@@ -395,7 +395,7 @@ ASTNode** parseFile(Token* tokens, int tokenCount) {
     if (peekToken(tokens, &tokenIndex)->type == TOKEN_EOF) {
       break;
     }
-    if (isTokenDataType(peekToken(tokens, &tokenIndex))) {
+    if (isTokenDataType(peekToken(tokens, &tokenIndex)) == 1) {
       printf("Is data type\n");
       if (peekAheadToken(tokens, &tokenIndex, 1, tokenCount)->type ==
           TOKEN_IDENTIFIER) {
@@ -415,9 +415,6 @@ ASTNode** parseFile(Token* tokens, int tokenCount) {
   }
   return astNodes;
 }
-
-/////////////////////////////////////////////////////////////
-// AST printing
 #include <stdio.h>
 
 // Helper function to print indentation.
@@ -427,23 +424,21 @@ static void printIndent(int indent) {
   }
 }
 
-// Recursively prints the AST tree.
+// Recursively prints a single AST node.
 void printAST(ASTNode* node, int indent) {
   if (node == NULL) {
     printIndent(indent);
     printf("NULL\n");
     return;
   }
-
   printIndent(indent);
   switch (node->type) {
     case AST_INT_LITERAL:
       printf("IntLiteral: %d\n", node->as.intLiteral);
       break;
-
     case AST_VARIABLE:
-      // Here we check if the node was created using newVariableDeclorationNode.
-      // If so, the 'type' field within variable_decloration is non-NULL.
+      // Here we check whether this is a declaration-based variable or a plain
+      // variable.
       if (node->as.variable_decloration.type != NULL) {
         printf("Variable Declaration: %.*s of type %.*s\n",
                node->as.variable_decloration.name->length,
@@ -451,13 +446,10 @@ void printAST(ASTNode* node, int indent) {
                node->as.variable_decloration.type->length,
                node->as.variable_decloration.type->lexeme);
       } else {
-        // Otherwise, assume it's a plain variable (using the variableName
-        // field).
         printf("Variable: %.*s\n", node->as.variableName->length,
                node->as.variableName->lexeme);
       }
       break;
-
     case AST_BINARY:
       printf("Binary Expression: '%s'\n",
              tokenTypeToString(node->as.binary._operator));
@@ -468,22 +460,18 @@ void printAST(ASTNode* node, int indent) {
       printf("Right:\n");
       printAST(node->as.binary.right, indent + 2);
       break;
-
     case AST_UNARY:
       printf("Unary Expression: '%c'\n", node->as.unary._operator);
       printIndent(indent + 1);
       printf("Operand:\n");
       printAST(node->as.unary.operand, indent + 2);
       break;
-
     case AST_ASSIGNMENT:
       printf("Assignment -- details not implemented.\n");
       break;
-
     case AST_EXPRESSION_STATEMENT:
       printf("Expression Statement -- details not implemented.\n");
       break;
-
     case AST_DECLARATION:
       printf("Declaration:\n");
       printIndent(indent + 1);
@@ -493,7 +481,6 @@ void printAST(ASTNode* node, int indent) {
       printf("Expression:\n");
       printAST(node->as.declaration.expression, indent + 2);
       break;
-
     case AST_FUNCTION_DECLARATION:
       printf("Function Declaration: %.*s returns %.*s\n",
              node->as.function.name->length, node->as.function.name->lexeme,
@@ -510,24 +497,33 @@ void printAST(ASTNode* node, int indent) {
         printAST(node->as.function.statements[i], indent + 2);
       }
       break;
-
     case AST_IF_STATEMENT:
       printf("If Statement -- details not implemented.\n");
       break;
-
     case AST_WHILE_STATEMENT:
       printf("While Statement -- details not implemented.\n");
       break;
-
     case AST_BLOCK:
       printf("Block with %d statement(s):\n", node->as.block.count);
       for (int i = 0; i < node->as.block.count; i++) {
         printAST(node->as.block.statements[i], indent + 1);
       }
       break;
-
     default:
       printf("Unknown AST Node\n");
       break;
+  }
+}
+
+// New function to print the entire file's AST.
+// 'nodes' is an array of ASTNode pointers and 'count' is the total number
+// allocated.
+void printASTFile(ASTNode** nodes, int count) {
+  printf("Printing AST for the entire file:\n");
+  for (int i = 0; i < count; i++) {
+    if (nodes[i] != NULL) {
+      printf("\n--- AST Node %d ---\n", i);
+      printAST(nodes[i], 0);
+    }
   }
 }

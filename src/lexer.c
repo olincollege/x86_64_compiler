@@ -267,7 +267,6 @@ void printLexer(const Lexer* lexer) {
 }
 
 void printToken(const Token* token) {
-  printf("Here");
   printf("Token(type=%s, lexeme=\"%.*s\", line=%d)\n",
          tokenTypeToString((TokenType)token->type), token->length,
          token->lexeme,  // precision specifier

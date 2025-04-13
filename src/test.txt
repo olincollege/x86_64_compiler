@@ -3,3 +3,8 @@ int main() {
  int b = 0;
  int c = a + b;
 }
+
+
+int secondFunction(int a, int b) {
+    c = b + a;
+}

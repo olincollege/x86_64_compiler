@@ -53,6 +53,8 @@ int main() {
 
   printf("AST Nodes:\n");
 
+  printASTFile(astNodes, tokenIndex);
+
   printAST(astNodes[0], 0);  // Print the AST starting from the root node
 
   return 0;

@@ -76,3 +76,5 @@ ASTNode** parseFile(Token* tokens, int tokenCount);
 ASTNode* newIntLiteralNode(int value);
 
 void printAST(ASTNode* node, int indent);
+
+void printASTFile(ASTNode** nodes, int count);
