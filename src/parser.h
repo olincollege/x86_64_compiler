@@ -33,7 +33,7 @@ typedef struct ASTNode {
     struct {
       Token* name;  // The name of the variable.
       Token* type;  // Type of variable, e.g., "int", "float"
-    } variable_decloration;
+    } variable_declaration;
 
     // For binary expressions.
     struct {

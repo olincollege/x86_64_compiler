@@ -36,19 +36,19 @@ ASTNode* newVariableNode(Token* name) {
   return node;
 }
 
-ASTNode* newVariableDeclorationNode(Token* name, Token* type) {
+ASTNode* newVariableDeclarationNode(Token* name, Token* type) {
   printf(
-      "Debug: Creating new VariableDecloration node. Name: %.*s, Type: %.*s\n",
+      "Debug: Creating new VariableDeclaration node. Name: %.*s, Type: %.*s\n",
       name->length, name->lexeme, type->length, type->lexeme);
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
-    fprintf(stderr, "Error: Out of memory in newVariableDeclorationNode\n");
+    fprintf(stderr, "Error: Out of memory in newVariableDeclarationNode\n");
     exit(1);
   }
   node->type =
       AST_VARIABLE_DECLORATION;  // Using the variable type for declarations.
-  node->as.variable_decloration.name = name;
-  node->as.variable_decloration.type = type;
+  node->as.variable_declaration.name = name;
+  node->as.variable_declaration.type = type;
   return node;
 }
 
@@ -114,14 +114,14 @@ ASTNode* newFunctionNode(Token* name, Token* returnType, ASTNode** parameters,
   return node;
 }
 
-ASTNode* newDeclarationNode(ASTNode* variableDecloration, ASTNode* expression) {
+ASTNode* newDeclarationNode(ASTNode* variableDeclaration, ASTNode* expression) {
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     fprintf(stderr, "Error: Out of memory in newDeclarationNode\n");
     exit(1);
   }
   node->type = AST_DECLARATION;
-  node->as.declaration.variable = variableDecloration;
+  node->as.declaration.variable = variableDeclaration;
   node->as.declaration.expression = expression;
   return node;
 }
@@ -154,9 +154,9 @@ Token* peekAheadToken(Token* tokens, int* index, int forward, int tokenCount) {
 //////////////////
 // Parser functions
 
-ASTNode* parseVariableDecloration(Token* tokens, int* tokenIndex,
+ASTNode* parseVariableDeclaration(Token* tokens, int* tokenIndex,
                                   int tokenCount) {
-  printf("Debug: Entering parseVariableDecloration at tokenIndex = %d\n",
+  printf("Debug: Entering parseVariableDeclaration at tokenIndex = %d\n",
          *tokenIndex);
 
   // Expect a data type token first.
@@ -179,7 +179,7 @@ ASTNode* parseVariableDecloration(Token* tokens, int* tokenIndex,
   Token* name = peekToken(tokens, tokenIndex);
   (*tokenIndex)++;
 
-  return newVariableDeclorationNode(name, type);
+  return newVariableDeclarationNode(name, type);
 }
 
 int isVariableOrLiteral(Token* token) {
@@ -275,9 +275,9 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
 
   // If the token represents the start of a variable declaration:
   if (isTokenDataType(peekToken(tokens, tokenIndex))) {
-    ASTNode* variableDeclorationNode =
-        parseVariableDecloration(tokens, tokenIndex, tokenCount);
-    if (variableDeclorationNode == NULL) {
+    ASTNode* variableDeclarationNode =
+        parseVariableDeclaration(tokens, tokenIndex, tokenCount);
+    if (variableDeclarationNode == NULL) {
       fprintf(stderr, "Error: Failed to parse variable declaration\n");
       return NULL;
     }
@@ -287,7 +287,7 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
             TOKEN_ASSIGN) {
       (*tokenIndex)++;
       printf("Debug: No assignment operator found after variable declaration");
-      return variableDeclorationNode;
+      return variableDeclarationNode;
     }
 
     // Otherwise, if an assignment operator is present, parse the expression.
@@ -298,7 +298,7 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
       return NULL;
     }
     (*tokenIndex)++;
-    return newDeclarationNode(variableDeclorationNode, expression);
+    return newDeclarationNode(variableDeclarationNode, expression);
   }
 
   // Placeholder for other types of statements.
@@ -343,7 +343,7 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
            parameterCount + 1, *tokenIndex);
     printToken(peekToken(tokens, tokenIndex));
     parameters[parameterCount++] =
-        parseVariableDecloration(tokens, tokenIndex, tokenCount);
+        parseVariableDeclaration(tokens, tokenIndex, tokenCount);
     if (peekToken(tokens, tokenIndex)->type == TOKEN_COMMA) {
       printf("Debug: Found comma token between parameters: ");
       printToken(peekToken(tokens, tokenIndex));
@@ -450,12 +450,12 @@ void printAST(ASTNode* node, int indent) {
     case AST_VARIABLE_DECLORATION:
       // Here we check whether this is a declaration-based variable or a plain
       // variable.
-      if (node->as.variable_decloration.type != NULL) {
+      if (node->as.variable_declaration.type != NULL) {
         printf("Variable Declaration: %.*s of type %.*s\n",
-               node->as.variable_decloration.name->length,
-               node->as.variable_decloration.name->lexeme,
-               node->as.variable_decloration.type->length,
-               node->as.variable_decloration.type->lexeme);
+               node->as.variable_declaration.name->length,
+               node->as.variable_declaration.name->lexeme,
+               node->as.variable_declaration.type->length,
+               node->as.variable_declaration.type->lexeme);
       } else {
         printf("Variable: %.*s\n", node->as.variableName->length,
                node->as.variableName->lexeme);
