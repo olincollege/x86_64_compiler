@@ -25,11 +25,13 @@ typedef struct ASTNode {
     // For integer literals.
     int intLiteral;
 
+    Token* variableName;
+
     // For a variable or identifier.
     struct {
       Token* name;  // The name of the variable.
       Token* type;  // Type of variable, e.g., "int", "float"
-    } variable;
+    } variable_decloration;
 
     // For binary expressions.
     struct {
@@ -56,7 +58,7 @@ typedef struct ASTNode {
     struct {
       struct ASTNode* variable;
       struct ASTNode* expression;
-    } decloration;
+    } declaration;
 
     // For blocks (a list of statements).
     struct {
