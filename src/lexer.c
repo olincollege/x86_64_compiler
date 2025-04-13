@@ -91,17 +91,20 @@ TokenType identifierType(const char* text, int length) {
   if (length == 4 && strncmp(text, "else", 4) == 0) {
     return TOKEN_ELSE;
   }
-  if (length == LENGTH_5 && strncmp(text, "while", LENGTH_5) == 0) {
+  if (length == 5 && strncmp(text, "while", 5) == 0) {
     return TOKEN_WHILE;
   }
   if (length == 3 && strncmp(text, "for", 3) == 0) {
     return TOKEN_FOR;
   }
-  if (length == LENGTH_6 && strncmp(text, "return", LENGTH_6) == 0) {
+  if (length == 6 && strncmp(text, "return", 6) == 0) {
     return TOKEN_RETURN;
   }
   if (length == 3 && strncmp(text, "int", 3) == 0) {
     return TOKEN_INT_TYPE;
+  }
+  if (length == 4 && strncmp(text, "void", 3) == 0) {
+    return TOKEN_VOID_TYPE;
   }
   return TOKEN_IDENTIFIER;
 }

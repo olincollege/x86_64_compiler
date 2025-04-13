@@ -11,6 +11,7 @@ typedef enum {
   TOKEN_FOR,
   TOKEN_RETURN,
   TOKEN_INT_TYPE,
+  TOKEN_VOID_TYPE,
   // Operators:
   TOKEN_PLUS,
   TOKEN_MINUS,
@@ -33,8 +34,6 @@ typedef enum {
   TOKEN_RBRACE,
   TOKEN_UNKNOWN  // errors
 } TokenType;
-
-enum { LENGTH_5 = 5, LENGTH_6 = 6 };
 
 typedef struct {
   TokenType type;
@@ -64,3 +63,9 @@ TokenType identifierType(const char* text, int length);
 // lots of testing
 
 // set up in cmake
+
+// Helper functions to print tokens and lexer state
+const char* tokenTypeToString(TokenType type);
+
+void printLexer(const Lexer* lexer);
+void printToken(const Token* token);
