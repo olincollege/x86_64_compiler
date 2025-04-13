@@ -1,7 +1,9 @@
 #pragma once
 
-#include "lexer.h"
+#include <stdio.h>
+#include <stdlib.h>
 
+#include "lexer.h"
 typedef enum {
   AST_INT_LITERAL,
   AST_VARIABLE,
@@ -78,6 +80,6 @@ ASTNode** parseFile(Token* tokens, int tokenCount);
 
 ASTNode* newIntLiteralNode(int value);
 
-void printAST(ASTNode* node, int indent);
-
+void printAST(FILE* file, ASTNode* node, int indent);
 void printASTFile(ASTNode** nodes, int count);
+void printASTOutput(ASTNode** nodes, int count, int outputToFile);

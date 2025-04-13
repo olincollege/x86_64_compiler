@@ -1,0 +1,27 @@
+Printing AST for the entire file:
+
+--- AST Node 0 ---
+Function Declaration: main returns int
+  Parameters (0):
+  Body Statements (3):
+    Declaration:
+      Variable Declaration:
+        Variable Declaration: a of type int
+      Expression:
+        IntLiteral: 0
+    Declaration:
+      Variable Declaration:
+        Variable Declaration: b of type int
+      Expression:
+        IntLiteral: 0
+    Declaration:
+      Variable Declaration:
+        Variable Declaration: c of type int
+      Expression:
+        Binary Expression: 'PLUS'
+          Left:
+            Variable: a
+          Right:
+            Variable: b
+  Return expression:
+    IntLiteral: 0
