@@ -51,8 +51,9 @@ ASTNode* newVariableDeclorationNode(Token* name, Token* type) {
   return node;
 }
 
-ASTNode* newBinaryNode(ASTNode* left, char operator, ASTNode * right) {
-  printf("Debug: Creating new Binary node with operator '%c'\n", operator);
+ASTNode* newBinaryNode(ASTNode* left, TokenType operator, ASTNode * right) {
+  printf("Debug: Creating new Binary node with operator '%s'\n",
+         tokenTypeToString(operator));
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     fprintf(stderr, "Error: Out of memory in newBinaryNode\n");
@@ -135,7 +136,7 @@ int isTokenDataType(Token* token) {
 }
 
 Token* peekToken(Token* tokens, int* index) {
-  printf("In peekToken");
+  printf("In peekToken\n");
   return &tokens[(*index)];
 }
 
@@ -228,12 +229,14 @@ ASTNode* parseVariableOrLiteral(Token* tokens, int* tokenIndex,
          *tokenIndex);
   if (peekToken(tokens, tokenIndex)->type == TOKEN_IDENTIFIER) {
     printf("Is identifier\n");
+    ASTNode* node = newVariableNode(peekToken(tokens, tokenIndex));
     (*tokenIndex)++;
-    return newVariableNode(peekToken(tokens, tokenIndex));
+    return node;
   } else if (peekToken(tokens, tokenIndex)->type == TOKEN_INT_LITERAL) {
     printf("Is Int\n");
+    ASTNode* node = newIntLiteralNode(atoi(peekToken(tokens, tokenIndex)));
     (*tokenIndex)++;
-    return newIntLiteralNode(atoi(peekToken(tokens, tokenIndex)));
+    return node;
   }
 }
 
@@ -253,9 +256,8 @@ ASTNode* parseExpression(Token* tokens, int* tokenIndex, int tokenCount) {
   if (peekToken(tokens, tokenIndex)->type == TOKEN_LPAREN) {
     // Deal with this later
   }
-  if (isVariableOrLiteral(peekToken(tokens, tokenIndex))) {
+  if (isVariableOrLiteral(peekToken(tokens, tokenIndex)) == 1) {
     ASTNode* leftSide = parseVariableOrLiteral(tokens, tokenIndex, tokenCount);
-    (*tokenIndex)++;
     TokenType _operator = peekToken(tokens, tokenIndex)->type;
     (*tokenIndex)++;
 
@@ -416,35 +418,49 @@ ASTNode** parseFile(Token* tokens, int tokenCount) {
 
 /////////////////////////////////////////////////////////////
 // AST printing
-
 #include <stdio.h>
 
+// Helper function to print indentation.
 static void printIndent(int indent) {
   for (int i = 0; i < indent; i++) {
     printf("  ");  // Two spaces per indent level.
   }
 }
 
+// Recursively prints the AST tree.
 void printAST(ASTNode* node, int indent) {
   if (node == NULL) {
     printIndent(indent);
     printf("NULL\n");
     return;
   }
+
   printIndent(indent);
   switch (node->type) {
     case AST_INT_LITERAL:
       printf("IntLiteral: %d\n", node->as.intLiteral);
       break;
+
     case AST_VARIABLE:
-      printf("Variable: %.*s of type %.*s\n",
-             node->as.variable_decloration.name->length,
-             node->as.variable_decloration.name->lexeme,
-             node->as.variable_decloration.type->length,
-             node->as.variable_decloration.type->lexeme);
+      // Here we check if the node was created using newVariableDeclorationNode.
+      // If so, the 'type' field within variable_decloration is non-NULL.
+      if (node->as.variable_decloration.type != NULL) {
+        printf("Variable Declaration: %.*s of type %.*s\n",
+               node->as.variable_decloration.name->length,
+               node->as.variable_decloration.name->lexeme,
+               node->as.variable_decloration.type->length,
+               node->as.variable_decloration.type->lexeme);
+      } else {
+        // Otherwise, assume it's a plain variable (using the variableName
+        // field).
+        printf("Variable: %.*s\n", node->as.variableName->length,
+               node->as.variableName->lexeme);
+      }
       break;
+
     case AST_BINARY:
-      printf("Binary Expression: '%c'\n", node->as.binary._operator);
+      printf("Binary Expression: '%s'\n",
+             tokenTypeToString(node->as.binary._operator));
       printIndent(indent + 1);
       printf("Left:\n");
       printAST(node->as.binary.left, indent + 2);
@@ -452,18 +468,22 @@ void printAST(ASTNode* node, int indent) {
       printf("Right:\n");
       printAST(node->as.binary.right, indent + 2);
       break;
+
     case AST_UNARY:
       printf("Unary Expression: '%c'\n", node->as.unary._operator);
       printIndent(indent + 1);
       printf("Operand:\n");
       printAST(node->as.unary.operand, indent + 2);
       break;
+
     case AST_ASSIGNMENT:
       printf("Assignment -- details not implemented.\n");
       break;
+
     case AST_EXPRESSION_STATEMENT:
       printf("Expression Statement -- details not implemented.\n");
       break;
+
     case AST_DECLARATION:
       printf("Declaration:\n");
       printIndent(indent + 1);
@@ -473,6 +493,7 @@ void printAST(ASTNode* node, int indent) {
       printf("Expression:\n");
       printAST(node->as.declaration.expression, indent + 2);
       break;
+
     case AST_FUNCTION_DECLARATION:
       printf("Function Declaration: %.*s returns %.*s\n",
              node->as.function.name->length, node->as.function.name->lexeme,
@@ -489,18 +510,22 @@ void printAST(ASTNode* node, int indent) {
         printAST(node->as.function.statements[i], indent + 2);
       }
       break;
+
     case AST_IF_STATEMENT:
       printf("If Statement -- details not implemented.\n");
       break;
+
     case AST_WHILE_STATEMENT:
       printf("While Statement -- details not implemented.\n");
       break;
+
     case AST_BLOCK:
       printf("Block with %d statement(s):\n", node->as.block.count);
       for (int i = 0; i < node->as.block.count; i++) {
         printAST(node->as.block.statements[i], indent + 1);
       }
       break;
+
     default:
       printf("Unknown AST Node\n");
       break;
