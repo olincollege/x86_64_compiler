@@ -44,22 +44,21 @@ Test(lexer, int_literal) {
   Lexer lexer;
   initLexer(&lexer, source);
   Token token = getNextToken(&lexer);
-  cr_assert_eq(token.type, TOKEN_INT);
+  cr_assert_eq(token.type, TOKEN_INT_LITERAL);
   cr_assert(memcmp(token.lexeme, "12345", token.length) == 0,
             "Expected token lexeme to be \"12345\"");
   cr_assert_eq(token.length, 5);
 }
 
 Test(lexer, semicolon) {
-    const char* source = "  ;";
-    Lexer lexer;
-    initLexer(&lexer, source);
-    Token token = getNextToken(&lexer);
-    cr_assert_eq(token.type, TOKEN_SEMICOLON);
-    cr_assert(memcmp(token.lexeme, ";", token.length) == 0,
-              "Expected token lexeme to be \";\"");
-    cr_assert_eq(token.length, 1);
-  }
-  
+  const char* source = "  ;";
+  Lexer lexer;
+  initLexer(&lexer, source);
+  Token token = getNextToken(&lexer);
+  cr_assert_eq(token.type, TOKEN_SEMICOLON);
+  cr_assert(memcmp(token.lexeme, ";", token.length) == 0,
+            "Expected token lexeme to be \";\"");
+  cr_assert_eq(token.length, 1);
+}
 
 // NOLINTEND(*-magic-numbers)

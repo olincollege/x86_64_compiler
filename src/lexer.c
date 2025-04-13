@@ -6,9 +6,9 @@
 #include "lexer.h"
 
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 static int atEnd(Lexer* lexer) { return *lexer->current == '\0'; }
 
 static char advance(Lexer* lexer) {
@@ -81,7 +81,7 @@ static Token scanNumber(Lexer* lexer) {
     advance(lexer);
   }
   int length = (int)(lexer->current - start);
-  return makeToken(lexer, TOKEN_INT, start, length);
+  return makeToken(lexer, TOKEN_INT_LITERAL, start, length);
 }
 
 TokenType identifierType(const char* text, int length) {
@@ -91,17 +91,20 @@ TokenType identifierType(const char* text, int length) {
   if (length == 4 && strncmp(text, "else", 4) == 0) {
     return TOKEN_ELSE;
   }
-  if (length == LENGTH_5 && strncmp(text, "while", LENGTH_5) == 0) {
+  if (length == 5 && strncmp(text, "while", 5) == 0) {
     return TOKEN_WHILE;
   }
   if (length == 3 && strncmp(text, "for", 3) == 0) {
     return TOKEN_FOR;
   }
-  if (length == LENGTH_6 && strncmp(text, "return", LENGTH_6) == 0) {
+  if (length == 6 && strncmp(text, "return", 6) == 0) {
     return TOKEN_RETURN;
   }
   if (length == 3 && strncmp(text, "int", 3) == 0) {
     return TOKEN_INT_TYPE;
+  }
+  if (length == 4 && strncmp(text, "void", 3) == 0) {
+    return TOKEN_VOID_TYPE;
   }
   return TOKEN_IDENTIFIER;
 }
@@ -190,4 +193,82 @@ void initLexer(Lexer* lexer, const char* source) {
   lexer->start = source;
   lexer->current = source;
   lexer->line = 1;
+}
+
+// Code to print lexers and tokens
+
+const char* tokenTypeToString(TokenType type) {
+  switch (type) {
+    case TOKEN_EOF:
+      return "EOF";
+    case TOKEN_INT_LITERAL:
+      return "INT";
+    case TOKEN_IDENTIFIER:
+      return "IDENTIFIER";
+    case TOKEN_IF:
+      return "IF";
+    case TOKEN_ELSE:
+      return "ELSE";
+    case TOKEN_WHILE:
+      return "WHILE";
+    case TOKEN_FOR:
+      return "FOR";
+    case TOKEN_RETURN:
+      return "RETURN";
+    case TOKEN_INT_TYPE:
+      return "INT_TYPE";
+    case TOKEN_PLUS:
+      return "PLUS";
+    case TOKEN_MINUS:
+      return "MINUS";
+    case TOKEN_STAR:
+      return "STAR";
+    case TOKEN_SLASH:
+      return "SLASH";
+    case TOKEN_PERCENT:
+      return "PERCENT";
+    case TOKEN_ASSIGN:
+      return "ASSIGN";
+    case TOKEN_EQ:
+      return "EQ";
+    case TOKEN_NEQ:
+      return "NEQ";
+    case TOKEN_LT:
+      return "LT";
+    case TOKEN_GT:
+      return "GT";
+    case TOKEN_LEQ:
+      return "LEQ";
+    case TOKEN_GEQ:
+      return "GEQ";
+    case TOKEN_SEMICOLON:
+      return "SEMICOLON";
+    case TOKEN_COMMA:
+      return "COMMA";
+    case TOKEN_LPAREN:
+      return "LPAREN";
+    case TOKEN_RPAREN:
+      return "RPAREN";
+    case TOKEN_LBRACE:
+      return "LBRACE";
+    case TOKEN_RBRACE:
+      return "RBRACE";
+    case TOKEN_UNKNOWN:
+      return "UNKNOWN";
+    default:
+      return "INVALID";
+  }
+}
+
+void printLexer(const Lexer* lexer) {
+  printf("Lexer(start=\"%s\", current=\"%s\", offset=%ld, line=%d)\n",
+         lexer->start, lexer->current, lexer->current - lexer->start,
+         lexer->line);
+}
+
+void printToken(const Token* token) {
+  printf("Token(type=%s, lexeme=\"%.*s\", line=%d)\n",
+         tokenTypeToString((TokenType)token->type), token->length,
+         token->lexeme,  // precision specifier
+         token->line);
 }
