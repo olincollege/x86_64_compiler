@@ -21,14 +21,15 @@ ASTNode* newIntLiteralNode(int value) {
 }
 
 ASTNode* newVariableNode(Token* name, Token* type) {
-  printf("Debug: Creating new Variable node. Name: %s, Type: %s\n", name, type);
+  printf("Debug: Creating new Variable node. Name: %.*s, Type: %.*s\n",
+         name->length, name->lexeme, type->length, type->lexeme);
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     fprintf(stderr, "Error: Out of memory in newVariableNode\n");
     exit(1);
   }
   node->type = AST_VARIABLE;
-  // Copy the variable name and type
+  // Store pointers to the tokens (which hold the lexeme, length, etc.)
   node->as.variable.name = name;
   node->as.variable.type = type;
   return node;
@@ -78,8 +79,8 @@ ASTNode* newBlockNode(ASTNode** statements, int count) {
 
 ASTNode* newFunctionNode(Token* name, Token* returnType, ASTNode** parameters,
                          int count, ASTNode** statements, int statementCount) {
-  printf("Debug: Creating new Function node. Name: %s, Return Type: %s\n", name,
-         returnType);
+  printf("Debug: Creating new Function node. Name: %.*s, Return Type: %.*s\n",
+         name->length, name->lexeme, returnType->length, returnType->lexeme);
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     fprintf(stderr, "Error: Out of memory in newFunctionNode\n");
@@ -117,42 +118,44 @@ Token* peekAheadToken(Token* tokens, int index, int forward, int tokenCount) {
 }
 
 ASTNode* parseVariable(Token* tokens, int* tokenIndex, int tokenCount) {
-  printf("Debug: Entering parseVariable at tokenIndex = %d\n", tokenIndex);
+  printf("Debug: Entering parseVariable at tokenIndex = %d\n", *tokenIndex);
   // Expect a data type first.
-  if (!isTokenDataType(peekToken(tokens, tokenIndex))) {
+  if (!isTokenDataType(peekToken(tokens, *tokenIndex))) {
     fprintf(stderr, "Error: Expected a data type\n");
     return NULL;
   }
 
   // Debug: Print data type token.
   printf("Debug: Data type token: ");
-  printToken(peekToken(tokens, tokenIndex));
+  printToken(peekToken(tokens, *tokenIndex));
 
-  Token* type = peekToken(tokens, tokenIndex);
-  tokenIndex++;
+  Token* type = peekToken(tokens, *tokenIndex);
+  *tokenIndex += 1;
 
   // Check for the identifier.
-  if (peekToken(tokens, tokenIndex)->type != TOKEN_IDENTIFIER) {
+  if (peekToken(tokens, *tokenIndex)->type != TOKEN_IDENTIFIER) {
     fprintf(stderr, "Error: Expected an identifier\n");
     return NULL;
   }
 
   // Debug: Print identifier token.
   printf("Debug: Identifier token: ");
-  printToken(peekToken(tokens, tokenIndex));
+  printToken(peekToken(tokens, *tokenIndex));
 
-  Token* name = peekToken(tokens, tokenIndex);
+  Token* name = peekToken(tokens, *tokenIndex);
+  *tokenIndex += 1;
   return newVariableNode(name, type);
 }
 
 ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
-  printf("Debug: Entering parseStatement at tokenIndex = %d\n", tokenIndex);
+  printf("Debug: Entering parseStatement at tokenIndex = %d\n", *tokenIndex);
   // Placeholder for statement parsing.
+  *tokenIndex += 1;
   return NULL;
 }
 
 ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
-  printf("Debug: Entering parseFunction at tokenIndex = %d\n", tokenIndex);
+  printf("Debug: Entering parseFunction at tokenIndex = %d\n", *tokenIndex);
 
   Token* name;
   Token* returnType;
@@ -162,71 +165,68 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
   int statementCount = 0;
 
   // Parse return type.
-  printf("Debug: Parsing function return type token at index %d: ", tokenIndex);
-  printToken(peekToken(tokens, tokenIndex));
-  printf("Debug: Parsing function return type token at index %d: ", tokenIndex);
-  returnType = peekToken(tokens, tokenIndex);
-  printf("Debug: Parsing function return type token at index %d: ", tokenIndex);
-  tokenIndex++;
+  printf("Debug: Parsing function return type token at index %d: ",
+         *tokenIndex);
+  printToken(peekToken(tokens, *tokenIndex));
+  returnType = peekToken(tokens, *tokenIndex);
+  *tokenIndex += 1;
 
   // Parse function name.
-  printf("Debug: Parsing function name token at index %d: ", tokenIndex);
-  printToken(peekToken(tokens, tokenIndex));
-  name = strdup(peekToken(tokens, tokenIndex)->lexeme);
-  tokenIndex++;
+  printf("Debug: Parsing function name token at index %d: ", *tokenIndex);
+  printToken(peekToken(tokens, *tokenIndex));
+  name = peekToken(tokens, *tokenIndex);
+  *tokenIndex += 1;
 
   // Ensure we have a '('.
-  if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
+  if (peekToken(tokens, *tokenIndex)->type != TOKEN_LPAREN) {
     fprintf(stderr, "Error: Expected '(' after function name\n");
     return NULL;
   }
   printf("Debug: Found '(' token: ");
-  printToken(peekToken(tokens, tokenIndex));
-  tokenIndex++;
+  printToken(peekToken(tokens, *tokenIndex));
+  *tokenIndex += 1;
 
   // Parse parameters.
-  while (peekToken(tokens, tokenIndex)->type != TOKEN_RPAREN) {
+  while (peekToken(tokens, *tokenIndex)->type != TOKEN_RPAREN) {
     printf("Debug: Parsing parameter %d at tokenIndex = %d: ",
-           parameterCount + 1, tokenIndex);
-    printToken(peekToken(tokens, tokenIndex));
-    // Note: The code passes &tokenIndex, which might be a bug,
-    // but we do not change the code—only add debug prints.
+           parameterCount + 1, *tokenIndex);
+    printToken(peekToken(tokens, *tokenIndex));
     parameters[parameterCount++] =
         parseVariable(tokens, tokenIndex, tokenCount);
-    if (peekToken(tokens, tokenIndex)->type == TOKEN_COMMA) {
+    if (peekToken(tokens, *tokenIndex)->type == TOKEN_COMMA) {
       printf("Debug: Found comma token between parameters: ");
-      printToken(peekToken(tokens, tokenIndex));
-      tokenIndex++;
+      printToken(peekToken(tokens, *tokenIndex));
+      *tokenIndex += 1;
     }
   }
   // Skip the closing ')'
   printf("Debug: Found ')' token for parameter list: ");
-  printToken(peekToken(tokens, tokenIndex));
-  tokenCount++;  // Skip the closing parenthesis (though note: incrementing
-                 // tokenCount here does not change tokenIndex)
+  printToken(peekToken(tokens, *tokenIndex));
+  *tokenIndex += 1;
 
   // Check for '{' to begin function body.
-  if (peekToken(tokens, tokenIndex)->type != TOKEN_LBRACE) {
+  if (peekToken(tokens, *tokenIndex)->type != TOKEN_LBRACE) {
     fprintf(stderr, "Error: Expected '{' after function parameters\n");
     return NULL;
   }
   printf("Debug: Found '{' token for function body: ");
-  printToken(peekToken(tokens, tokenIndex));
-  tokenIndex++;  // Skip the opening brace
+  printToken(peekToken(tokens, *tokenIndex));
+  *tokenIndex += 1;
 
   // Parse statements until we see a '}'
-  while (peekToken(tokens, tokenIndex)->type != TOKEN_RBRACE) {
+  while (peekToken(tokens, *tokenIndex)->type != TOKEN_RBRACE) {
     printf("Debug: Parsing statement %d at tokenIndex = %d: ",
-           statementCount + 1, tokenIndex);
-    printToken(peekToken(tokens, tokenIndex));
+           statementCount + 1, *tokenIndex);
+    printToken(peekToken(tokens, *tokenIndex));
     statements[statementCount++] =
         parseStatement(tokens, tokenIndex, tokenCount);
   }
   printf("Debug: Found '}' token ending function body: ");
-  printToken(peekToken(tokens, tokenIndex));
-  // You could advance tokenIndex here if needed.
+  printToken(peekToken(tokens, *tokenIndex));
+  *tokenIndex += 1;  // Skip the closing brace
 
-  printf("Debug: Finished parsing function '%s'\n", name);
+  printf("Debug: Finished parsing function '%.*s'\n", name->length,
+         name->lexeme);
   return newFunctionNode(name, returnType, parameters, parameterCount,
                          statements, statementCount);
 }
@@ -241,7 +241,9 @@ ASTNode** parseFile(Token* tokens, int tokenCount) {
 
   int astNodesIndex = 0;
 
-  // The following code will never be executed.
+  // The following loop is provided as context; note that without proper
+  // advancing of tokenIndex, this could become an infinite loop. Here we
+  // increment tokenIndex when nothing matches.
   while (tokenIndex < tokenCount) {
     if (peekToken(tokens, tokenIndex)->type == TOKEN_EOF) {
       break;  // End of file reached
@@ -256,11 +258,13 @@ ASTNode** parseFile(Token* tokens, int tokenCount) {
           printf("Is function\n");
           printf("Debug: Parsing function starting at tokenIndex %d\n",
                  tokenIndex);
-          astNodes[astNodesIndex++] = parseFunction(
-              tokens, tokenIndex, tokenCount);  // Creating a function
+          astNodes[astNodesIndex++] =
+              parseFunction(tokens, &tokenIndex, tokenCount);
+          continue;
         }
       }
     }
+    tokenIndex++;  // Avoid infinite loop if no matching constructs are found.
   }
   return astNodes;
 }
@@ -271,7 +275,7 @@ ASTNode** parseFile(Token* tokens, int tokenCount) {
 // Helper function to print indentation.
 static void printIndent(int indent) {
   for (int i = 0; i < indent; i++) {
-    printf("  ");  // two spaces per indent level
+    printf("  ");  // Two spaces per indent level.
   }
 }
 
@@ -291,9 +295,10 @@ void printAST(ASTNode* node, int indent) {
       break;
 
     case AST_VARIABLE:
-      // Print both variable's name and type.
-      printf("Variable: %s of type %s\n", node->as.variable.name,
-             node->as.variable.type);
+      // Print variable's name and type using token lexeme and length.
+      printf("Variable: %.*s of type %.*s\n", node->as.variable.name->length,
+             node->as.variable.name->lexeme, node->as.variable.type->length,
+             node->as.variable.type->lexeme);
       break;
 
     case AST_BINARY:
@@ -324,13 +329,15 @@ void printAST(ASTNode* node, int indent) {
       break;
 
     case AST_DECLARATION:
-      // Placeholder for variable or other declarations.
+      // Placeholder for declarations.
       printf("Declaration -- details not implemented.\n");
       break;
 
     case AST_FUNCTION_DECLARATION:
-      printf("Function Declaration: %s returns %s\n", node->as.function.name,
-             node->as.function.returnType);
+      printf("Function Declaration: %.*s returns %.*s\n",
+             node->as.function.name->length, node->as.function.name->lexeme,
+             node->as.function.returnType->length,
+             node->as.function.returnType->lexeme);
       printIndent(indent + 1);
       printf("Parameters (%d):\n", node->as.function.paramCount);
       for (int i = 0; i < node->as.function.paramCount; i++) {
