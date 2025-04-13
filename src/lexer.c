@@ -6,9 +6,9 @@
 #include "lexer.h"
 
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 static int atEnd(Lexer* lexer) { return *lexer->current == '\0'; }
 
 static char advance(Lexer* lexer) {
@@ -267,6 +267,7 @@ void printLexer(const Lexer* lexer) {
 }
 
 void printToken(const Token* token) {
+  printf("Here");
   printf("Token(type=%s, lexeme=\"%.*s\", line=%d)\n",
          tokenTypeToString((TokenType)token->type), token->length,
          token->lexeme,  // precision specifier

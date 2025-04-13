@@ -32,14 +32,28 @@ int main() {
   tokens[tokenIndex++] = token;
 
   while (token.type != TOKEN_EOF) {
-    printToken(&token);
     token = getNextToken(&lexer);
     tokens[tokenIndex++] = token;
   }
+  tokenIndex--;
 
   // free(source);
-  fclose(file);
-  parseFile(tokens, tokenIndex);
+  // fclose(file);
+
+  for (int i = 0; i < tokenIndex; ++i) {
+    printToken(&tokens[i]);
+  }
+
+  printf("\nParsing tokens...\n\n");
+
+  ASTNode** astNodes;
+  printf("Printing AST...\n\n");
+
+  astNodes = parseFile(tokens, tokenIndex);
+
+  printf("AST Nodes:\n");
+
+  printAST(astNodes[0], 0);  // Print the AST starting from the root node
 
   return 0;
 }
