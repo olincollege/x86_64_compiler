@@ -162,9 +162,10 @@ int isTokenDataType(Token* token) {
 #ifdef DEBUG
 
   printf("Debug: Checking if token is data type: ");
+  printToken(token);
+
 #endif
 
-  printToken(token);
   if (token->type == TOKEN_INT_TYPE || token->type == TOKEN_VOID_TYPE) {
     return 1;
   }
@@ -211,9 +212,10 @@ ASTNode* parseVariableDeclaration(Token* tokens, int* tokenIndex,
 #ifdef DEBUG
 
   printf("Debug: Data type token: ");
+  printToken(peekToken(tokens, tokenIndex));
+
 #endif
 
-  printToken(peekToken(tokens, tokenIndex));
   Token* type = peekToken(tokens, tokenIndex);
   (*tokenIndex)++;
 
@@ -225,9 +227,10 @@ ASTNode* parseVariableDeclaration(Token* tokens, int* tokenIndex,
 #ifdef DEBUG
 
   printf("Debug: Identifier token: ");
+  printToken(peekToken(tokens, tokenIndex));
+
 #endif
 
-  printToken(peekToken(tokens, tokenIndex));
   Token* name = peekToken(tokens, tokenIndex);
   (*tokenIndex)++;
 
@@ -376,6 +379,16 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
     (*tokenIndex)++;
     return newDeclarationNode(variableDeclarationNode, expression);
   }
+  if (peekToken(tokens, tokenIndex)->type == TOKEN_RETURN) {
+#ifdef DEBUG
+
+    printf("Debug: Found 'return' keyword\n");
+#endif
+
+    (*tokenIndex)++;
+    ASTNode* returnNode = parseExpression(tokens, tokenIndex, tokenCount);
+    return returnNode;
+  }
 
   // Placeholder for other types of statements.
   return NULL;
@@ -399,9 +412,10 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
   // Parse return type.
   printf("Debug: Parsing function return type token at index %d: ",
          *tokenIndex);
+  printToken(peekToken(tokens, tokenIndex));
+
 #endif
 
-  printToken(peekToken(tokens, tokenIndex));
   returnType = peekToken(tokens, tokenIndex);
   (*tokenIndex)++;
 
@@ -409,9 +423,10 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
 
   // Parse function name.
   printf("Debug: Parsing function name token at index %d: ", *tokenIndex);
+  printToken(peekToken(tokens, tokenIndex));
+
 #endif
 
-  printToken(peekToken(tokens, tokenIndex));
   name = peekToken(tokens, tokenIndex);
   (*tokenIndex)++;
 
@@ -423,9 +438,10 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
 #ifdef DEBUG
 
   printf("Debug: Found '(' token: ");
+  printToken(peekToken(tokens, tokenIndex));
+
 #endif
 
-  printToken(peekToken(tokens, tokenIndex));
   (*tokenIndex)++;
 
   // Parse parameters until a ')' token is found.
@@ -434,18 +450,20 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
 
     printf("Debug: Parsing parameter %d at tokenIndex = %d: ",
            parameterCount + 1, *tokenIndex);
+    printToken(peekToken(tokens, tokenIndex));
+
 #endif
 
-    printToken(peekToken(tokens, tokenIndex));
     parameters[parameterCount++] =
         parseVariableDeclaration(tokens, tokenIndex, tokenCount);
     if (peekToken(tokens, tokenIndex)->type == TOKEN_COMMA) {
 #ifdef DEBUG
 
       printf("Debug: Found comma token between parameters: ");
+      printToken(peekToken(tokens, tokenIndex));
+
 #endif
 
-      printToken(peekToken(tokens, tokenIndex));
       (*tokenIndex)++;
     }
   }
@@ -453,9 +471,10 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
 
   // Skip the closing ')'
   printf("Debug: Found ')' token for parameter list: ");
+  printToken(peekToken(tokens, tokenIndex));
+
 #endif
 
-  printToken(peekToken(tokens, tokenIndex));
   (*tokenIndex)++;
 
   // Check for '{' to begin the function body.
@@ -463,12 +482,12 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
     fprintf(stderr, "Error: Expected '{' after function parameters\n");
     return NULL;
   }
-#ifdef DEBUG
 
+#ifdef DEBUG
   printf("Debug: Found '{' token for function body: ");
+  printToken(peekToken(tokens, tokenIndex));
 #endif
 
-  printToken(peekToken(tokens, tokenIndex));
   (*tokenIndex)++;
 
   ASTNode* returnNode = NULL;
@@ -476,33 +495,21 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
   // Parse function body statements until a '}' is encountered.
   while (peekToken(tokens, tokenIndex)->type != TOKEN_RBRACE) {
 #ifdef DEBUG
-
     printf("Debug: Parsing statement %d at tokenIndex = %d: ",
            statementCount + 1, *tokenIndex);
-#endif
-
     printToken(peekToken(tokens, tokenIndex));
-
-    if (peekToken(tokens, tokenIndex)->type == TOKEN_RETURN) {
-#ifdef DEBUG
-
-      printf("Debug: Found 'return' keyword\n");
 #endif
-
-      (*tokenIndex)++;
-      returnNode = parseExpression(tokens, tokenIndex, tokenCount);
-      break;
-    }
 
     statements[statementCount++] =
         parseStatement(tokens, tokenIndex, tokenCount);
   }
-#ifdef DEBUG
 
+#ifdef DEBUG
   printf("Debug: Found '}' token ending function body: ");
+  printToken(peekToken(tokens, tokenIndex));
+
 #endif
 
-  printToken(peekToken(tokens, tokenIndex));
   (*tokenIndex)++;  // Skip the closing brace
 
 #ifdef DEBUG
