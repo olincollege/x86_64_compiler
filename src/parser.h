@@ -5,6 +5,7 @@
 typedef enum {
   AST_INT_LITERAL,
   AST_VARIABLE,
+  AST_VARIABLE_DECLORATION,
   AST_BINARY,  // For binary operators like +, -, *, etc.
   AST_UNARY,   // For unary operators such as negation
   AST_ASSIGNMENT,
@@ -14,6 +15,7 @@ typedef enum {
   AST_IF_STATEMENT,
   AST_WHILE_STATEMENT,
   AST_BLOCK,
+  AST_RETURN,
   // Add more as needed...
 } ASTNodeType;
 
@@ -53,6 +55,7 @@ typedef struct ASTNode {
       int paramCount;               // Number of parameters.
       struct ASTNode** statements;  // List of statements in the function.
       int statementCount;           // Number of statements in the function.
+      struct ASTNode* returnStatement;
     } function;
 
     struct {
