@@ -139,7 +139,7 @@ Token* peekToken(Token* tokens, int index) { return &tokens[index]; }
 Token* peekAheadToken(Token* tokens, int* index, int forward, int tokenCount) {
   printf("Debug: peekAheadToken at index %d and forward = %d\n", *index,
          forward);
-  if (index + forward >= tokenCount) {
+  if ((*index) + forward >= tokenCount) {
     return NULL;
   }
   return &tokens[(*index) + forward];
