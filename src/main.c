@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define DEBUG
+
 #include "lexer.h"
 #include "parser.h"
-
-// #define DEBUG
 
 int main() {
   FILE* file = fopen("test.txt", "r");
@@ -56,7 +56,7 @@ int main() {
 
   printf("AST Nodes:\n");
 
-  printASTOutput(astNodes, tokenIndex, 1);
+  printASTOutput(astNodes, tokenIndex, 0);
 
   // printASTFile(astNodes, tokenIndex);
   // void printASTOutput(ASTNode** nodes, int count, int outputToFile);

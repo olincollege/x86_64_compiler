@@ -7,6 +7,7 @@
 
 #include "lexer.h"
 
+#define DEBUG
 // ASTNode constructors with added debug prints.
 
 ASTNode* newIntLiteralNode(int value) {
@@ -119,8 +120,7 @@ ASTNode* newBlockNode(ASTNode** statements, int count) {
 }
 
 ASTNode* newFunctionNode(Token* name, Token* returnType, ASTNode** parameters,
-                         int count, ASTNode** statements, int statementCount,
-                         ASTNode* returnStatement) {
+                         int count, ASTNode* statements) {
 #ifdef DEBUG
 
   printf("Debug: Creating new Function node. Name: %.*s, Return Type: %.*s\n",
@@ -138,8 +138,20 @@ ASTNode* newFunctionNode(Token* name, Token* returnType, ASTNode** parameters,
   node->as.function.parameters = parameters;
   node->as.function.paramCount = count;
   node->as.function.statements = statements;
-  node->as.function.statementCount = statementCount;
-  node->as.function.returnStatement = returnStatement;
+  return node;
+}
+
+ASTNode* newReturnNode(ASTNode* expression) {
+#ifdef DEBUG
+  printf("Debug: Creating new Return node.\n");
+#endif
+  ASTNode* node = malloc(sizeof(ASTNode));
+  if (!node) {
+    fprintf(stderr, "Error: Out of memory in newReturnNode\n");
+    exit(1);
+  }
+  node->type = AST_RETURN;
+  node->as._return.expression = expression;
   return node;
 }
 
@@ -385,13 +397,53 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
     printf("Debug: Found 'return' keyword\n");
 #endif
 
-    (*tokenIndex)++;
-    ASTNode* returnNode = parseExpression(tokens, tokenIndex, tokenCount);
-    return returnNode;
+    (*tokenIndex)++;  // Skip "Return"
+    ASTNode* returnExpression = parseExpression(tokens, tokenIndex, tokenCount);
+    if (peekToken(tokens, tokenIndex)->type != TOKEN_SEMICOLON) {
+      fprintf(stderr, "Error: Expected semicolon after return\n");
+      return NULL;
+    }
+    (*tokenIndex)++;  // skip semicolon
+
+    return newReturnNode(returnExpression);
   }
 
   // Placeholder for other types of statements.
   return NULL;
+}
+
+ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount) {
+#ifdef DEBUG
+  printf("Debug: Entering parseBlock at tokenIndex = %d\n", *tokenIndex);
+#endif
+
+  ASTNode** statements = malloc(100 * sizeof(ASTNode*));
+  int statementCount = 0;
+
+  if (peekToken(tokens, tokenIndex)->type != TOKEN_LBRACE) {
+    // There isn't a left brace so only parse next statement
+    statements[statementCount++] =
+        parseStatement(tokens, tokenIndex, tokenCount);
+    return newBlockNode(statements, statementCount);
+  }
+
+  // There is a left brace
+  (*tokenIndex)++;  // Move to the next token after '{'
+
+  ASTNode* returnExpression = NULL;
+
+  // Parse function body statements until a '}' is encountered.
+  while (peekToken(tokens, tokenIndex)->type != TOKEN_RBRACE) {
+#ifdef DEBUG
+    printf("Debug: Parsing statement %d at tokenIndex = %d: ",
+           statementCount + 1, *tokenIndex);
+    printToken(peekToken(tokens, tokenIndex));
+#endif
+
+    statements[statementCount++] =
+        parseStatement(tokens, tokenIndex, tokenCount);
+  }
+  return newBlockNode(statements, statementCount);
 }
 
 ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
@@ -403,7 +455,9 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
   Token* name;
   Token* returnType;
   ASTNode** parameters = malloc(100 * sizeof(ASTNode*));
-  ASTNode** statements = malloc(100 * sizeof(ASTNode*));
+  ASTNode* statements = malloc(sizeof(ASTNode));
+  ASTNode* returnStatement = NULL;
+
   int parameterCount = 0;
   int statementCount = 0;
 
@@ -488,21 +542,7 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
   printToken(peekToken(tokens, tokenIndex));
 #endif
 
-  (*tokenIndex)++;
-
-  ASTNode* returnNode = NULL;
-
-  // Parse function body statements until a '}' is encountered.
-  while (peekToken(tokens, tokenIndex)->type != TOKEN_RBRACE) {
-#ifdef DEBUG
-    printf("Debug: Parsing statement %d at tokenIndex = %d: ",
-           statementCount + 1, *tokenIndex);
-    printToken(peekToken(tokens, tokenIndex));
-#endif
-
-    statements[statementCount++] =
-        parseStatement(tokens, tokenIndex, tokenCount);
-  }
+  statements = parseBlock(tokens, tokenIndex, tokenCount);
 
 #ifdef DEBUG
   printf("Debug: Found '}' token ending function body: ");
@@ -519,7 +559,7 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
 #endif
 
   return newFunctionNode(name, returnType, parameters, parameterCount,
-                         statements, statementCount, returnNode);
+                         statements);
 }
 
 ASTNode** parseFile(Token* tokens, int tokenCount) {
@@ -655,14 +695,9 @@ void printAST(FILE* output, ASTNode* node, int indent) {
         printAST(output, node->as.function.parameters[i], indent + 2);
       }
       printIndent(output, indent + 1);
-      fprintf(output, "Body Statements (%d):\n",
-              node->as.function.statementCount);
-      for (int i = 0; i < node->as.function.statementCount; i++) {
-        printAST(output, node->as.function.statements[i], indent + 2);
-      }
+      fprintf(output, "Body Statements:\n");
+      printAST(output, node->as.function.statements, indent + 2);
       printIndent(output, indent + 1);
-      fprintf(output, "Return expression:\n");
-      printAST(output, node->as.function.returnStatement, indent + 2);
       break;
     case AST_IF_STATEMENT:
       fprintf(output, "If Statement -- details not implemented.\n");
@@ -675,6 +710,10 @@ void printAST(FILE* output, ASTNode* node, int indent) {
       for (int i = 0; i < node->as.block.count; i++) {
         printAST(output, node->as.block.statements[i], indent + 1);
       }
+      break;
+    case AST_RETURN:
+      fprintf(output, "Return Statement\n");
+      printAST(output, node->as._return.expression, indent + 1);
       break;
     default:
       fprintf(output, "Unknown AST Node\n");

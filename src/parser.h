@@ -55,9 +55,7 @@ typedef struct ASTNode {
       Token* returnType;
       struct ASTNode** parameters;  // List of parameters (ASTNodes).
       int paramCount;               // Number of parameters.
-      struct ASTNode** statements;  // List of statements in the function.
-      int statementCount;           // Number of statements in the function.
-      struct ASTNode* returnStatement;
+      struct ASTNode* statements;   // Block for the statements in the function.
     } function;
 
     struct {
@@ -70,6 +68,10 @@ typedef struct ASTNode {
       struct ASTNode** statements;
       int count;  // The number of statements in the block.
     } block;
+
+    struct {
+      struct ASTNode* expression;
+    } _return;
 
     // For an assignment, declaration, or other composite structures,
     // you can add additional fields or even nested structs here.
