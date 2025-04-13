@@ -135,7 +135,7 @@ int isTokenDataType(Token* token) {
 }
 
 Token* peekToken(Token* tokens, int* index) {
-  printf("In peektoken");
+  printf("In peekToken");
   return &tokens[(*index)];
 }
 
@@ -156,23 +156,23 @@ ASTNode* parseVariableDecloration(Token* tokens, int* tokenIndex,
          *tokenIndex);
 
   // Expect a data type token first.
-  if (!isTokenDataType(peektoken(tokens, tokenIndex))) {
+  if (!isTokenDataType(peekToken(tokens, tokenIndex))) {
     fprintf(stderr, "Error: Expected a data type\n");
     return NULL;
   }
   printf("Debug: Data type token: ");
-  printToken(peektoken(tokens, tokenIndex));
-  Token* type = peektoken(tokens, tokenIndex);
+  printToken(peekToken(tokens, tokenIndex));
+  Token* type = peekToken(tokens, tokenIndex);
   (*tokenIndex)++;
 
   // Check for identifier token.
-  if (peektoken(tokens, tokenIndex)->type != TOKEN_IDENTIFIER) {
+  if (peekToken(tokens, tokenIndex)->type != TOKEN_IDENTIFIER) {
     fprintf(stderr, "Error: Expected an identifier\n");
     return NULL;
   }
   printf("Debug: Identifier token: ");
-  printToken(peektoken(tokens, tokenIndex));
-  Token* name = peektoken(tokens, tokenIndex);
+  printToken(peekToken(tokens, tokenIndex));
+  Token* name = peekToken(tokens, tokenIndex);
   (*tokenIndex)++;
 
   return newVariableDeclorationNode(name, type);
@@ -268,7 +268,7 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
   printf("Debug: Entering parseStatement at tokenIndex = %d\n", *tokenIndex);
 
   // If the token represents the start of a variable declaration:
-  if (isTokenDataType(peektoken(tokens, tokenIndex))) {
+  if (isTokenDataType(peekToken(tokens, tokenIndex))) {
     ASTNode* variableDeclorationNode =
         parseVariableDecloration(tokens, tokenIndex, tokenCount);
     if (variableDeclorationNode == NULL) {
@@ -312,65 +312,65 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
   // Parse return type.
   printf("Debug: Parsing function return type token at index %d: ",
          *tokenIndex);
-  printToken(peektoken(tokens, tokenIndex));
-  returnType = peektoken(tokens, tokenIndex);
+  printToken(peekToken(tokens, tokenIndex));
+  returnType = peekToken(tokens, tokenIndex);
   (*tokenIndex)++;
 
   // Parse function name.
   printf("Debug: Parsing function name token at index %d: ", *tokenIndex);
-  printToken(peektoken(tokens, tokenIndex));
-  name = peektoken(tokens, tokenIndex);
+  printToken(peekToken(tokens, tokenIndex));
+  name = peekToken(tokens, tokenIndex);
   (*tokenIndex)++;
 
   // Ensure a '(' token follows.
-  if (peektoken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
+  if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
     fprintf(stderr, "Error: Expected '(' after function name\n");
     return NULL;
   }
   printf("Debug: Found '(' token: ");
-  printToken(peektoken(tokens, tokenIndex));
+  printToken(peekToken(tokens, tokenIndex));
   (*tokenIndex)++;
 
   // Parse parameters until a ')' token is found.
-  while (peektoken(tokens, tokenIndex)->type != TOKEN_RPAREN) {
+  while (peekToken(tokens, tokenIndex)->type != TOKEN_RPAREN) {
     printf("Debug: Parsing parameter %d at tokenIndex = %d: ",
            parameterCount + 1, *tokenIndex);
-    printToken(peektoken(tokens, tokenIndex));
+    printToken(peekToken(tokens, tokenIndex));
     parameters[parameterCount++] =
         parseVariableDecloration(tokens, tokenIndex, tokenCount);
-    if (peektoken(tokens, tokenIndex)->type == TOKEN_COMMA) {
+    if (peekToken(tokens, tokenIndex)->type == TOKEN_COMMA) {
       printf("Debug: Found comma token between parameters: ");
-      printToken(peektoken(tokens, tokenIndex));
+      printToken(peekToken(tokens, tokenIndex));
       (*tokenIndex)++;
     }
   }
   // Skip the closing ')'
   printf("Debug: Found ')' token for parameter list: ");
-  printToken(peektoken(tokens, tokenIndex));
+  printToken(peekToken(tokens, tokenIndex));
   (*tokenIndex)++;
 
   // Check for '{' to begin the function body.
-  if (peektoken(tokens, tokenIndex)->type != TOKEN_LBRACE) {
+  if (peekToken(tokens, tokenIndex)->type != TOKEN_LBRACE) {
     fprintf(stderr, "Error: Expected '{' after function parameters\n");
     return NULL;
   }
   printf("Debug: Found '{' token for function body: ");
-  printToken(peektoken(tokens, tokenIndex));
+  printToken(peekToken(tokens, tokenIndex));
   (*tokenIndex)++;
 
   // Parse function body statements until a '}' is encountered.
-  while (peektoken(tokens, tokenIndex)->type != TOKEN_RBRACE) {
+  while (peekToken(tokens, tokenIndex)->type != TOKEN_RBRACE) {
     printf("Debug: Parsing statement %d at tokenIndex = %d: ",
            statementCount + 1, *tokenIndex);
     if (statementCount > 10) {
       break;
     }
-    printToken(peektoken(tokens, tokenIndex));
+    printToken(peekToken(tokens, tokenIndex));
     statements[statementCount++] =
         parseStatement(tokens, tokenIndex, tokenCount);
   }
   printf("Debug: Found '}' token ending function body: ");
-  printToken(peektoken(tokens, tokenIndex));
+  printToken(peekToken(tokens, tokenIndex));
   (*tokenIndex)++;  // Skip the closing brace
 
   printf("Debug: Finished parsing function '%.*s'\n", name->length,
