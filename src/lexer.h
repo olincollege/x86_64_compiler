@@ -1,9 +1,9 @@
 #pragma once
 
 typedef enum {
-  TOKEN_EOF,         // end of file
-  TOKEN_INT,         // Integer literal
-  TOKEN_IDENTIFIER,  // Identifier names
+  TOKEN_EOF,          // end of file
+  TOKEN_INT_LITERAL,  // Integer literal
+  TOKEN_IDENTIFIER,   // Identifier names
   // Keywords:
   TOKEN_IF,
   TOKEN_ELSE,

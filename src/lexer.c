@@ -81,7 +81,7 @@ static Token scanNumber(Lexer* lexer) {
     advance(lexer);
   }
   int length = (int)(lexer->current - start);
-  return makeToken(lexer, TOKEN_INT, start, length);
+  return makeToken(lexer, TOKEN_INT_LITERAL, start, length);
 }
 
 TokenType identifierType(const char* text, int length) {
@@ -201,7 +201,7 @@ const char* tokenTypeToString(TokenType type) {
   switch (type) {
     case TOKEN_EOF:
       return "EOF";
-    case TOKEN_INT:
+    case TOKEN_INT_LITERAL:
       return "INT";
     case TOKEN_IDENTIFIER:
       return "IDENTIFIER";

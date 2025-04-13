@@ -21,6 +21,21 @@ ASTNode* newIntLiteralNode(int value) {
   return node;
 }
 
+ASTNode* newVariableNode(Token* name) {
+  printf("Debug: Creating new Variable node. Name: %.*s\n", name->length,
+         name->lexeme);
+
+  ASTNode* node = malloc(sizeof(ASTNode));
+
+  if (!node) {
+    fprintf(stderr, "Error: Out of memory in newVariableNode\n");
+    exit(1);
+  }
+  node->type = AST_VARIABLE;  // Using the variable type for declarations.
+  node->as.variableName = name;
+  return node;
+}
+
 ASTNode* newVariableDeclorationNode(Token* name, Token* type) {
   printf(
       "Debug: Creating new VariableDecloration node. Name: %.*s, Type: %.*s\n",
@@ -36,10 +51,8 @@ ASTNode* newVariableDeclorationNode(Token* name, Token* type) {
   return node;
 }
 
-ASTNode* newBinaryNode(ASTNode* left, char operator, ASTNode * right,
-                       int line) {
-  printf("Debug: Creating new Binary node with operator '%c' at line %d\n",
-         operator, line);
+ASTNode* newBinaryNode(ASTNode* left, char operator, ASTNode * right) {
+  printf("Debug: Creating new Binary node with operator '%c'\n", operator);
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     fprintf(stderr, "Error: Out of memory in newBinaryNode\n");
@@ -123,13 +136,14 @@ int isTokenDataType(Token* token) {
 
 Token* peekToken(Token* tokens, int index) { return &tokens[index]; }
 
-Token* peekAheadToken(Token* tokens, int index, int forward, int tokenCount) {
+Token* peekAheadToken(Token* tokens, int* index, int forward, int tokenCount) {
+  printf("Debug: peekAheadToken at index %d and forward = %d\n", *index,
+         forward);
   if (index + forward >= tokenCount) {
     return NULL;
   }
-  return &tokens[index + forward];
+  return &tokens[(*index) + forward];
 }
-
 //////////////////
 // Parser functions
 
@@ -161,12 +175,87 @@ ASTNode* parseVariableDecloration(Token* tokens, int* tokenIndex,
   return newVariableDeclorationNode(name, type);
 }
 
+int isVariableOrLiteral(Token* token) {
+  printf("Debug: isVariableOrLiteral at tokenIndex = %d\n");
+  if (token->type == TOKEN_IDENTIFIER || token->type == TOKEN_INT_LITERAL) {
+    return 1;
+  }
+  return 0;
+}
+
+int convertTokenToInt(Token* token) {
+  printf("Debug: convertTokenToInt at tokenIndex = %d\n");
+
+  // int convertSubstringToInt(const char *str, size_t len) {
+  // Allocate memory for a null-terminated string copy of the substring.
+  char* buf = malloc(token->length + 1);
+  if (!buf) {
+    fprintf(stderr, "Error: Out of memory\n");
+    return 0;  // Or use another error signal
+  }
+
+  // Copy the substring and add a null terminator.
+  memcpy(buf, token->lexeme, token->length);
+  buf[token->length] = '\0';
+
+  // Use strtol for conversion with error checking.
+  char* endptr;
+  errno = 0;  // Clear errno before conversion
+  long value = strtol(buf, &endptr, 10);
+
+  // Clean up the temporary buffer.
+  free(buf);
+
+  // Check for conversion errors.
+  if (endptr == buf) {
+    fprintf(stderr, "Error: No digits found in substring\n");
+    return 0;
+  }
+  if (errno == ERANGE || value > INT_MAX || value < INT_MIN) {
+    fprintf(stderr, "Error: Number out of range\n");
+    return 0;
+  }
+
+  return (int)value;
+}
+
+ASTNode* parseVariableOrLiteral(Token* tokens, int* tokenIndex,
+                                int tokenCount) {
+  printf("Debug: Entering parseVariableOrLiteral");
+  if (peekToken(tokens, tokenIndex)->type == TOKEN_IDENTIFIER) {
+    (*tokenIndex)++;
+    return newVariableNode(peekToken(tokens, tokenIndex));
+  } else if (peekToken(tokens, tokenIndex)->type == TOKEN_INT_LITERAL) {
+    (*tokenIndex)++;
+    return newIntLiteralNode(atoi(peekToken(tokens, tokenIndex)));
+  }
+}
+
 ASTNode* parseExpression(Token* tokens, int* tokenIndex, int tokenCount) {
   printf("Debug: Entering parseExpression at tokenIndex = %d\n", *tokenIndex);
   // For now, this is a placeholder.
   // A complete implementation would parse an expression, possibly using
   // recursive descent.
-  return NULL;
+  if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type == TOKEN_RPAREN ||
+      peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type ==
+          TOKEN_SEMICOLON) {
+    printf("Debug: No expression, just value\n");
+
+    return parseVariableOrLiteral(tokens, tokenIndex, tokenCount);
+  }
+
+  if (peekToken(tokens, tokenIndex)->type == TOKEN_LPAREN) {
+    // Deal with this later
+  }
+  if (isVariableOrLiteral(peekToken(tokens, tokenIndex))) {
+    ASTNode* leftSide = parseVariableOrLiteral(tokens, tokenIndex, tokenCount);
+    (*tokenIndex)++;
+    TokenType _operator = peekToken(tokens, tokenIndex)->type;
+    (*tokenIndex)++;
+
+    return newBinaryNode(leftSide, _operator,
+                         parseExpression(tokens, tokenIndex, tokenCount));
+  }
 }
 
 ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
@@ -181,18 +270,22 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
       return NULL;
     }
     // Check if there is an assignment following the declaration.
-    if (peekAheadToken(tokens, *tokenIndex, 1, tokenCount) != NULL &&
-        peekAheadToken(tokens, *tokenIndex, 1, tokenCount)->type !=
+    if (peekAheadToken(tokens, tokenIndex, 0, tokenCount) != NULL &&
+        peekAheadToken(tokens, tokenIndex, 0, tokenCount)->type !=
             TOKEN_ASSIGN) {
+      (*tokenIndex)++;
+      printf("Debug: No assignment operator found after variable declaration");
       return variableDeclorationNode;
     }
 
     // Otherwise, if an assignment operator is present, parse the expression.
+    (*tokenIndex)++;
     ASTNode* expression = parseExpression(tokens, tokenIndex, tokenCount);
     if (expression == NULL) {
       fprintf(stderr, "Error: Failed to parse expression\n");
       return NULL;
     }
+    (*tokenIndex)++;
     return newDeclarationNode(variableDeclorationNode, expression);
   }
 
@@ -263,6 +356,9 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
   while (peekToken(tokens, *tokenIndex)->type != TOKEN_RBRACE) {
     printf("Debug: Parsing statement %d at tokenIndex = %d: ",
            statementCount + 1, *tokenIndex);
+    if (statementCount > 10) {
+      break;
+    }
     printToken(peekToken(tokens, *tokenIndex));
     statements[statementCount++] =
         parseStatement(tokens, tokenIndex, tokenCount);
@@ -293,10 +389,10 @@ ASTNode** parseFile(Token* tokens, int tokenCount) {
     }
     if (isTokenDataType(peekToken(tokens, tokenIndex))) {
       printf("Is data type\n");
-      if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type ==
+      if (peekAheadToken(tokens, &tokenIndex, 1, tokenCount)->type ==
           TOKEN_IDENTIFIER) {
         printf("Is identifier\n");
-        if (peekAheadToken(tokens, tokenIndex, 2, tokenCount)->type ==
+        if (peekAheadToken(tokens, &tokenIndex, 2, tokenCount)->type ==
             TOKEN_LPAREN) {
           printf("Is function\n");
           printf("Debug: Parsing function starting at tokenIndex %d\n",

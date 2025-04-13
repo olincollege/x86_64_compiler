@@ -36,7 +36,7 @@ typedef struct ASTNode {
     // For binary expressions.
     struct {
       struct ASTNode* left;
-      char _operator;  // You might use a char or a TokenType here.
+      TokenType _operator;  // You might use a char or a TokenType here.
       struct ASTNode* right;
     } binary;
 
