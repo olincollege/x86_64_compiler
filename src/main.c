@@ -4,6 +4,9 @@
 
 #include "lexer.h"
 #include "parser.h"
+
+// #define DEBUG
+
 int main() {
   FILE* file = fopen("test.txt", "r");
   if (!file) {

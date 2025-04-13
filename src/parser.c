@@ -9,8 +9,6 @@
 
 // ASTNode constructors with added debug prints.
 
-#define DEBUG
-
 ASTNode* newIntLiteralNode(int value) {
 #ifdef DEBUG
 
