@@ -167,6 +167,31 @@ ASTNode* newDeclarationNode(ASTNode* variableDeclaration, ASTNode* expression) {
   return node;
 }
 
+ASTNode* newIfElifElseNode(ASTNodeType type, ASTNode* condition,
+                           ASTNode* body) {
+  ASTNode* node = malloc(sizeof(ASTNode));
+  if (!node) {
+    fprintf(stderr, "Error: Out of memory in newIfElifElseNode\n");
+    exit(1);
+  }
+  node->type = type;
+  node->as.if_elif_else_statement.condition = condition;
+  node->as.if_elif_else_statement.body = body;
+  return node;
+}
+
+ASTNode* newWhileNode(ASTNode* condition, ASTNode* body) {
+  ASTNode* node = malloc(sizeof(ASTNode));
+  if (!node) {
+    fprintf(stderr, "Error: Out of memory in newIfElifElseNode\n");
+    exit(1);
+  }
+  node->type = AST_WHILE_STATEMENT;
+  node->as.while_statement.condition = condition;
+  node->as.while_statement.body = body;
+  return node;
+}
+
 //////////////////
 // Helper functions for the parser
 
@@ -338,7 +363,9 @@ ASTNode* parseExpression(Token* tokens, int* tokenIndex, int tokenCount) {
 
 #endif
 
-    return parseVariableOrLiteral(tokens, tokenIndex, tokenCount);
+    ASTNode* node = parseVariableOrLiteral(tokens, tokenIndex, tokenCount);
+    // (*tokenIndex)++;  // Skip semicolon or end parenthis
+    return node;
   }
 
   if (peekToken(tokens, tokenIndex)->type == TOKEN_LPAREN) {
@@ -352,6 +379,100 @@ ASTNode* parseExpression(Token* tokens, int* tokenIndex, int tokenCount) {
     return newBinaryNode(leftSide, _operator,
                          parseExpression(tokens, tokenIndex, tokenCount));
   }
+}
+
+// parse for
+// parse while
+
+ASTNode* parseWhileStatement(Token* tokens, int* tokenIndex, int tokenCount) {
+#ifdef DEBUG
+  printf("Debug: Entering parseWhileStatement at tokenIndex = %d\n",
+         *tokenIndex);
+#endif
+  ASTNode* condition;
+  ASTNode* body;
+
+  if (peekToken(tokens, tokenIndex)->type != TOKEN_WHILE) {
+    return NULL;
+  }
+  (*tokenIndex)++;
+
+  if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
+    fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n", *tokenIndex);
+    return NULL;
+  }
+
+  (*tokenIndex)++;  // Skip left parenthis
+
+  condition = parseExpression(tokens, tokenIndex, tokenCount);
+
+  if (peekToken(tokens, tokenIndex)->type != TOKEN_RPAREN) {
+    fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n", *tokenIndex);
+    return NULL;
+  }
+
+  (*tokenIndex)++;  // Skip right parenthis
+
+  body = parseBlock(tokens, tokenIndex, tokenCount);
+
+  return newWhileNode(condition, body);
+}
+
+ASTNode* parseIfElifElseStatement(Token* tokens, int* tokenIndex,
+                                  int tokenCount) {
+#ifdef DEBUG
+  printf("Debug: Entering parseIfStatement at tokenIndex = %d\n", *tokenIndex);
+#endif
+  ASTNode* condition;
+  ASTNode* body;
+
+  ASTNodeType nodeType;
+
+  if (peekToken(tokens, tokenIndex)->type == TOKEN_IF) {
+    nodeType = AST_IF_STATEMENT;
+    (*tokenIndex)++;
+  }
+  if (peekToken(tokens, tokenIndex)->type == TOKEN_ELSE) {
+    if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type == TOKEN_IF) {
+      nodeType = AST_ELSE_IF_STATEMENT;
+      (*tokenIndex)++;
+      (*tokenIndex)++;
+    } else if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type ==
+               TOKEN_LPAREN) {
+      nodeType = AST_ELSE_STATEMENT;
+      (*tokenIndex)++;
+    } else {
+      fprintf(stderr,
+              "Error: Expected 'if', 'else' or 'else if' at "
+              "tokenIndex = %d\n",
+              *tokenIndex);
+      return NULL;
+    }
+  } else {
+    fprintf(stderr,
+            "Error: Expected 'if', 'else if' or 'else' at tokenIndex = %d\n",
+            *tokenIndex);
+    return NULL;
+  }
+
+  if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
+    fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n", *tokenIndex);
+    return NULL;
+  }
+
+  (*tokenIndex)++;  // Skip left parenthis
+
+  condition = parseExpression(tokens, tokenIndex, tokenCount);
+
+  if (peekToken(tokens, tokenIndex)->type != TOKEN_RPAREN) {
+    fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n", *tokenIndex);
+    return NULL;
+  }
+
+  (*tokenIndex)++;  // Skip right parenthis
+  body = parseBlock(tokens, tokenIndex, tokenCount);
+
+  return newIfElifElseNode(nodeType, condition, body);
 }
 
 ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
@@ -369,9 +490,8 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
       return NULL;
     }
     // Check if there is an assignment following the declaration.
-    if (peekAheadToken(tokens, tokenIndex, 0, tokenCount) != NULL &&
-        peekAheadToken(tokens, tokenIndex, 0, tokenCount)->type !=
-            TOKEN_ASSIGN) {
+    if (peekToken(tokens, tokenIndex) != NULL &&
+        peekToken(tokens, tokenIndex)->type != TOKEN_ASSIGN) {
       (*tokenIndex)++;
 #ifdef DEBUG
 
@@ -388,28 +508,48 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
       fprintf(stderr, "Error: Failed to parse expression\n");
       return NULL;
     }
-    (*tokenIndex)++;
+    (*tokenIndex)++;  // Skip semicolon
+
     return newDeclarationNode(variableDeclarationNode, expression);
   }
-  if (peekToken(tokens, tokenIndex)->type == TOKEN_RETURN) {
+
+  // Case below
+  switch (peekToken(tokens, tokenIndex)->type) {
+    case TOKEN_RETURN:
 #ifdef DEBUG
 
-    printf("Debug: Found 'return' keyword\n");
+      printf("Debug: Found 'return' keyword\n");
 #endif
 
-    (*tokenIndex)++;  // Skip "Return"
-    ASTNode* returnExpression = parseExpression(tokens, tokenIndex, tokenCount);
-    if (peekToken(tokens, tokenIndex)->type != TOKEN_SEMICOLON) {
-      fprintf(stderr, "Error: Expected semicolon after return\n");
+      (*tokenIndex)++;  // Skip "Return"
+      ASTNode* returnExpression =
+          parseExpression(tokens, tokenIndex, tokenCount);
+      if (peekToken(tokens, tokenIndex)->type != TOKEN_SEMICOLON) {
+        fprintf(stderr, "Error: Expected semicolon after return\n");
+        return NULL;
+      }
+      (*tokenIndex)++;  // skip semicolon
+
+      return newReturnNode(returnExpression);
+    case TOKEN_SEMICOLON:
+#ifdef DEBUG
+      printf("Debug: Found semicolon after statement\n");
+#endif
+
+      (*tokenIndex)++;
       return NULL;
-    }
-    (*tokenIndex)++;  // skip semicolon
+    case TOKEN_IF:
+      return parseIfElifElseStatement(tokens, tokenIndex, tokenCount);
+    case TOKEN_ELSE:
+      return parseIfElifElseStatement(tokens, tokenIndex, tokenCount);
+    case TOKEN_WHILE:
+      return parseWhileStatement(tokens, tokenIndex, tokenCount);
+    default:
+      // Placeholder for other types of statements.
+      (*tokenIndex)++;  // consume the token to avoid infinite loop
 
-    return newReturnNode(returnExpression);
+      return NULL;
   }
-
-  // Placeholder for other types of statements.
-  return NULL;
 }
 
 ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount) {
@@ -443,6 +583,8 @@ ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount) {
     statements[statementCount++] =
         parseStatement(tokens, tokenIndex, tokenCount);
   }
+
+  (*tokenIndex)++;  // Move to the next token after '}'
   return newBlockNode(statements, statementCount);
 }
 
@@ -455,7 +597,7 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
   Token* name;
   Token* returnType;
   ASTNode** parameters = malloc(100 * sizeof(ASTNode*));
-  ASTNode* statements = malloc(sizeof(ASTNode));
+  ASTNode* statements;
   ASTNode* returnStatement = NULL;
 
   int parameterCount = 0;
@@ -550,7 +692,7 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
 
 #endif
 
-  (*tokenIndex)++;  // Skip the closing brace
+  //   (*tokenIndex)++;  // Skip the closing brace
 
 #ifdef DEBUG
 
@@ -615,7 +757,6 @@ ASTNode** parseFile(Token* tokens, int tokenCount) {
 
 // Assuming ASTNode and its related definitions are provided elsewhere
 // For example, AST_INT_LITERAL, AST_VARIABLE_DECLORATION, etc.
-
 // Helper function to print indentation to the given output stream.
 static void printIndent(FILE* output, int indent) {
   for (int i = 0; i < indent; i++) {
@@ -697,13 +838,39 @@ void printAST(FILE* output, ASTNode* node, int indent) {
       printIndent(output, indent + 1);
       fprintf(output, "Body Statements:\n");
       printAST(output, node->as.function.statements, indent + 2);
-      printIndent(output, indent + 1);
       break;
     case AST_IF_STATEMENT:
-      fprintf(output, "If Statement -- details not implemented.\n");
+      fprintf(output, "If Statement:\n");
+      printIndent(output, indent + 1);
+      fprintf(output, "Condition:\n");
+      printAST(output, node->as.if_elif_else_statement.condition, indent + 2);
+      printIndent(output, indent + 1);
+      fprintf(output, "Body:\n");
+      printAST(output, node->as.if_elif_else_statement.body, indent + 2);
+      break;
+    case AST_ELSE_IF_STATEMENT:
+      fprintf(output, "Else If Statement:\n");
+      printIndent(output, indent + 1);
+      fprintf(output, "Condition:\n");
+      printAST(output, node->as.if_elif_else_statement.condition, indent + 2);
+      printIndent(output, indent + 1);
+      fprintf(output, "Body:\n");
+      printAST(output, node->as.if_elif_else_statement.body, indent + 2);
+      break;
+    case AST_ELSE_STATEMENT:
+      fprintf(output, "Else Statement:\n");
+      printIndent(output, indent + 1);
+      fprintf(output, "Body:\n");
+      printAST(output, node->as.if_elif_else_statement.body, indent + 2);
       break;
     case AST_WHILE_STATEMENT:
-      fprintf(output, "While Statement -- details not implemented.\n");
+      fprintf(output, "While Statement:\n");
+      printIndent(output, indent + 1);
+      fprintf(output, "Condition:\n");
+      printAST(output, node->as.while_statement.condition, indent + 2);
+      printIndent(output, indent + 1);
+      fprintf(output, "Body:\n");
+      printAST(output, node->as.while_statement.body, indent + 2);
       break;
     case AST_BLOCK:
       fprintf(output, "Block with %d statement(s):\n", node->as.block.count);
@@ -712,8 +879,10 @@ void printAST(FILE* output, ASTNode* node, int indent) {
       }
       break;
     case AST_RETURN:
-      fprintf(output, "Return Statement\n");
-      printAST(output, node->as._return.expression, indent + 1);
+      fprintf(output, "Return Statement:\n");
+      printIndent(output, indent + 1);
+      fprintf(output, "Expression:\n");
+      printAST(output, node->as._return.expression, indent + 2);
       break;
     default:
       fprintf(output, "Unknown AST Node\n");

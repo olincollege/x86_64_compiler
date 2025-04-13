@@ -18,6 +18,9 @@ typedef enum {
   AST_WHILE_STATEMENT,
   AST_BLOCK,
   AST_RETURN,
+  AST_FOR_STATEMENT,
+  AST_ELSE_IF_STATEMENT,
+  AST_ELSE_STATEMENT,
   // Add more as needed...
 } ASTNodeType;
 
@@ -43,6 +46,16 @@ typedef struct ASTNode {
       TokenType _operator;  // You might use a char or a TokenType here.
       struct ASTNode* right;
     } binary;
+
+    struct {
+      struct ASTNode* condition;
+      struct ASTNode* body;
+    } while_statement;
+
+    struct {
+      struct ASTNode* condition;
+      struct ASTNode* body;
+    } if_elif_else_statement;
 
     // For unary expressions.
     struct {
@@ -85,3 +98,4 @@ ASTNode* newIntLiteralNode(int value);
 void printAST(FILE* file, ASTNode* node, int indent);
 void printASTFile(ASTNode** nodes, int count);
 void printASTOutput(ASTNode** nodes, int count, int outputToFile);
+ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount);
