@@ -53,6 +53,11 @@ typedef struct ASTNode {
       int statementCount;           // Number of statements in the function.
     } function;
 
+    struct {
+      struct ASTNode* variable;
+      struct ASTNode* expression;
+    } decloration;
+
     // For blocks (a list of statements).
     struct {
       struct ASTNode** statements;

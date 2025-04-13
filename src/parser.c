@@ -270,7 +270,6 @@ ASTNode** parseFile(Token* tokens, int tokenCount) {
 }
 
 /////////////////////////////////////////////////////////////
-#include <stdio.h>
 
 // Helper function to print indentation.
 static void printIndent(int indent) {
@@ -288,7 +287,6 @@ void printAST(ASTNode* node, int indent) {
   }
 
   printIndent(indent);
-
   switch (node->type) {
     case AST_INT_LITERAL:
       printf("IntLiteral: %d\n", node->as.intLiteral);
@@ -329,8 +327,14 @@ void printAST(ASTNode* node, int indent) {
       break;
 
     case AST_DECLARATION:
-      // Placeholder for declarations.
-      printf("Declaration -- details not implemented.\n");
+      // New printing logic using the decloration union.
+      printf("Declaration:\n");
+      printIndent(indent + 1);
+      printf("Variable:\n");
+      printAST(node->as.decloration.variable, indent + 2);
+      printIndent(indent + 1);
+      printf("Expression:\n");
+      printAST(node->as.decloration.expression, indent + 2);
       break;
 
     case AST_FUNCTION_DECLARATION:
