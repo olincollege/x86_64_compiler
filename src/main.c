@@ -56,7 +56,7 @@ int main() {
 
   printf("AST Nodes:\n");
 
-  printASTOutput(astNodes, tokenIndex, 0);
+  printASTOutput(astNodes, tokenIndex, 1);
 
   // printASTFile(astNodes, tokenIndex);
   // void printASTOutput(ASTNode** nodes, int count, int outputToFile);

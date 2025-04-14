@@ -6,7 +6,7 @@ int main() {
     int d = a;
  }
  if (a < c) {
-    a = 1 - 2;
+    int a = 1 - 2;
  }
  else if (c > 3) {
     return 1;

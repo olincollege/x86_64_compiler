@@ -169,6 +169,9 @@ ASTNode* newDeclarationNode(ASTNode* variableDeclaration, ASTNode* expression) {
 
 ASTNode* newIfElifElseNode(ASTNodeType type, ASTNode* condition,
                            ASTNode* body) {
+#ifdef DEBUG
+  printf("Debug: Creating new If/Elif/Else node.\n");
+#endif
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     fprintf(stderr, "Error: Out of memory in newIfElifElseNode\n");
@@ -181,9 +184,12 @@ ASTNode* newIfElifElseNode(ASTNodeType type, ASTNode* condition,
 }
 
 ASTNode* newWhileNode(ASTNode* condition, ASTNode* body) {
+#ifdef DEBUG
+  printf("Debug: Creating new while node\n");
+#endif
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
-    fprintf(stderr, "Error: Out of memory in newIfElifElseNode\n");
+    fprintf(stderr, "Error: Out of memory in newWhileNode\n");
     exit(1);
   }
   node->type = AST_WHILE_STATEMENT;
@@ -223,6 +229,7 @@ Token* peekAheadToken(Token* tokens, int* index, int forward, int tokenCount) {
 
   printf("Debug: peekAheadToken at index %d and forward = %d\n", *index,
          forward);
+  printToken(&tokens[(*index) + forward]);
 #endif
 
   if ((*index) + forward >= tokenCount) {
@@ -423,53 +430,61 @@ ASTNode* parseIfElifElseStatement(Token* tokens, int* tokenIndex,
 #ifdef DEBUG
   printf("Debug: Entering parseIfStatement at tokenIndex = %d\n", *tokenIndex);
 #endif
-  ASTNode* condition;
-  ASTNode* body;
+  ASTNode* condition = NULL;
+  ASTNode* body = NULL;
 
   ASTNodeType nodeType;
 
   if (peekToken(tokens, tokenIndex)->type == TOKEN_IF) {
     nodeType = AST_IF_STATEMENT;
     (*tokenIndex)++;
-  }
-  if (peekToken(tokens, tokenIndex)->type == TOKEN_ELSE) {
+  } else if (peekToken(tokens, tokenIndex)->type == TOKEN_ELSE) {
+    printf("Else\n\n");
     if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type == TOKEN_IF) {
       nodeType = AST_ELSE_IF_STATEMENT;
+      printf("Elseif\n\n");
+
       (*tokenIndex)++;
       (*tokenIndex)++;
     } else if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type ==
-               TOKEN_LPAREN) {
+               TOKEN_LBRACE) {
+      printf("Elseelse\n\n");
+
       nodeType = AST_ELSE_STATEMENT;
       (*tokenIndex)++;
     } else {
+      printf("asdfasdfsada\n");
       fprintf(stderr,
-              "Error: Expected 'if', 'else' or 'else if' at "
+              "Error1: Expected 'if', 'else' or 'else if' at "
               "tokenIndex = %d\n",
               *tokenIndex);
       return NULL;
     }
   } else {
     fprintf(stderr,
-            "Error: Expected 'if', 'else if' or 'else' at tokenIndex = %d\n",
+            "Error2: Expected 'if', 'else if' or 'else' at tokenIndex = %d\n",
             *tokenIndex);
     return NULL;
   }
 
-  if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
-    fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n", *tokenIndex);
-    return NULL;
+  // Condition only for if or else if, not else
+  if (nodeType != AST_ELSE_STATEMENT) {
+    if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
+      fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n", *tokenIndex);
+      return NULL;
+    }
+    (*tokenIndex)++;  // Skip left parenthis
+
+    condition = parseExpression(tokens, tokenIndex, tokenCount);
+
+    if (peekToken(tokens, tokenIndex)->type != TOKEN_RPAREN) {
+      fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n", *tokenIndex);
+      return NULL;
+    }
+
+    (*tokenIndex)++;  // Skip right parenthis
   }
 
-  (*tokenIndex)++;  // Skip left parenthis
-
-  condition = parseExpression(tokens, tokenIndex, tokenCount);
-
-  if (peekToken(tokens, tokenIndex)->type != TOKEN_RPAREN) {
-    fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n", *tokenIndex);
-    return NULL;
-  }
-
-  (*tokenIndex)++;  // Skip right parenthis
   body = parseBlock(tokens, tokenIndex, tokenCount);
 
   return newIfElifElseNode(nodeType, condition, body);
@@ -562,8 +577,10 @@ ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount) {
 
   if (peekToken(tokens, tokenIndex)->type != TOKEN_LBRACE) {
     // There isn't a left brace so only parse next statement
-    statements[statementCount++] =
-        parseStatement(tokens, tokenIndex, tokenCount);
+    ASTNode* newNode = parseStatement(tokens, tokenIndex, tokenCount);
+    if (newNode != NULL) {
+      statements[statementCount++] = newNode;
+    }
     return newBlockNode(statements, statementCount);
   }
 
@@ -579,9 +596,10 @@ ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount) {
            statementCount + 1, *tokenIndex);
     printToken(peekToken(tokens, tokenIndex));
 #endif
-
-    statements[statementCount++] =
-        parseStatement(tokens, tokenIndex, tokenCount);
+    ASTNode* newNode = parseStatement(tokens, tokenIndex, tokenCount);
+    if (newNode != NULL) {
+      statements[statementCount++] = newNode;
+    }
   }
 
   (*tokenIndex)++;  // Move to the next token after '}'
