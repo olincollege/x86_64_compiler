@@ -2,8 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define DEBUG
+
 #include "lexer.h"
 #include "parser.h"
+
 int main() {
   FILE* file = fopen("test.txt", "r");
   if (!file) {
@@ -41,7 +44,7 @@ int main() {
   // fclose(file);
 
   for (int i = 0; i < tokenIndex; ++i) {
-    printToken(&tokens[i]);
+    printTokenBoth(&tokens[i], 1);
   }
 
   printf("\nParsing tokens...\n\n");
@@ -53,9 +56,12 @@ int main() {
 
   printf("AST Nodes:\n");
 
-  printASTFile(astNodes, tokenIndex);
+  printASTOutput(astNodes, tokenIndex, 1);
 
-  printAST(astNodes[0], 0);  // Print the AST starting from the root node
+  // printASTFile(astNodes, tokenIndex);
+  // void printASTOutput(ASTNode** nodes, int count, int outputToFile);
+
+  // printAST(astNodes[0], 0);  // Print the AST starting from the root node
 
   return 0;
 }

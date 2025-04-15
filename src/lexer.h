@@ -69,3 +69,4 @@ const char* tokenTypeToString(TokenType type);
 
 void printLexer(const Lexer* lexer);
 void printToken(const Token* token);
+void printTokenBoth(const Token* token, int file);

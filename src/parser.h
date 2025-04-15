@@ -1,10 +1,13 @@
 #pragma once
 
-#include "lexer.h"
+#include <stdio.h>
+#include <stdlib.h>
 
+#include "lexer.h"
 typedef enum {
   AST_INT_LITERAL,
   AST_VARIABLE,
+  AST_VARIABLE_DECLORATION,
   AST_BINARY,  // For binary operators like +, -, *, etc.
   AST_UNARY,   // For unary operators such as negation
   AST_ASSIGNMENT,
@@ -14,6 +17,10 @@ typedef enum {
   AST_IF_STATEMENT,
   AST_WHILE_STATEMENT,
   AST_BLOCK,
+  AST_RETURN,
+  AST_FOR_STATEMENT,
+  AST_ELSE_IF_STATEMENT,
+  AST_ELSE_STATEMENT,
   // Add more as needed...
 } ASTNodeType;
 
@@ -31,7 +38,7 @@ typedef struct ASTNode {
     struct {
       Token* name;  // The name of the variable.
       Token* type;  // Type of variable, e.g., "int", "float"
-    } variable_decloration;
+    } variable_declaration;
 
     // For binary expressions.
     struct {
@@ -39,6 +46,16 @@ typedef struct ASTNode {
       TokenType _operator;  // You might use a char or a TokenType here.
       struct ASTNode* right;
     } binary;
+
+    struct {
+      struct ASTNode* condition;
+      struct ASTNode* body;
+    } while_statement;
+
+    struct {
+      struct ASTNode* condition;
+      struct ASTNode* body;
+    } if_elif_else_statement;
 
     // For unary expressions.
     struct {
@@ -51,8 +68,7 @@ typedef struct ASTNode {
       Token* returnType;
       struct ASTNode** parameters;  // List of parameters (ASTNodes).
       int paramCount;               // Number of parameters.
-      struct ASTNode** statements;  // List of statements in the function.
-      int statementCount;           // Number of statements in the function.
+      struct ASTNode* statements;   // Block for the statements in the function.
     } function;
 
     struct {
@@ -66,6 +82,10 @@ typedef struct ASTNode {
       int count;  // The number of statements in the block.
     } block;
 
+    struct {
+      struct ASTNode* expression;
+    } _return;
+
     // For an assignment, declaration, or other composite structures,
     // you can add additional fields or even nested structs here.
   } as;
@@ -75,6 +95,7 @@ ASTNode** parseFile(Token* tokens, int tokenCount);
 
 ASTNode* newIntLiteralNode(int value);
 
-void printAST(ASTNode* node, int indent);
-
+void printAST(FILE* file, ASTNode* node, int indent);
 void printASTFile(ASTNode** nodes, int count);
+void printASTOutput(ASTNode** nodes, int count, int outputToFile);
+ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount);

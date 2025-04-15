@@ -266,9 +266,32 @@ void printLexer(const Lexer* lexer) {
          lexer->line);
 }
 
-void printToken(const Token* token) {
-  printf("Token(type=%s, lexeme=\"%.*s\", line=%d)\n",
-         tokenTypeToString((TokenType)token->type), token->length,
-         token->lexeme,  // precision specifier
-         token->line);
+#include <stdio.h>
+#include <stdlib.h>
+
+void printTokenBoth(const Token* token, int file) {
+  if (file == 1) {
+    // Open the file "tokens" in append mode.
+    FILE* file = fopen("tokens", "a");
+    if (file == NULL) {
+      perror("Error opening file 'tokens'");
+      exit(EXIT_FAILURE);
+    }
+
+    // Write the token information to the file.
+    fprintf(file, "Token(type=%s, lexeme=\"%.*s\", line=%d)\n",
+            tokenTypeToString((TokenType)token->type), token->length,
+            token->lexeme, token->line);
+
+    // Close the file.
+    fclose(file);
+
+  } else {
+    printf("Token(type=%s, lexeme=\"%.*s\", line=%d)\n",
+           tokenTypeToString((TokenType)token->type), token->length,
+           token->lexeme,  // precision specifier
+           token->line);
+  }
 }
+
+void printToken(const Token* token) { printTokenBoth(token, 0); }

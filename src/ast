@@ -1,0 +1,79 @@
+Printing AST for the entire file:
+
+--- AST Node 0 ---
+Function Declaration: main returns int
+  Parameters (0):
+  Body Statements:
+    Block with 8 statement(s):
+      Declaration:
+        Variable Declaration:
+          Variable Declaration: a of type int
+        Expression:
+          IntLiteral: 0
+      Declaration:
+        Variable Declaration:
+          Variable Declaration: b of type int
+        Expression:
+          IntLiteral: 0
+      Declaration:
+        Variable Declaration:
+          Variable Declaration: c of type int
+        Expression:
+          Binary Expression: 'PLUS'
+            Left:
+              Variable: a
+            Right:
+              Variable: b
+      While Statement:
+        Condition:
+          Binary Expression: 'GT'
+            Left:
+              Variable: a
+            Right:
+              Variable: b
+        Body:
+          Block with 1 statement(s):
+            Declaration:
+              Variable Declaration:
+                Variable Declaration: d of type int
+              Expression:
+                Variable: a
+      If Statement:
+        Condition:
+          Binary Expression: 'LT'
+            Left:
+              Variable: a
+            Right:
+              Variable: c
+        Body:
+          Block with 1 statement(s):
+            Declaration:
+              Variable Declaration:
+                Variable Declaration: a of type int
+              Expression:
+                Binary Expression: 'MINUS'
+                  Left:
+                    IntLiteral: 1
+                  Right:
+                    IntLiteral: 2
+      Else If Statement:
+        Condition:
+          Binary Expression: 'GT'
+            Left:
+              Variable: c
+            Right:
+              IntLiteral: 3
+        Body:
+          Block with 1 statement(s):
+            Return Statement:
+              Expression:
+                IntLiteral: 1
+      Else Statement:
+        Body:
+          Block with 1 statement(s):
+            Return Statement:
+              Expression:
+                IntLiteral: 2
+      Return Statement:
+        Expression:
+          IntLiteral: 0
