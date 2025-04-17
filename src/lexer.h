@@ -58,15 +58,22 @@ Token getNextToken(Lexer* lexer);
  * TokenType */
 TokenType identifierType(const char* text, int length);
 
-// set of assembly that wer'e gong to rno on device that's been compiled
-
-// lots of testing
-
-// set up in cmake
-
-// Helper functions to print tokens and lexer state
+static int atEnd(Lexer* lexer);
+static char advance(Lexer* lexer);
+static char peek(Lexer* lexer);
+static char peekNext(Lexer* lexer);
+static void skipWhitespace(Lexer* lexer);
+static Token makeToken(Lexer* lexer, TokenType type, const char* start,
+                       int length);
+static Token errorToken(Lexer* lexer, const char* message);
+static int isAlphabetic(char chrc);
+static int isDigit(char chrc);
+static Token scanNumber(Lexer* lexer);
+TokenType identifierType(const char* text, int length);
+static Token scanIdentifier(Lexer* lexer);
+Token getNextToken(Lexer* lexer);
+void initLexer(Lexer* lexer, const char* source);
 const char* tokenTypeToString(TokenType type);
-
 void printLexer(const Lexer* lexer);
-void printToken(const Token* token);
 void printTokenBoth(const Token* token, int file);
+void printToken(const Token* token);
