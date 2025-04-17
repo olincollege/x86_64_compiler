@@ -92,10 +92,39 @@ typedef struct ASTNode {
 } ASTNode;
 
 ASTNode** parseFile(Token* tokens, int tokenCount);
-
 ASTNode* newIntLiteralNode(int value);
-
 void printAST(FILE* file, ASTNode* node, int indent);
 void printASTFile(ASTNode** nodes, int count);
 void printASTOutput(ASTNode** nodes, int count, int outputToFile);
 ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount);
+ASTNode* newIntLiteralNode(int value);
+ASTNode* newVariableNode(Token* name);
+ASTNode* newVariableDeclarationNode(Token* name, Token* type);
+ASTNode* newBinaryNode(ASTNode* left, TokenType operator, ASTNode * right);
+ASTNode* newUnaryNode(char operator, ASTNode * operand);
+ASTNode* newBlockNode(ASTNode** statements, int count);
+ASTNode* newFunctionNode(Token* name, Token* returnType, ASTNode** parameters,
+                         int count, ASTNode* statements);
+ASTNode* newReturnNode(ASTNode* expression);
+ASTNode* newDeclarationNode(ASTNode* variableDeclaration, ASTNode* expression);
+ASTNode* newIfElifElseNode(ASTNodeType type, ASTNode* condition, ASTNode* body);
+ASTNode* newWhileNode(ASTNode* condition, ASTNode* body);
+int isTokenDataType(Token* token);
+Token* peekToken(Token* tokens, int* index);
+Token* peekAheadToken(Token* tokens, int* index, int forward, int tokenCount);
+ASTNode* parseVariableDeclaration(Token* tokens, int* tokenIndex,
+                                  int tokenCount);
+int convertTokenToInt(Token* token);
+ASTNode* parseVariableOrLiteral(Token* tokens, int* tokenIndex, int tokenCount);
+static int isVariableOrLiteral(const Token* tok);
+ASTNode* parseExpression(Token* tokens, int* tokenIndex, int tokenCount);
+ASTNode* parseWhileStatement(Token* tokens, int* tokenIndex, int tokenCount);
+ASTNode* parseIfElifElseStatement(Token* tokens, int* tokenIndex,
+                                  int tokenCount);
+ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount);
+ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount);
+ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount);
+ASTNode** parseFile(Token* tokens, int tokenCount);
+static void printIndent(FILE* output, int indent);
+void printAST(FILE* output, ASTNode* node, int indent);
+void printASTOutput(ASTNode** nodes, int count, int outputToFile);
