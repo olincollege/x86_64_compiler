@@ -7,7 +7,7 @@
 typedef enum {
   AST_INT_LITERAL,
   AST_VARIABLE,
-  AST_VARIABLE_DECLORATION,
+  AST_VARIABLE_DECLARATION,
   AST_BINARY,  // For binary operators like +, -, *, etc.
   AST_UNARY,   // For unary operators such as negation
   AST_ASSIGNMENT,

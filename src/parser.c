@@ -1,6 +1,7 @@
 #include "parser.h"
 
 #include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,7 +61,7 @@ ASTNode* newVariableDeclarationNode(Token* name, Token* type) {
     exit(1);
   }
   node->type =
-      AST_VARIABLE_DECLORATION;  // Using the variable type for declarations.
+      AST_VARIABLE_DECLARATION;  // Using the variable type for declarations.
   node->as.variable_declaration.name = name;
   node->as.variable_declaration.type = type;
   return node;
@@ -281,51 +282,47 @@ ASTNode* parseVariableDeclaration(Token* tokens, int* tokenIndex,
   return newVariableDeclarationNode(name, type);
 }
 
-int isVariableOrLiteral(Token* token) {
-#ifdef DEBUG
-
-  printf("Debug: isVariableOrLiteral at tokenIndex = %d\n");
-#endif
-
-  if (token->type == TOKEN_IDENTIFIER || token->type == TOKEN_INT_LITERAL) {
-    return 1;
-  }
-  return 0;
-}
-
 int convertTokenToInt(Token* token) {
 #ifdef DEBUG
-
   printf("Debug: convertTokenToInt at tokenIndex = %d\n");
 #endif
 
-  // int convertSubstringToInt(const char *str, size_t len) {
   // Allocate memory for a null-terminated string copy of the substring.
   char* buf = malloc(token->length + 1);
   if (!buf) {
     fprintf(stderr, "Error: Out of memory\n");
-    return 0;  // Or use another error signal
+    return 0;  // Error signal
   }
 
   // Copy the substring and add a null terminator.
   memcpy(buf, token->lexeme, token->length);
   buf[token->length] = '\0';
 
-  // Use strtol for conversion with error checking.
+  // Convert to integer
   char* endptr;
-  errno = 0;  // Clear errno before conversion
   long value = strtol(buf, &endptr, 10);
 
   // Clean up the temporary buffer.
   free(buf);
 
-  // Check for conversion errors.
+  // Check if any characters were converted
   if (endptr == buf) {
     fprintf(stderr, "Error: No digits found in substring\n");
     return 0;
   }
-  if (errno == ERANGE || value > INT_MAX || value < INT_MIN) {
-    fprintf(stderr, "Error: Number out of range\n");
+
+  // Check if there are any non-digit trailing characters
+  while (*endptr != '\0') {
+    if (!isspace((unsigned char)*endptr)) {
+      fprintf(stderr, "Error: Invalid characters after number\n");
+      return 0;
+    }
+    endptr++;
+  }
+
+  // Manual range check (since we're avoiding errno)
+  if (value < INT_MIN || value > INT_MAX) {
+    fprintf(stderr, "Error: Number out of range for int\n");
     return 0;
   }
 
@@ -774,7 +771,7 @@ ASTNode** parseFile(Token* tokens, int tokenCount) {
 #include <stdlib.h>
 
 // Assuming ASTNode and its related definitions are provided elsewhere
-// For example, AST_INT_LITERAL, AST_VARIABLE_DECLORATION, etc.
+// For example, AST_INT_LITERAL, AST_VARIABLE_DECLARATION, etc.
 // Helper function to print indentation to the given output stream.
 static void printIndent(FILE* output, int indent) {
   for (int i = 0; i < indent; i++) {
@@ -795,7 +792,7 @@ void printAST(FILE* output, ASTNode* node, int indent) {
     case AST_INT_LITERAL:
       fprintf(output, "IntLiteral: %d\n", node->as.intLiteral);
       break;
-    case AST_VARIABLE_DECLORATION:
+    case AST_VARIABLE_DECLARATION:
       // Check if this is a variable declaration with a type.
       if (node->as.variable_declaration.type != NULL) {
         fprintf(output, "Variable Declaration: %.*s of type %.*s\n",
