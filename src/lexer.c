@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 static int atEnd(Lexer* lexer) { return *lexer->current == '\0'; }
 
 static char advance(Lexer* lexer) {
@@ -85,25 +86,27 @@ static Token scanNumber(Lexer* lexer) {
 }
 
 TokenType identifierType(const char* text, int length) {
-  if (length == 2 && strncmp(text, "if", 2) == 0) {
+  if (length == strlen("if") && strncmp(text, "if", strlen("if")) == 0) {
     return TOKEN_IF;
   }
-  if (length == 4 && strncmp(text, "else", 4) == 0) {
+  if (length == strlen("else") && strncmp(text, "else", strlen("else")) == 0) {
     return TOKEN_ELSE;
   }
-  if (length == 5 && strncmp(text, "while", 5) == 0) {
+  if (length == strlen("while") &&
+      strncmp(text, "while", strlen("while")) == 0) {
     return TOKEN_WHILE;
   }
-  if (length == 3 && strncmp(text, "for", 3) == 0) {
+  if (length == strlen("for") && strncmp(text, "for", strlen("for")) == 0) {
     return TOKEN_FOR;
   }
-  if (length == 6 && strncmp(text, "return", 6) == 0) {
+  if (length == strlen("return") &&
+      strncmp(text, "return", strlen("return")) == 0) {
     return TOKEN_RETURN;
   }
-  if (length == 3 && strncmp(text, "int", 3) == 0) {
+  if (length == strlen("int") && strncmp(text, "int", strlen("int")) == 0) {
     return TOKEN_INT_TYPE;
   }
-  if (length == 4 && strncmp(text, "void", 3) == 0) {
+  if (length == strlen("void") && strncmp(text, "void", strlen("void")) == 0) {
     return TOKEN_VOID_TYPE;
   }
   return TOKEN_IDENTIFIER;
@@ -266,9 +269,6 @@ void printLexer(const Lexer* lexer) {
          lexer->line);
 }
 
-#include <stdio.h>
-#include <stdlib.h>
-
 void printTokenBoth(const Token* token, int file) {
   if (file == 1) {
     // Open the file "tokens" in append mode.
@@ -280,15 +280,15 @@ void printTokenBoth(const Token* token, int file) {
 
     // Write the token information to the file.
     fprintf(file, "Token(type=%s, lexeme=\"%.*s\", line=%d)\n",
-            tokenTypeToString((TokenType)token->type), token->length,
-            token->lexeme, token->line);
+            tokenTypeToString(token->type), token->length, token->lexeme,
+            token->line);
 
     // Close the file.
     fclose(file);
 
   } else {
     printf("Token(type=%s, lexeme=\"%.*s\", line=%d)\n",
-           tokenTypeToString((TokenType)token->type), token->length,
+           tokenTypeToString(token->type), token->length,
            token->lexeme,  // precision specifier
            token->line);
   }
