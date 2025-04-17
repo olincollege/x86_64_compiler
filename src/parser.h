@@ -92,24 +92,19 @@ typedef struct ASTNode {
 } ASTNode;
 
 ASTNode** parseFile(Token* tokens, int tokenCount);
-
 ASTNode* newIntLiteralNode(int value);
-
 void printAST(FILE* file, ASTNode* node, int indent);
 void printASTFile(ASTNode** nodes, int count);
 void printASTOutput(ASTNode** nodes, int count, int outputToFile);
 ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount);
-
 ASTNode* newIntLiteralNode(int value);
 ASTNode* newVariableNode(Token* name);
 ASTNode* newVariableDeclarationNode(Token* name, Token* type);
 ASTNode* newBinaryNode(ASTNode* left, TokenType operator, ASTNode * right);
 ASTNode* newUnaryNode(char operator, ASTNode * operand);
 ASTNode* newBlockNode(ASTNode** statements, int count);
-
 ASTNode* newFunctionNode(Token* name, Token* returnType, ASTNode** parameters,
                          int count, ASTNode* statements);
-
 ASTNode* newReturnNode(ASTNode* expression);
 ASTNode* newDeclarationNode(ASTNode* variableDeclaration, ASTNode* expression);
 ASTNode* newIfElifElseNode(ASTNodeType type, ASTNode* condition, ASTNode* body);
