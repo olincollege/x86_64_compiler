@@ -48,29 +48,7 @@ typedef struct {
   int line;
 } Lexer;
 
-/* Initializes the lexer with the given source code */
-void initLexer(Lexer* lexer, const char* source);
-
-/* Returns the next token from the source code */
-Token getNextToken(Lexer* lexer);
-
-/* Determines if an identifier is a keyword; if so, returns the appropriate
- * TokenType */
 TokenType identifierType(const char* text, int length);
-
-static int atEnd(Lexer* lexer);
-static char advance(Lexer* lexer);
-static char peek(Lexer* lexer);
-static char peekNext(Lexer* lexer);
-static void skipWhitespace(Lexer* lexer);
-static Token makeToken(Lexer* lexer, TokenType type, const char* start,
-                       int length);
-static Token errorToken(Lexer* lexer, const char* message);
-static int isAlphabetic(char chrc);
-static int isDigit(char chrc);
-static Token scanNumber(Lexer* lexer);
-TokenType identifierType(const char* text, int length);
-static Token scanIdentifier(Lexer* lexer);
 Token getNextToken(Lexer* lexer);
 void initLexer(Lexer* lexer, const char* source);
 const char* tokenTypeToString(TokenType type);
