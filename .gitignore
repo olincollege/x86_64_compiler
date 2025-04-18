@@ -1,5 +1,6 @@
 *.json
 build/*
+src/tokens
 
 # Prerequisites
 *.d

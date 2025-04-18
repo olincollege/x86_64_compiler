@@ -29,8 +29,8 @@ main:
         mov     eax, 2
         mov     esi, eax
         call    test
-        mov     edx, 3
-        mov     eax, 1
-add     eax, edx
+        mov     edx, 2
+        mov     eax, 6
+        idiv     eax, edx
         pop     rbp
         ret

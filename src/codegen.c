@@ -15,8 +15,11 @@
 
 const int MAX_LINE_LENGTH = 64;
 
-map opConstants[] = {
-    {TOKEN_PLUS, "add"}, {TOKEN_MINUS, "sub"}, {TOKEN_STAR, "imul"}, {0, NULL}};
+map opConstants[] = {{TOKEN_PLUS, "add"},
+                     {TOKEN_MINUS, "sub"},
+                     {TOKEN_STAR, "imul"},
+                     {TOKEN_SLASH, "idiv"},  // ← added this line for division
+                     {0, NULL}};
 
 map lowLinuxRegisters[] = {
     {1, "edi"}, {2, "esi"}, {3, "edx"}, {4, "ecx"}, {5, "e8d"}, {6, "e9d"},
@@ -241,7 +244,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
       perror("malloc failed");
       exit(1);
     }
-    sprintf(newInstruction, "%s     eax, edx",
+    sprintf(newInstruction, "        %s     eax, edx",
             get_op_name(node->as.binary._operator));
 
     addInstruction(list, newInstruction);
