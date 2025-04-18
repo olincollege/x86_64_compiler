@@ -18,7 +18,7 @@
 #define DEBUG_PRINT(fmt, ...)
 #endif
 
-ASTNode* newIntLiteralNode(int value) {
+ASTNode* newIntLiteralNode(int value, Token* token) {
   DEBUG_PRINT("Debug: Creating new IntLiteral node with value = %d\n", value);
 
   ASTNode* node = malloc(sizeof(ASTNode));
@@ -27,7 +27,8 @@ ASTNode* newIntLiteralNode(int value) {
     exit(1);
   }
   node->type = AST_INT_LITERAL;
-  node->as.intLiteral = value;
+  node->as.intLiteral.intLiteral = value;
+  node->as.intLiteral.token = token;
   return node;
 }
 
@@ -301,7 +302,8 @@ ASTNode* parseVariableOrLiteral(Token* tokens, int* tokenIndex,
     return node;
   } else if (peekToken(tokens, tokenIndex)->type == TOKEN_INT_LITERAL) {
     ASTNode* node =
-        newIntLiteralNode(convertTokenToInt(peekToken(tokens, tokenIndex)));
+        newIntLiteralNode(convertTokenToInt(peekToken(tokens, tokenIndex)),
+                          &(tokens[*tokenIndex]));
     (*tokenIndex)++;
     return node;
   }
@@ -729,9 +731,6 @@ void printAST(FILE* output, ASTNode* node, int indent) {
       break;
     case AST_ASSIGNMENT:
       fprintf(output, "Assignment -- details not implemented.\n");
-      break;
-    case AST_EXPRESSION_STATEMENT:
-      fprintf(output, "Expression Statement -- details not implemented.\n");
       break;
     case AST_DECLARATION:
       fprintf(output, "Declaration:\n");

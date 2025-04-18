@@ -11,7 +11,6 @@ typedef enum {
   AST_BINARY,  // For binary operators like +, -, *, etc.
   AST_UNARY,   // For unary operators such as negation
   AST_ASSIGNMENT,
-  AST_EXPRESSION_STATEMENT,
   AST_DECLARATION,
   AST_FUNCTION_DECLARATION,
   AST_IF_STATEMENT,
@@ -30,7 +29,10 @@ typedef struct ASTNode {
   // messages.
   union {
     // For integer literals.
-    int intLiteral;
+    struct {
+      int intLiteral;
+      Token* token;  // The token representing the integer literal.
+    } intLiteral;
 
     Token* variableName;
 

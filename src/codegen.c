@@ -3,6 +3,12 @@
 #include "lexer.h"
 #include "parser.h"
 
+const char* get_op_name(char op) {
+  for (int i = 0; constants[i].symbol != 0; i++) {
+    if (constants[i].symbol == op) return constants[i].name;
+  }
+  return NULL;
+}
 void initMemory(memory* mem) {
   mem->variableCapacity = 8;
   mem->variables = malloc(sizeof(variableInMemory*) * mem->variableCapacity);
@@ -28,13 +34,122 @@ void addVariableToMemory(memory* mem, char* variableName) {
   }
 }
 
-int get_variable_memory_location(memory* mem, char* variableName) {
+int get_variable_memory_location(memory* mem, char* lexeme, int length) {
   for (int i = 0; i < mem->numberOfVariables; i++) {
-    if (len(variableName) == len(mem->variables[i]->variableName) ==
-        strcmp(mem->variables[i]->variableName, variableName) == 0)
+    if (length == len(mem->variables[i]->variableName) ==
+        strncmp(mem->variables[i]->variableName, lexeme, length) == 0)
       return mem->variables[i]->memory_difference;
   }
   return NULL;
+}
+
+char* get_variable_memory_location_with_pointer(memory* mem, char* lexeme,
+                                                int length) {
+  int offset = get_variable_memory_location(mem, lexeme, length);
+  char* buffer = malloc(32);  // plenty of room for [rbp-<offset>]
+  if (!buffer) {
+    perror("malloc failed");
+    exit(1);
+  }
+  sprintf(buffer, "[rbp-%d]", offset);  // format the result into the buffer
+  return buffer;
+}
+
+void initListOfInstructions(listOfX86Instructions* list) {
+  list->instructionCapacity = 2;
+  list->instructionCount = 0;
+  list->instructions = malloc(sizeof(char*) * list->instructionCapacity);
+}
+
+void addInstruction(listOfX86Instructions* list, char* instruction) {
+  if (list->instructionCount == list->instructionCapacity) {
+    list->instructionCapacity *= 2;
+    list->instructions =
+        realloc(list->instructions, sizeof(char*) * list->instructionCapacity);
+  }
+  list->instructions[list->instructionCount] = instruction;
+  list->instructionCount++;
+}
+
+void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                        memory* mem) {
+  int rightLiteralOrVariable = 1;
+  if (node->as.binary.right->type == AST_INT_LITERAL) {
+    ASTNode* rightNode = node->as.binary.right;
+    char* newInstruction = malloc(64);
+    if (!newInstruction) {
+      perror("malloc failed");
+      exit(1);
+    }
+    sprintf(newInstruction, "mov     edx, %d",
+            rightNode->as.intLiteral.intLiteral);
+    addInstruction(list, newInstruction);
+  } else if (node->as.binary.right->type == AST_VARIABLE) {
+    ASTNode* rightNode = node->as.binary.right;
+    char* operand = get_variable_memory_location_with_pointer(
+        mem, rightNode->as.variableName->lexeme,
+        rightNode->as.variableName->length);
+
+    char* newInstruction = malloc(64);  // enough for full instruction line
+    if (!newInstruction) {
+      perror("malloc failed");
+      exit(1);
+    }
+    sprintf(newInstruction, "mov     edx, DWORD PTR %s", operand);
+    free(operand);  // don't forget to free the operand string
+    addInstruction(list, newInstruction);
+  } else {
+    rightLiteralOrVariable = 0;
+  }
+
+  // Add in what else to do if not literal
+  ASTBinaryNodeToX86(node->as.binary.right, list, mem);
+
+  if (node->as.binary.left->type == AST_INT_LITERAL) {
+    ASTNode* leftNode = node->as.binary.left;
+    char* newInstruction = malloc(64);
+    if (!newInstruction) {
+      perror("malloc failed");
+      exit(1);
+    }
+    sprintf(newInstruction, "mov     eax, %d",
+            leftNode->as.intLiteral.intLiteral);
+  } else if (node->as.binary.left->type == AST_VARIABLE) {
+    ASTNode* leftNode = node->as.binary.left;
+    char* operand = get_variable_memory_location_with_pointer(
+        mem, leftNode->as.variableName->lexeme,
+        leftNode->as.variableName->length);
+
+    char* newInstruction = malloc(64);  // enough for full instruction line
+    if (!newInstruction) {
+      perror("malloc failed");
+      exit(1);
+    }
+    sprintf(newInstruction, "mov     eax, DWORD PTR %s", operand);
+    free(operand);  // don't forget to free the operand string
+    addInstruction(list, newInstruction);
+    addInstruction(list, newInstruction);
+  }
+
+  if (rightLiteralOrVariable == 0) {
+    char* newInstruction = malloc(64);  // enough for full instruction line
+    if (!newInstruction) {
+      perror("malloc failed");
+      exit(1);
+    }
+    sprintf(newInstruction, "%s     edx, eax",
+            get_op_name(node->as.binary._operator));
+    addInstruction(list, newInstruction);
+  } else {
+    char* newInstruction = malloc(64);  // enough for full instruction line
+    if (!newInstruction) {
+      perror("malloc failed");
+      exit(1);
+    }
+    sprintf(newInstruction, "%s     eax, edx",
+            get_op_name(node->as.binary._operator));
+    addInstruction(list, newInstruction);
+  }
 }
 
 char** ASTFunctionNodeToX86(ASTNode* node) {

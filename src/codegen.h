@@ -16,3 +16,22 @@ typedef struct memory {
   int numberOfVariables;
   int nextStartingLocation;
 } memory;
+
+typedef struct listOfX86Instructions {
+  char** instructions;
+  int instructionCount;
+  int instructionCapacity;
+} listOfX86Instructions;
+
+typedef struct {
+  char symbol;
+  const char* name;
+} OpMap;
+
+OpMap constants[] = {
+    {TOKEN_PLUS, "add"},
+    {TOKEN_MINUS, "sub"},
+    {TOKEN_STAR, "imul"},
+    // {'/', "DIV"},
+    {0, NULL}  // sentinel
+};
