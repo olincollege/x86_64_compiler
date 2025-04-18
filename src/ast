@@ -18,3 +18,9 @@ Function Declaration: test returns int
         Expression:
           IntLiteral: 3
       Variable Declaration: b of type int
+
+--- AST Node 1 ---
+Function Declaration: main returns int
+  Parameters (0):
+  Body Statements:
+    Block with 0 statement(s):

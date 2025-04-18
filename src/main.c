@@ -60,9 +60,9 @@ int main() {
   printASTOutput(astNodes, tokenIndex, 1);
 
   // ASTNode* expressionNode =
-  astNodes[1] = astNodes[0]->as.function.statements->as.block.statements[0];
+  // astNodes[1] = astNodes[0]->as.function.statements->as.block.statements[0];
 
-  ASTNode* expressionNode = astNodes[1];
+  // ASTNode* expressionNode = astNodes[1];
 
   printASTOutput(astNodes, tokenIndex, 0);
 
@@ -74,7 +74,7 @@ int main() {
 
   printf("Before\n");
 
-  ASTFunctionNodeToX86(astNodes[0], &list);
+  ListOfASTFunctionNodesToX86(astNodes[0], &list, tokenIndex);
   // ASTDeclarationNodeToX86(expressionNode, &list, &mem);
 
   printf("After\n");

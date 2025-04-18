@@ -294,7 +294,7 @@ void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
 
 void ASTBlockNodeToX86(ASTNode* node, listOfX86Instructions* list,
                        memory* mem) {
-  printf("In blocknode%d\n");
+  printf("In blocknode%d\n", node->as.block.count);
   for (int i = 0; i < node->as.block.count; i++) {
     printf("Blocknode: %d\n", i);
 
@@ -354,6 +354,13 @@ void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
   ASTBlockNodeToX86(node->as.function.statements, list, mem);
 
   return;
+}
+
+void ListOfASTFunctionNodesToX86(ASTNode** node, listOfX86Instructions* list,
+                                 int numberOfFunctions) {
+  for (int i = 0; i < numberOfFunctions; ++i) {
+    ASTFunctionNodeToX86(node[i], list);
+  }
 }
 
 void printInstructions(listOfX86Instructions* list) {

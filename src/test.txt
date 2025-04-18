@@ -3,3 +3,6 @@ int test(int a, int b) {
   a = 3;
   int b;
 }
+int main() {
+   test(1, 2);
+}
