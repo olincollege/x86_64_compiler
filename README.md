@@ -47,3 +47,11 @@ This code does not have any external dependencies.
 ### Files
 
 The repository contains the following files:
+
+### Running while debugging
+
+```
+cd src
+chmod +x run.sh
+./run.sh
+```

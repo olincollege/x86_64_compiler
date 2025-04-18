@@ -39,6 +39,6 @@ Function Declaration: main returns int
         Expression:
           Binary Expression: 'PLUS'
             Left:
-              IntLiteral: 1
+              IntLiteral: 6
             Right:
-              IntLiteral: 3
+              IntLiteral: 2
