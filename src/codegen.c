@@ -3,14 +3,23 @@
 #include "lexer.h"
 #include "parser.h"
 
+#define DEBUG
+// ASTNode constructors with added debug prints.
+
+#ifdef DEBUG
+#define DEBUG_PRINT(fmt, ...) \
+  fprintf(stderr, "[DEBUG] %s:%d: " fmt "\n", __func__, __LINE__, ##__VA_ARGS__)
+#else
+#define DEBUG_PRINT(fmt, ...)
+#endif
+
 const int MAX_LINE_LENGTH = 64;
 
-OpMap opConstants[] = {
-    {TOKEN_PLUS, "add"},
-    {TOKEN_MINUS, "sub"},
-    {TOKEN_STAR, "imul"},
-    // {'/', "DIV"},
-    {0, NULL}  // sentinel
+map opConstants[] = {
+    {TOKEN_PLUS, "add"}, {TOKEN_MINUS, "sub"}, {TOKEN_STAR, "imul"}, {0, NULL}};
+
+map lowLinuxRegisters[] = {
+    {1, "edi"}, {2, "esi"}, {3, "edx"}, {4, "ecx"}, {5, "e8d"}, {6, "e9d"},
 };
 
 const char* get_op_name(TokenType op) {
@@ -18,6 +27,9 @@ const char* get_op_name(TokenType op) {
     if (opConstants[i].symbol == op) return opConstants[i].name;
   }
   return "UNKNOWN_OP";
+}
+const char* getLowLinuxRegistersName(int i) {
+  return lowLinuxRegisters[i].name;
 }
 
 void initMemory(memory* mem) {
@@ -34,13 +46,13 @@ void addVariableToMemory(memory* mem, char* variableName) {
   variableInMemory* newVariable = malloc(sizeof(variableInMemory));
   newVariable->variableName = variableName;
   newVariable->memory_difference = mem->nextStartingLocation;
-  printf("Adding variable %s to memory at location %d\n", variableName,
-         newVariable->memory_difference);
+  DEBUG_PRINT("Adding variable %s to memory at location %d\n", variableName,
+              newVariable->memory_difference);
   mem->nextStartingLocation -= 4;
 
   if (mem->numberOfVariables + 1 > mem->variableCapacity) {
-    printf("Memory full! Increasing capacity to %d\n",
-           mem->variableCapacity * 2);
+    DEBUG_PRINT("Memory full! Increasing capacity to %d\n",
+                mem->variableCapacity * 2);
     mem->variableCapacity *= 2;
     mem->variables = realloc(mem->variables,
                              sizeof(variableInMemory*) * mem->variableCapacity);
@@ -52,25 +64,25 @@ void addVariableToMemory(memory* mem, char* variableName) {
 }
 
 int get_variable_memory_location(memory* mem, char* lexeme, int length) {
-  printf("Searching for variable: '%.*s' (length = %d)\n", length, lexeme,
-         length);
+  DEBUG_PRINT("Searching for variable: '%.*s' (length = %d)\n", length, lexeme,
+              length);
 
   for (int i = 0; i < mem->numberOfVariables; i++) {
     char* varName = mem->variables[i]->variableName;
     int varLen = strlen(varName);
     int cmpResult = strncmp(varName, lexeme, length);
 
-    printf("  Checking [%d]: name = '%s', strlen = %d, strncmp = %d\n", i,
-           varName, varLen, cmpResult);
+    DEBUG_PRINT("  Checking [%d]: name = '%s', strlen = %d, strncmp = %d\n", i,
+                varName, varLen, cmpResult);
 
     if (length == varLen && cmpResult == 0) {
-      printf("  -> Match found! Returning memory offset: %d\n",
-             mem->variables[i]->memory_difference);
+      DEBUG_PRINT("  -> Match found! Returning memory offset: %d\n",
+                  mem->variables[i]->memory_difference);
       return mem->variables[i]->memory_difference;
     }
   }
 
-  printf("  -> No match found.\n");
+  DEBUG_PRINT("  -> No match found.\n");
   return -1;  // NULL is a pointer; returning -1 is better for an int
 }
 
@@ -111,25 +123,29 @@ void addInstruction(listOfX86Instructions* list, char* instruction) {
 
 void ASTVariableLiteralOrBinaryToX86(ASTNode* node, listOfX86Instructions* list,
                                      memory* mem) {
-  if (node->as.declaration.expression->type == AST_BINARY) {
-    ASTBinaryNodeToX86(node->as.declaration.expression, list, mem);
-  } else if (node->as.declaration.expression->type == AST_VARIABLE ||
-             node->as.declaration.expression->type == AST_INT_LITERAL) {
-    ASTVariableOrLiteralNodeToX86(node->as.declaration.expression, list, mem);
+  DEBUG_PRINT("In ASTVariableLiteralOrBinaryToX86\n");
+  if (node->type == AST_BINARY) {
+    ASTBinaryNodeToX86(node, list, mem);
+  } else if (node->type == AST_VARIABLE || node->type == AST_INT_LITERAL) {
+    ASTVariableOrLiteralNodeToX86(node, list, mem);
   }
 }
 
 void ASTVariableOrLiteralNodeToX86(ASTNode* node, listOfX86Instructions* list,
                                    memory* mem) {
+  DEBUG_PRINT("In ASTVariableOrLiteralNodeToX86\n");
   if (node->type == AST_INT_LITERAL) {
+    DEBUG_PRINT("IS Int Literal");
     char* newInstruction = malloc(MAX_LINE_LENGTH);
     if (!newInstruction) {
       perror("malloc failed");
       exit(1);
     }
-    sprintf(newInstruction, "mov     eax, %d", node->as.intLiteral.intLiteral);
+    sprintf(newInstruction, "        mov     eax, %d",
+            node->as.intLiteral.intLiteral);
     addInstruction(list, newInstruction);
   } else if (node->type == AST_VARIABLE) {
+    DEBUG_PRINT("IS Int Literaasdfasdfl");
     char* operand = get_variable_memory_location_with_pointer(
         mem, node->as.variableName->lexeme, node->as.variableName->length);
 
@@ -139,9 +155,11 @@ void ASTVariableOrLiteralNodeToX86(ASTNode* node, listOfX86Instructions* list,
       perror("malloc failed");
       exit(1);
     }
-    sprintf(newInstruction, "mov     eax, DWORD PTR %s", operand);
+    sprintf(newInstruction, "        mov     eax, DWORD PTR %s", operand);
     free(operand);  // don't forget to free the operand string
     addInstruction(list, newInstruction);
+  } else {
+    fprintf(stderr, "ERROR: Unknown AST node type\n");
   }
 }
 
@@ -155,7 +173,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
       perror("malloc failed");
       exit(1);
     }
-    sprintf(newInstruction, "mov     edx, %d",
+    sprintf(newInstruction, "        mov     edx, %d",
             rightNode->as.intLiteral.intLiteral);
     addInstruction(list, newInstruction);
   } else if (node->as.binary.right->type == AST_VARIABLE) {
@@ -170,7 +188,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
       perror("malloc failed");
       exit(1);
     }
-    sprintf(newInstruction, "mov     edx, DWORD PTR %s", operand);
+    sprintf(newInstruction, "        mov     edx, DWORD PTR %s", operand);
     free(operand);  // don't forget to free the operand string
     addInstruction(list, newInstruction);
   } else {
@@ -185,7 +203,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
       perror("malloc failed");
       exit(1);
     }
-    sprintf(newInstruction, "mov     eax, %d",
+    sprintf(newInstruction, "        mov     eax, %d",
             leftNode->as.intLiteral.intLiteral);
     addInstruction(list, newInstruction);
 
@@ -201,7 +219,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
       perror("malloc failed");
       exit(1);
     }
-    sprintf(newInstruction, "mov     eax, DWORD PTR %s", operand);
+    sprintf(newInstruction, "        mov     eax, DWORD PTR %s", operand);
     free(operand);  // don't forget to free the operand string
     addInstruction(list, newInstruction);
   }
@@ -214,7 +232,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
       exit(1);
     }
 
-    sprintf(newInstruction, "%s     edx, eax",
+    sprintf(newInstruction, "        %s     edx, eax",
             get_op_name(node->as.binary._operator));
 
     addInstruction(list, newInstruction);
@@ -248,7 +266,7 @@ void ASTVariableDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
 
 void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
                              memory* mem) {
-  printf("In ASTDeclarationNodeToX86 function\n");
+  DEBUG_PRINT("In ASTDeclarationNodeToX86 function\n");
   char* variableLocationString;
   if (node->as.declaration.variable->type == AST_VARIABLE_DECLARATION) {
     ASTVariableDeclarationNodeToX86(node->as.declaration.variable, list, mem);
@@ -265,7 +283,7 @@ void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
     exit(1);
   }
 
-  ASTVariableLiteralOrBinaryToX86(node, list, mem);
+  ASTVariableLiteralOrBinaryToX86(node->as.declaration.expression, list, mem);
 
   printMemory(mem);
   char* newInstruction =
@@ -275,7 +293,8 @@ void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
     exit(1);
   }
 
-  sprintf(newInstruction, "mov     DWORD PTR %s, eax", variableLocationString);
+  sprintf(newInstruction, "        mov     DWORD PTR %s, eax",
+          variableLocationString);
   free(variableLocationString);
   addInstruction(list, newInstruction);
 }
@@ -289,20 +308,82 @@ void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
     case AST_VARIABLE_DECLARATION:
       ASTVariableDeclarationNodeToX86(node, list, mem);
       break;
+    case AST_FUNCTION_CALL:
+      DEBUG_PRINT("In Function Call\n");
+      ASTFunctionCallNodeToX86(node, list, mem);
+      break;
   }
 }
 
 void ASTBlockNodeToX86(ASTNode* node, listOfX86Instructions* list,
                        memory* mem) {
-  printf("In blocknode%d\n", node->as.block.count);
+  DEBUG_PRINT("In blocknode%d\n", node->as.block.count);
   for (int i = 0; i < node->as.block.count; i++) {
-    printf("Blocknode: %d\n", i);
+    DEBUG_PRINT("Blocknode: %d\n", i);
 
     ASTStatementNodeToX86(node->as.block.statements[i], list, mem);
   }
 }
 
+void ASTFunctionCallNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                              memory* mem) {
+  for (int i = 0; i < node->as.function_call.paramCount; i++) {
+    DEBUG_PRINT("1\n");
+    if (node->as.function_call.parameters[i]->type == AST_INT_LITERAL) {
+      DEBUG_PRINT(
+          "%d", node->as.function_call.parameters[i]->as.intLiteral.intLiteral);
+    }
+    ASTVariableLiteralOrBinaryToX86(node->as.function_call.parameters[i], list,
+                                    mem);
+    DEBUG_PRINT("1\n");
+    char* newInstruction = malloc(MAX_LINE_LENGTH);
+    if (!newInstruction) {
+      perror("malloc failed");
+      exit(1);
+    }
+    printf("2n\n");
+    sprintf(newInstruction, "        mov     %s, eax",
+            getLowLinuxRegistersName(i));
+    printf("2n\n");
+    addInstruction(list, newInstruction);
+  }
+  DEBUG_PRINT("1\n");
+
+  // Below is the function call
+  char* newInstruction = malloc(MAX_LINE_LENGTH);
+
+  sprintf(newInstruction, "        call    %.*s(",
+          node->as.function_call.name->length,
+          node->as.function_call.name->lexeme);
+
+  for (int i = 0; i < node->as.function_call.paramCount; i++) {
+    // TODO: (PRIORITY)  Deal with variables properly by putting them in the
+    // stack using edi esi
+    char* paramType = "int";
+    // node->as.function_call.parameters[i]->as.variable_declaration.type->lexeme;
+    int length = 3;
+    // node->as.function_call.parameters[i]->as.variable_declaration.type->length;
+
+    int currentNewInstructionLength = strlen(newInstruction);
+    for (int j = 0; j < length; j++) {
+      newInstruction[currentNewInstructionLength + j] = paramType[j];
+    }
+    if (i + 1 < node->as.function_call.paramCount) {
+      newInstruction[currentNewInstructionLength + length] = ',';
+      length++;
+    }
+    newInstruction[currentNewInstructionLength + length] = '\0';
+  }
+  int currentNewInstructionLength = strlen(newInstruction);
+
+  newInstruction[currentNewInstructionLength] = ')';
+  newInstruction[currentNewInstructionLength + 2] = '\0';
+  addInstruction(list, newInstruction);
+}
+
 void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
+  DEBUG_PRINT("In function node %.*s\n", node->as.function.name->length,
+              node->as.function.name->lexeme);
   if (node->type != AST_FUNCTION_DECLARATION) {
     printf("Error: Not a function node\n");
     exit(1);
@@ -351,27 +432,64 @@ void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
 
     addInstruction(list, newInstruction);
   }
+  char* newInstruction = "        push    rbp";
+  addInstruction(list, newInstruction);
+  newInstruction = "        mov     rbp, rsp";
+  addInstruction(list, newInstruction);
+
+  for (int i = 0; i < node->as.function.paramCount; i++) {
+    char* variableName = malloc(
+        node->as.function.parameters[i]->as.variable_declaration.name->length +
+        1);
+    if (!variableName) {
+      perror("malloc failed");
+      exit(1);
+    }
+    strncpy(
+        variableName,
+        node->as.function.parameters[i]->as.variable_declaration.name->lexeme,
+        node->as.function.parameters[i]->as.variable_declaration.name->length);
+    variableName[node->as.function.parameters[i]
+                     ->as.variable_declaration.name->length] = '\0';
+    addVariableToMemory(mem, variableName);
+    char* var_loc_with_pointer = get_variable_memory_location_with_pointer(
+        mem,
+        node->as.function.parameters[i]->as.variable_declaration.name->lexeme,
+        node->as.function.parameters[i]->as.variable_declaration.name->length);
+    newInstruction = malloc(MAX_LINE_LENGTH);
+    sprintf(newInstruction, "        mov     DWORD PTR %s, %s",
+            var_loc_with_pointer, getLowLinuxRegistersName(i));
+    addInstruction(list, newInstruction);
+  }
+
   ASTBlockNodeToX86(node->as.function.statements, list, mem);
 
+  newInstruction = "        pop     rbp";
+  addInstruction(list, newInstruction);
+  newInstruction = "        ret";
+  addInstruction(list, newInstruction);
   return;
 }
 
-void ListOfASTFunctionNodesToX86(ASTNode** node, listOfX86Instructions* list,
+void ListOfASTFunctionNodesToX86(ASTNode** nodes, listOfX86Instructions* list,
                                  int numberOfFunctions) {
+  DEBUG_PRINT("Going through %d functions.\n", numberOfFunctions);
   for (int i = 0; i < numberOfFunctions; ++i) {
-    ASTFunctionNodeToX86(node[i], list);
+    if (nodes[i] != NULL) {
+      ASTFunctionNodeToX86(nodes[i], list);
+    }
   }
 }
 
 void printInstructions(listOfX86Instructions* list) {
-  printf("X86 Instruction List (%d total):\n", list->instructionCount);
+  DEBUG_PRINT("X86 Instruction List (%d total):\n", list->instructionCount);
   for (int i = 0; i < list->instructionCount; i++) {
     printf("%s\n", list->instructions[i]);
   }
 }
 
 void printMemory(memory* mem) {
-  printf("Memory Layout (%d variable(s)):\n", mem->numberOfVariables);
+  DEBUG_PRINT("Memory Layout (%d variable(s)):\n", mem->numberOfVariables);
   for (int i = 0; i < mem->numberOfVariables; i++) {
     printf("  %s -> [rbp-%d]\n", mem->variables[i]->variableName,
            mem->variables[i]->memory_difference * -1);  // make offset positive

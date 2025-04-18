@@ -27,7 +27,7 @@ typedef struct listOfX86Instructions {
 typedef struct {
   char symbol;
   const char* name;
-} OpMap;
+} map;
 
 void initListOfInstructions(listOfX86Instructions* list);
 void initMemory(memory* mem);

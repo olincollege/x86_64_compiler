@@ -74,7 +74,7 @@ int main() {
 
   printf("Before\n");
 
-  ListOfASTFunctionNodesToX86(astNodes[0], &list, tokenIndex);
+  ListOfASTFunctionNodesToX86(astNodes, &list, tokenIndex);
   // ASTDeclarationNodeToX86(expressionNode, &list, &mem);
 
   printf("After\n");

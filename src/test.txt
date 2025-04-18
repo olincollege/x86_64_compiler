@@ -1,8 +1,12 @@
 int test(int a, int b) {
-  int a = 2 ;//- 3;
+  int d = 2 ;//- 3;
   a = 3;
-  int b;
+  int c;
 }
 int main() {
+   int c = 0;
+
    test(1, 2);
 }
+
+

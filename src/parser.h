@@ -13,6 +13,7 @@ typedef enum {
   AST_ASSIGNMENT,
   AST_DECLARATION,
   AST_FUNCTION_DECLARATION,
+  AST_FUNCTION_CALL,
   AST_IF_STATEMENT,
   AST_WHILE_STATEMENT,
   AST_BLOCK,
@@ -73,6 +74,12 @@ typedef struct ASTNode {
       int paramCount;               // Number of parameters.
       struct ASTNode* statements;   // Block for the statements in the function.
     } function;
+
+    struct {
+      Token* name;                  // The name of the function.
+      struct ASTNode** parameters;  // List of parameters (ASTNodes).
+      int paramCount;               // Number of parameters.
+    } function_call;
 
     struct {
       struct ASTNode* variable;
