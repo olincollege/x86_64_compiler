@@ -31,6 +31,6 @@ main:
         call    test
         mov     edx, 2
         mov     eax, 6
-        idiv     eax, edx
+        add     eax, edx
         pop     rbp
         ret

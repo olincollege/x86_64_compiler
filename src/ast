@@ -37,7 +37,7 @@ Function Declaration: main returns int
         IntLiteral: 2
       Return Statement:
         Expression:
-          Binary Expression: 'SLASH'
+          Binary Expression: 'PLUS'
             Left:
               IntLiteral: 6
             Right:
