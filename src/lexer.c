@@ -5,10 +5,10 @@
 
 #include "lexer.h"
 
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 static int atEnd(Lexer* lexer) { return *lexer->current == '\0'; }
 
 static char advance(Lexer* lexer) {
@@ -85,25 +85,27 @@ static Token scanNumber(Lexer* lexer) {
 }
 
 TokenType identifierType(const char* text, int length) {
-  if (length == 2 && strncmp(text, "if", 2) == 0) {
+  if (length == strlen("if") && strncmp(text, "if", strlen("if")) == 0) {
     return TOKEN_IF;
   }
-  if (length == 4 && strncmp(text, "else", 4) == 0) {
+  if (length == strlen("else") && strncmp(text, "else", strlen("else")) == 0) {
     return TOKEN_ELSE;
   }
-  if (length == 5 && strncmp(text, "while", 5) == 0) {
+  if (length == strlen("while") &&
+      strncmp(text, "while", strlen("while")) == 0) {
     return TOKEN_WHILE;
   }
-  if (length == 3 && strncmp(text, "for", 3) == 0) {
+  if (length == strlen("for") && strncmp(text, "for", strlen("for")) == 0) {
     return TOKEN_FOR;
   }
-  if (length == 6 && strncmp(text, "return", 6) == 0) {
+  if (length == strlen("return") &&
+      strncmp(text, "return", strlen("return")) == 0) {
     return TOKEN_RETURN;
   }
-  if (length == 3 && strncmp(text, "int", 3) == 0) {
+  if (length == strlen("int") && strncmp(text, "int", strlen("int")) == 0) {
     return TOKEN_INT_TYPE;
   }
-  if (length == 4 && strncmp(text, "void", 3) == 0) {
+  if (length == strlen("void") && strncmp(text, "void", strlen("void")) == 0) {
     return TOKEN_VOID_TYPE;
   }
   return TOKEN_IDENTIFIER;
@@ -265,31 +267,35 @@ void printLexer(const Lexer* lexer) {
          lexer->start, lexer->current, lexer->current - lexer->start,
          lexer->line);
 }
-
-#include <stdio.h>
-#include <stdlib.h>
-
-void printTokenBoth(const Token* token, int file) {
-  if (file == 1) {
-    // Open the file "tokens" in append mode.
-    FILE* file = fopen("tokens", "a");
-    if (file == NULL) {
-      perror("Error opening file 'tokens'");
-      exit(EXIT_FAILURE);
+void printTokenBoth(const Token* token, int toFile)
+/* ────────────────────────────────────────────────────────── *
+ *  toFile == 0 → print to stdout
+ *  toFile != 0 → append to the file called "tokens"
+ * ────────────────────────────────────────────────────────── */
+{
+  if (toFile) {
+    /* 1.  no shadowing: parameter is now  `toFile`, variable is `fp` */
+    /* 2.  use "ae" so the file is opened with O_CLOEXEC             */
+    FILE* fp = fopen("tokens", "ae");
+    if (fp == NULL) { /* safer than exit() in libs   */
+      perror("fopen(\"tokens\")");
+      return;
     }
 
-    // Write the token information to the file.
-    fprintf(file, "Token(type=%s, lexeme=\"%.*s\", line=%d)\n",
-            tokenTypeToString((TokenType)token->type), token->length,
-            token->lexeme, token->line);
+    /* 3.  check fprintf ’s return value (CERT ERR33‑C)              */
+    if (fprintf(fp, "Token(type=%s, lexeme=\"%.*s\", line=%d)\n",
+                tokenTypeToString(token->type), token->length, token->lexeme,
+                token->line) < 0) {
+      perror("fprintf");
+      /* fall through ‑ we still try to flush & close */
+    }
 
-    // Close the file.
-    fclose(file);
-
+    if (fclose(fp) != 0) { /* also check fclose           */
+      perror("fclose");
+    }
   } else {
     printf("Token(type=%s, lexeme=\"%.*s\", line=%d)\n",
-           tokenTypeToString((TokenType)token->type), token->length,
-           token->lexeme,  // precision specifier
+           tokenTypeToString(token->type), token->length, token->lexeme,
            token->line);
   }
 }

@@ -48,25 +48,10 @@ typedef struct {
   int line;
 } Lexer;
 
-/* Initializes the lexer with the given source code */
-void initLexer(Lexer* lexer, const char* source);
-
-/* Returns the next token from the source code */
-Token getNextToken(Lexer* lexer);
-
-/* Determines if an identifier is a keyword; if so, returns the appropriate
- * TokenType */
 TokenType identifierType(const char* text, int length);
-
-// set of assembly that wer'e gong to rno on device that's been compiled
-
-// lots of testing
-
-// set up in cmake
-
-// Helper functions to print tokens and lexer state
+Token getNextToken(Lexer* lexer);
+void initLexer(Lexer* lexer, const char* source);
 const char* tokenTypeToString(TokenType type);
-
 void printLexer(const Lexer* lexer);
-void printToken(const Token* token);
 void printTokenBoth(const Token* token, int file);
+void printToken(const Token* token);

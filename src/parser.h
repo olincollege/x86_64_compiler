@@ -91,8 +91,6 @@ typedef struct ASTNode {
   } as;
 } ASTNode;
 
-ASTNode** parseFile(Token* tokens, int tokenCount);
-ASTNode* newIntLiteralNode(int value);
 void printAST(FILE* file, ASTNode* node, int indent);
 void printASTFile(ASTNode** nodes, int count);
 void printASTOutput(ASTNode** nodes, int count, int outputToFile);
