@@ -6,18 +6,13 @@ Function Declaration: test returns int
     Variable Declaration: a of type int
     Variable Declaration: b of type int
   Body Statements:
-    Block with 4 statement(s):
+    Block with 3 statement(s):
       Declaration:
         Variable Declaration:
           Variable Declaration: d of type int
         Expression:
-          IntLiteral: 2
-      Declaration:
-        Variable Declaration:
-          Variable: a
-        Expression:
-          IntLiteral: 3
-      Variable Declaration: c of type int
+          IntLiteral: 234
+      Variable Declaration: c2 of type int
       Return Statement:
         Expression:
           Variable: d
@@ -32,13 +27,15 @@ Function Declaration: main returns int
           Variable Declaration: c of type int
         Expression:
           IntLiteral: 0
-      Function Call: test with 2 argument(s)
-        IntLiteral: 1
-        IntLiteral: 2
+      Declaration:
+        Variable Declaration:
+          Variable Declaration: a of type int
+        Expression:
+          Function Call: test with 2 argument(s)
+            IntLiteral: 1
+            IntLiteral: 2
       Return Statement:
         Expression:
-          Binary Expression: 'PLUS'
-            Left:
-              IntLiteral: 6
-            Right:
-              IntLiteral: 2
+          Function Call: test with 2 argument(s)
+            IntLiteral: 1
+            IntLiteral: 2

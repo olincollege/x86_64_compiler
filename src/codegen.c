@@ -131,6 +131,8 @@ void ASTVariableLiteralOrBinaryToX86(ASTNode* node, listOfX86Instructions* list,
     ASTBinaryNodeToX86(node, list, mem, 1);
   } else if (node->type == AST_VARIABLE || node->type == AST_INT_LITERAL) {
     ASTVariableOrLiteralNodeToX86(node, list, mem);
+  } else if (node->type == AST_FUNCTION_CALL) {
+    ASTFunctionCallNodeToX86(node, list, mem);
   }
 }
 
@@ -304,7 +306,7 @@ void ASTReturnNodeToX86(ASTNode* node, listOfX86Instructions* list,
                         memory* mem) {
   DEBUG_PRINT("In Return Node\n");
 
-  ASTVariableLiteralOrBinaryToX86(node->as._return.expression, list, mem);
+  ASTStatementNodeToX86(node->as._return.expression, list, mem);
   char* newInstruction;  //= malloc(MAX_LINE_LENGTH);
 
   newInstruction = "        pop     rbp";
@@ -314,6 +316,7 @@ void ASTReturnNodeToX86(ASTNode* node, listOfX86Instructions* list,
 }
 void ASTFunctionCallNodeToX86(ASTNode* node, listOfX86Instructions* list,
                               memory* mem) {
+  DEBUG_PRINT("In Function Call\n");
   for (int i = 0; i < node->as.function_call.paramCount; i++) {
     DEBUG_PRINT("1\n");
     if (node->as.function_call.parameters[i]->type == AST_INT_LITERAL) {
