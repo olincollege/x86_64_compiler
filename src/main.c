@@ -64,7 +64,7 @@ int main() {
 
   // ASTNode* expressionNode = astNodes[1];
 
-  printASTOutput(astNodes, tokenIndex, 0);
+  printASTOutput(astNodes, tokenIndex, 1);
 
   listOfX86Instructions list;
   initListOfInstructions(&list);
