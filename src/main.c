@@ -4,6 +4,7 @@
 
 #define DEBUG
 
+#include "codegen.h"
 #include "lexer.h"
 #include "parser.h"
 
@@ -57,6 +58,33 @@ int main() {
   printf("AST Nodes:\n");
 
   printASTOutput(astNodes, tokenIndex, 1);
+
+  // ASTNode* expressionNode =
+  astNodes[1] = astNodes[0]
+                    ->as.function.statements->as.block.statements[0]
+                    ->as._return.expression;
+
+  ASTNode* expressionNode = astNodes[1];
+
+  printASTOutput(astNodes, tokenIndex, 0);
+
+  listOfX86Instructions list;
+  initListOfInstructions(&list);
+
+  memory mem;
+  initMemory(&mem);
+
+  printf("Before\n");
+
+  ASTBinaryNodeToX86(expressionNode, &list, &mem);
+
+  printf("After\n");
+  printInstructions(&list);
+
+  // Cleanup
+  free(source);
+  free(tokens);
+  return 0;
 
   // printASTFile(astNodes, tokenIndex);
   // void printASTOutput(ASTNode** nodes, int count, int outputToFile);

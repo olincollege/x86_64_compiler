@@ -20,7 +20,6 @@
 
 ASTNode* newIntLiteralNode(int value, Token* token) {
   DEBUG_PRINT("Debug: Creating new IntLiteral node with value = %d\n", value);
-
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     fprintf(stderr, "Error: Out of memory in newIntLiteralNode\n");
@@ -263,7 +262,6 @@ int convertTokenToInt(Token* token) {
   // Convert to integer
   char* endptr;
   long value = strtol(buf, &endptr, 10);
-
   // Clean up the temporary buffer.
   free(buf);
 
@@ -273,14 +271,14 @@ int convertTokenToInt(Token* token) {
     return 0;
   }
 
-  // Check if there are any non-digit trailing characters
-  while (*endptr != '\0') {
-    if (!isspace((unsigned char)*endptr)) {
-      fprintf(stderr, "Error: Invalid characters after number\n");
-      return 0;
-    }
-    endptr++;
-  }
+  // // Check if there are any non-digit trailing characters
+  // while (*endptr != '\0') {
+  //   if (!isspace((unsigned char)*endptr)) {
+  //     fprintf(stderr, "Error: Invalid characters after number%s\n",
+  //     (*endptr)); return 0;
+  //   }
+  //   endptr++;
+  // }
 
   // Manual range check (since we're avoiding errno)
   if (value < INT_MIN || value > INT_MAX) {

@@ -3,12 +3,21 @@
 #include "lexer.h"
 #include "parser.h"
 
-const char* get_op_name(char op) {
-  for (int i = 0; constants[i].symbol != 0; i++) {
-    if (constants[i].symbol == op) return constants[i].name;
+OpMap opConstants[] = {
+    {TOKEN_PLUS, "add"},
+    {TOKEN_MINUS, "sub"},
+    {TOKEN_STAR, "imul"},
+    // {'/', "DIV"},
+    {0, NULL}  // sentinel
+};
+
+const char* get_op_name(TokenType op) {
+  for (int i = 0; opConstants[i].name != NULL; i++) {
+    if (opConstants[i].symbol == op) return opConstants[i].name;
   }
-  return NULL;
+  return "UNKNOWN_OP";
 }
+
 void initMemory(memory* mem) {
   mem->variableCapacity = 8;
   mem->variables = malloc(sizeof(variableInMemory*) * mem->variableCapacity);
@@ -36,7 +45,7 @@ void addVariableToMemory(memory* mem, char* variableName) {
 
 int get_variable_memory_location(memory* mem, char* lexeme, int length) {
   for (int i = 0; i < mem->numberOfVariables; i++) {
-    if (length == len(mem->variables[i]->variableName) ==
+    if (length == strlen(mem->variables[i]->variableName) ==
         strncmp(mem->variables[i]->variableName, lexeme, length) == 0)
       return mem->variables[i]->memory_difference;
   }
@@ -73,6 +82,8 @@ void addInstruction(listOfX86Instructions* list, char* instruction) {
 
 void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
                         memory* mem) {
+  //   DEBUG_PRINT("ASTBinaryNodeToX86");
+  printf("Here");
   int rightLiteralOrVariable = 1;
   if (node->as.binary.right->type == AST_INT_LITERAL) {
     ASTNode* rightNode = node->as.binary.right;
@@ -100,11 +111,9 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
     addInstruction(list, newInstruction);
   } else {
     rightLiteralOrVariable = 0;
+    // Add in what else to do if not literal
+    ASTBinaryNodeToX86(node->as.binary.right, list, mem);
   }
-
-  // Add in what else to do if not literal
-  ASTBinaryNodeToX86(node->as.binary.right, list, mem);
-
   if (node->as.binary.left->type == AST_INT_LITERAL) {
     ASTNode* leftNode = node->as.binary.left;
     char* newInstruction = malloc(64);
@@ -114,6 +123,8 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
     }
     sprintf(newInstruction, "mov     eax, %d",
             leftNode->as.intLiteral.intLiteral);
+    addInstruction(list, newInstruction);
+
   } else if (node->as.binary.left->type == AST_VARIABLE) {
     ASTNode* leftNode = node->as.binary.left;
     char* operand = get_variable_memory_location_with_pointer(
@@ -128,7 +139,6 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
     sprintf(newInstruction, "mov     eax, DWORD PTR %s", operand);
     free(operand);  // don't forget to free the operand string
     addInstruction(list, newInstruction);
-    addInstruction(list, newInstruction);
   }
 
   if (rightLiteralOrVariable == 0) {
@@ -137,8 +147,10 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
       perror("malloc failed");
       exit(1);
     }
+
     sprintf(newInstruction, "%s     edx, eax",
             get_op_name(node->as.binary._operator));
+
     addInstruction(list, newInstruction);
   } else {
     char* newInstruction = malloc(64);  // enough for full instruction line
@@ -148,6 +160,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
     }
     sprintf(newInstruction, "%s     eax, edx",
             get_op_name(node->as.binary._operator));
+
     addInstruction(list, newInstruction);
   }
 }
@@ -156,5 +169,12 @@ char** ASTFunctionNodeToX86(ASTNode* node) {
   if (node->type != AST_FUNCTION_DECLARATION) {
     printf("Error: Not a function node\n");
     exit(1);
+  }
+}
+
+void printInstructions(listOfX86Instructions* list) {
+  printf("X86 Instruction List (%d total):\n", list->instructionCount);
+  for (int i = 0; i < list->instructionCount; i++) {
+    printf("%s\n", list->instructions[i]);
   }
 }

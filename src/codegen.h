@@ -28,10 +28,10 @@ typedef struct {
   const char* name;
 } OpMap;
 
-OpMap constants[] = {
-    {TOKEN_PLUS, "add"},
-    {TOKEN_MINUS, "sub"},
-    {TOKEN_STAR, "imul"},
-    // {'/', "DIV"},
-    {0, NULL}  // sentinel
-};
+void initListOfInstructions(listOfX86Instructions* list);
+
+void initMemory(memory* mem);
+void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                        memory* mem);
+void printInstructions(listOfX86Instructions* list);
+const char* get_op_name(TokenType op);

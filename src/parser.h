@@ -97,7 +97,7 @@ void printAST(FILE* file, ASTNode* node, int indent);
 void printASTFile(ASTNode** nodes, int count);
 void printASTOutput(ASTNode** nodes, int count, int outputToFile);
 ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount);
-ASTNode* newIntLiteralNode(int value);
+ASTNode* newIntLiteralNode(int value, Token* token);
 ASTNode* newVariableNode(Token* name);
 ASTNode* newVariableDeclarationNode(Token* name, Token* type);
 ASTNode* newBinaryNode(ASTNode* left, TokenType operator, ASTNode * right);
