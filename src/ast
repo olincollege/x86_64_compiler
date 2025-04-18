@@ -5,9 +5,11 @@ Function Declaration: test returns int
   Parameters (0):
   Body Statements:
     Block with 1 statement(s):
-      Return Statement:
+      Declaration:
+        Variable Declaration:
+          Variable Declaration: a of type int
         Expression:
-          Binary Expression: 'PLUS'
+          Binary Expression: 'MINUS'
             Left:
               IntLiteral: 2
             Right:

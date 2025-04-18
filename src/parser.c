@@ -692,7 +692,7 @@ void printAST(FILE* output, ASTNode* node, int indent) {
   printIndent(output, indent);
   switch (node->type) {
     case AST_INT_LITERAL:
-      fprintf(output, "IntLiteral: %d\n", node->as.intLiteral);
+      fprintf(output, "IntLiteral: %d\n", node->as.intLiteral.intLiteral);
       break;
     case AST_VARIABLE_DECLARATION:
       // Check if this is a variable declaration with a type.
