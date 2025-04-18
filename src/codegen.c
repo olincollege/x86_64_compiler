@@ -125,7 +125,7 @@ void ASTVariableLiteralOrBinaryToX86(ASTNode* node, listOfX86Instructions* list,
                                      memory* mem) {
   DEBUG_PRINT("In ASTVariableLiteralOrBinaryToX86\n");
   if (node->type == AST_BINARY) {
-    ASTBinaryNodeToX86(node, list, mem);
+    ASTBinaryNodeToX86(node, list, mem, 1);
   } else if (node->type == AST_VARIABLE || node->type == AST_INT_LITERAL) {
     ASTVariableOrLiteralNodeToX86(node, list, mem);
   }
@@ -163,9 +163,8 @@ void ASTVariableOrLiteralNodeToX86(ASTNode* node, listOfX86Instructions* list,
   }
 }
 
-void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                        memory* mem) {
-  int rightLiteralOrVariable = 1;
+void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
+                        int first) {
   if (node->as.binary.right->type == AST_INT_LITERAL) {
     ASTNode* rightNode = node->as.binary.right;
     char* newInstruction = malloc(MAX_LINE_LENGTH);
@@ -192,9 +191,8 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
     free(operand);  // don't forget to free the operand string
     addInstruction(list, newInstruction);
   } else {
-    rightLiteralOrVariable = 0;
     // Add in what else to do if not literal
-    ASTBinaryNodeToX86(node->as.binary.right, list, mem);
+    ASTBinaryNodeToX86(node->as.binary.right, list, mem, 1);
   }
   if (node->as.binary.left->type == AST_INT_LITERAL) {
     ASTNode* leftNode = node->as.binary.left;
@@ -224,7 +222,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list,
     addInstruction(list, newInstruction);
   }
 
-  if (rightLiteralOrVariable == 0) {
+  if (first == 0) {
     char* newInstruction =
         malloc(MAX_LINE_LENGTH);  // enough for full instruction line
     if (!newInstruction) {
@@ -299,6 +297,19 @@ void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
   addInstruction(list, newInstruction);
 }
 
+void ASTReturnNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                        memory* mem) {
+  DEBUG_PRINT("In Return Node\n");
+
+  ASTVariableLiteralOrBinaryToX86(node->as._return.expression, list, mem);
+  char* newInstruction;  //= malloc(MAX_LINE_LENGTH);
+
+  newInstruction = "        pop     rbp";
+  addInstruction(list, newInstruction);
+  newInstruction = "        ret";
+  addInstruction(list, newInstruction);
+}
+
 void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
                            memory* mem) {
   switch (node->type) {
@@ -311,6 +322,10 @@ void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
     case AST_FUNCTION_CALL:
       DEBUG_PRINT("In Function Call\n");
       ASTFunctionCallNodeToX86(node, list, mem);
+      break;
+    case AST_RETURN:
+      DEBUG_PRINT("In Return Statement\n");
+      ASTReturnNodeToX86(node, list, mem);
       break;
   }
 }
@@ -352,32 +367,35 @@ void ASTFunctionCallNodeToX86(ASTNode* node, listOfX86Instructions* list,
   // Below is the function call
   char* newInstruction = malloc(MAX_LINE_LENGTH);
 
-  sprintf(newInstruction, "        call    %.*s(",
+  sprintf(newInstruction, "        call    %.*s",
           node->as.function_call.name->length,
           node->as.function_call.name->lexeme);
 
-  for (int i = 0; i < node->as.function_call.paramCount; i++) {
-    // TODO: (PRIORITY)  Deal with variables properly by putting them in the
-    // stack using edi esi
-    char* paramType = "int";
-    // node->as.function_call.parameters[i]->as.variable_declaration.type->lexeme;
-    int length = 3;
-    // node->as.function_call.parameters[i]->as.variable_declaration.type->length;
+  //   for (int i = 0; i < node->as.function_call.paramCount; i++) {
+  //     // TODO: (PRIORITY)  Deal with variables properly by putting them in
+  //     the
+  //     // stack using edi esi
+  //     char* paramType = "int";
+  //     //
+  //     node->as.function_call.parameters[i]->as.variable_declaration.type->lexeme;
+  //     int length = 3;
+  //     //
+  //     node->as.function_call.parameters[i]->as.variable_declaration.type->length;
 
-    int currentNewInstructionLength = strlen(newInstruction);
-    for (int j = 0; j < length; j++) {
-      newInstruction[currentNewInstructionLength + j] = paramType[j];
-    }
-    if (i + 1 < node->as.function_call.paramCount) {
-      newInstruction[currentNewInstructionLength + length] = ',';
-      length++;
-    }
-    newInstruction[currentNewInstructionLength + length] = '\0';
-  }
-  int currentNewInstructionLength = strlen(newInstruction);
+  //     int currentNewInstructionLength = strlen(newInstruction);
+  //     for (int j = 0; j < length; j++) {
+  //       newInstruction[currentNewInstructionLength + j] = paramType[j];
+  //     }
+  //     if (i + 1 < node->as.function_call.paramCount) {
+  //       newInstruction[currentNewInstructionLength + length] = ',';
+  //       length++;
+  //     }
+  //     newInstruction[currentNewInstructionLength + length] = '\0';
+  //   }
+  //   int currentNewInstructionLength = strlen(newInstruction);
 
-  newInstruction[currentNewInstructionLength] = ')';
-  newInstruction[currentNewInstructionLength + 2] = '\0';
+  //   newInstruction[currentNewInstructionLength] = ')';
+  //   newInstruction[currentNewInstructionLength + 2] = '\0';
   addInstruction(list, newInstruction);
 }
 
@@ -401,34 +419,35 @@ void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
       exit(1);
     }
 
-    sprintf(newInstruction, "%.*s(", node->as.function.name->length,
+    sprintf(newInstruction, "%.*s:", node->as.function.name->length,
             node->as.function.name->lexeme);
 
-    for (int i = 0; i < node->as.function.paramCount; i++) {
-      // TODO: (PRIORITY)  Deal with variables properly by putting them in the
-      // stack using edi esi
-      char* paramType =
-          node->as.function.parameters[i]->as.variable_declaration.type->lexeme;
-      int length =
-          node->as.function.parameters[i]->as.variable_declaration.type->length;
+    // for (int i = 0; i < node->as.function.paramCount; i++) {
+    //   // TODO: (PRIORITY)  Deal with variables properly by putting them in
+    //   the
+    //   // stack using edi esi
+    //   char* paramType =
+    //       node->as.function.parameters[i]->as.variable_declaration.type->lexeme;
+    //   int length =
+    //       node->as.function.parameters[i]->as.variable_declaration.type->length;
 
-      int currentNewInstructionLength = strlen(newInstruction);
-      for (int j = 0; j < length; j++) {
-        newInstruction[currentNewInstructionLength + j] = paramType[j];
-      }
-      if (i + 1 < node->as.function.paramCount) {
-        newInstruction[currentNewInstructionLength + length] = ',';
-        length++;
-      }
-      newInstruction[currentNewInstructionLength + length] = '\0';
-    }
-    int currentNewInstructionLength = strlen(newInstruction);
+    //   int currentNewInstructionLength = strlen(newInstruction);
+    //   for (int j = 0; j < length; j++) {
+    //     newInstruction[currentNewInstructionLength + j] = paramType[j];
+    //   }
+    //   if (i + 1 < node->as.function.paramCount) {
+    //     newInstruction[currentNewInstructionLength + length] = ',';
+    //     length++;
+    //   }
+    //   newInstruction[currentNewInstructionLength + length] = '\0';
+    // }
+    // int currentNewInstructionLength = strlen(newInstruction);
 
-    newInstruction[currentNewInstructionLength] = ')';
-    newInstruction[currentNewInstructionLength + 1] = ':';
-    newInstruction[currentNewInstructionLength + 2] = '\0';
-    // sprintf(newInstruction, "global %s\n%s:", node->as.function.name,
-    //         node->as.function.name);
+    // newInstruction[currentNewInstructionLength] = ')';
+    // newInstruction[currentNewInstructionLength + 1] = ':';
+    // newInstruction[currentNewInstructionLength + 2] = '\0';
+    // // sprintf(newInstruction, "global %s\n%s:", node->as.function.name,
+    // //         node->as.function.name);
 
     addInstruction(list, newInstruction);
   }
@@ -464,10 +483,10 @@ void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
 
   ASTBlockNodeToX86(node->as.function.statements, list, mem);
 
-  newInstruction = "        pop     rbp";
-  addInstruction(list, newInstruction);
-  newInstruction = "        ret";
-  addInstruction(list, newInstruction);
+  //   newInstruction = "        pop     rbp";
+  //   addInstruction(list, newInstruction);
+  //   newInstruction = "        ret";
+  //   addInstruction(list, newInstruction);
   return;
 }
 
@@ -481,11 +500,32 @@ void ListOfASTFunctionNodesToX86(ASTNode** nodes, listOfX86Instructions* list,
   }
 }
 
+#include <stdio.h>
+
 void printInstructions(listOfX86Instructions* list) {
-  DEBUG_PRINT("X86 Instruction List (%d total):\n", list->instructionCount);
-  for (int i = 0; i < list->instructionCount; i++) {
-    printf("%s\n", list->instructions[i]);
+  FILE* file = fopen("chat.s", "w");  // Overwrite/clear the file
+  if (!file) {
+    perror("Failed to open chat.s for writing");
+    return;
   }
+
+  // Emit startup boilerplate
+  fprintf(file,
+          ".intel_syntax noprefix\n"
+          ".global _start\n"
+          ".text\n"
+          "_start:\n"
+          "    call main\n"
+          "    mov rdi, rax       # syscall: exit\n"
+          "    mov rax, 60        # exit code 0\n"
+          "    syscall\n\n");
+
+  // Add the instructions
+  for (int i = 0; i < list->instructionCount; i++) {
+    fprintf(file, "%s\n", list->instructions[i]);
+  }
+
+  fclose(file);
 }
 
 void printMemory(memory* mem) {
