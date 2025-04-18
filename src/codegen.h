@@ -29,15 +29,41 @@ typedef struct {
   const char* name;
 } map;
 
-void initListOfInstructions(listOfX86Instructions* list);
+// ───── Memory and Instruction Management ─────
 void initMemory(memory* mem);
+void addVariableToMemory(memory* mem, char* variableName);
+int get_variable_memory_location(memory* mem, const char* lexeme, int length);
+char* get_variable_memory_location_with_pointer(memory* mem, const char* lexeme,
+                                                int length);
+void initListOfInstructions(listOfX86Instructions* list);
+void addInstruction(listOfX86Instructions* list, char* instruction);
+void printMemory(memory* mem);
+
+// ───── Instruction Generation ─────
+void ASTVariableLiteralOrBinaryToX86(ASTNode* node, listOfX86Instructions* list,
+                                     memory* mem);
+void ASTVariableOrLiteralNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                                   memory* mem);
 void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
                         int first);
-void printInstructions(listOfX86Instructions* list);
-const char* get_op_name(TokenType op);
-void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                             memory* mem);
-
 void ASTVariableDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
                                      memory* mem);
-void printMemory(memory* mem);
+void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                             memory* mem);
+void ASTReturnNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                        memory* mem);
+void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                           memory* mem);
+void ASTBlockNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem);
+void ASTFunctionCallNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                              memory* mem);
+void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list);
+void ListOfASTFunctionNodesToX86(ASTNode** nodes, listOfX86Instructions* list,
+                                 int numberOfFunctions);
+
+// ───── Output ─────
+void printInstructions(listOfX86Instructions* list);
+
+// ───── Helpers ─────
+const char* get_op_name(TokenType op);
+const char* getLowLinuxRegistersName(int i);

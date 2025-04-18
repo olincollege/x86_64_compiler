@@ -11,7 +11,7 @@ Function Declaration: test returns int
         Variable Declaration:
           Variable Declaration: d of type int
         Expression:
-          IntLiteral: 234
+          IntLiteral: 12
       Variable Declaration: c2 of type int
       Return Statement:
         Expression:
@@ -21,7 +21,7 @@ Function Declaration: test returns int
 Function Declaration: main returns int
   Parameters (0):
   Body Statements:
-    Block with 3 statement(s):
+    Block with 4 statement(s):
       Declaration:
         Variable Declaration:
           Variable Declaration: c of type int
@@ -39,3 +39,6 @@ Function Declaration: main returns int
           Function Call: test with 2 argument(s)
             IntLiteral: 1
             IntLiteral: 2
+      Return Statement:
+        Expression:
+          Variable: a
