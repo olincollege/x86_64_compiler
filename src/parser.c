@@ -506,6 +506,18 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
       return parseIfElifElseStatement(tokens, tokenIndex, tokenCount);
     case TOKEN_WHILE:
       return parseWhileStatement(tokens, tokenIndex, tokenCount);
+    case TOKEN_IDENTIFIER:
+      // asdfsa
+      if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type ==
+          TOKEN_ASSIGN) {
+        ASTNode* varaibleName = newVariableNode(peekToken(tokens, tokenIndex));
+        (*tokenIndex)++;
+        (*tokenIndex)++;  // consume the assign operator
+        ASTNode* expressionNode =
+            parseExpression(tokens, tokenIndex, tokenCount);
+        return newDeclarationNode(varaibleName, expressionNode);
+        // newDeclarationNode()
+      }
     default:
       // Placeholder for other types of statements.
       (*tokenIndex)++;  // consume the token to avoid infinite loop

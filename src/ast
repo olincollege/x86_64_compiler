@@ -2,15 +2,19 @@ Printing AST for the entire file:
 
 --- AST Node 0 ---
 Function Declaration: test returns int
-  Parameters (0):
+  Parameters (2):
+    Variable Declaration: a of type int
+    Variable Declaration: b of type int
   Body Statements:
-    Block with 1 statement(s):
+    Block with 3 statement(s):
       Declaration:
         Variable Declaration:
           Variable Declaration: a of type int
         Expression:
-          Binary Expression: 'MINUS'
-            Left:
-              IntLiteral: 2
-            Right:
-              IntLiteral: 3
+          IntLiteral: 2
+      Declaration:
+        Variable Declaration:
+          Variable: a
+        Expression:
+          IntLiteral: 3
+      Variable Declaration: b of type int
