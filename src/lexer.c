@@ -283,9 +283,9 @@ void printTokenBoth(const Token* token, int toFile)
     }
 
     /* 3.  check fprintf ’s return value (CERT ERR33‑C)              */
-    if (fprintf(fp, "Token(type=%s, lexeme=\"%.*s\", line=%d)\n",
+    if (fprintf(fp, "Token(type=%s, lexeme=\"%.*s\", length=%d)\n",
                 tokenTypeToString(token->type), token->length, token->lexeme,
-                token->line) < 0) {
+                token->length) < 0) {
       perror("fprintf");
       /* fall through ‑ we still try to flush & close */
     }
@@ -294,9 +294,9 @@ void printTokenBoth(const Token* token, int toFile)
       perror("fclose");
     }
   } else {
-    printf("Token(type=%s, lexeme=\"%.*s\", line=%d)\n",
+    printf("Token(type=%s, lexeme=\"%.*s\", length=%d, line=%d)\n",
            tokenTypeToString(token->type), token->length, token->lexeme,
-           token->line);
+           token->length, token->line);
   }
 }
 

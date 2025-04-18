@@ -11,9 +11,9 @@ typedef enum {
   AST_BINARY,  // For binary operators like +, -, *, etc.
   AST_UNARY,   // For unary operators such as negation
   AST_ASSIGNMENT,
-  AST_EXPRESSION_STATEMENT,
   AST_DECLARATION,
   AST_FUNCTION_DECLARATION,
+  AST_FUNCTION_CALL,
   AST_IF_STATEMENT,
   AST_WHILE_STATEMENT,
   AST_BLOCK,
@@ -30,14 +30,18 @@ typedef struct ASTNode {
   // messages.
   union {
     // For integer literals.
-    int intLiteral;
+    struct {
+      int intLiteral;
+      Token* token;  // The token representing the integer literal.
+    } intLiteral;
 
     Token* variableName;
 
     // For a variable or identifier.
     struct {
       Token* name;  // The name of the variable.
-      Token* type;  // Type of variable, e.g., "int", "float"
+      Token* type;  // TODO: Rename to variabletype // Type of variable, e.g.,
+                    // "int", "float"
     } variable_declaration;
 
     // For binary expressions.
@@ -72,6 +76,12 @@ typedef struct ASTNode {
     } function;
 
     struct {
+      Token* name;                  // The name of the function.
+      struct ASTNode** parameters;  // List of parameters (ASTNodes).
+      int paramCount;               // Number of parameters.
+    } function_call;
+
+    struct {
       struct ASTNode* variable;
       struct ASTNode* expression;
     } declaration;
@@ -95,7 +105,7 @@ void printAST(FILE* file, ASTNode* node, int indent);
 void printASTFile(ASTNode** nodes, int count);
 void printASTOutput(ASTNode** nodes, int count, int outputToFile);
 ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount);
-ASTNode* newIntLiteralNode(int value);
+ASTNode* newIntLiteralNode(int value, Token* token);
 ASTNode* newVariableNode(Token* name);
 ASTNode* newVariableDeclarationNode(Token* name, Token* type);
 ASTNode* newBinaryNode(ASTNode* left, TokenType operator, ASTNode * right);
