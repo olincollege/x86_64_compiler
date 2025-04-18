@@ -8,7 +8,6 @@
 
 #include "lexer.h"
 
-#define DEBUG
 // ASTNode constructors with added debug prints.
 
 #ifdef DEBUG
@@ -334,7 +333,7 @@ ASTNode* parseExpression(Token* tokens, int* tokenIndex, int tokenCount) {
   ASTNode* node = NULL;
 
   if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type == TOKEN_LPAREN) {
-    DEBUG_PRINT("Debug: Next Left Parenthis in parseexpression", *tokenIndex);
+    DEBUG_PRINT("Debug: Next Left Parenthis in parseexpression");
     node = parseFunctionCall(tokens, tokenIndex, tokenCount);
   } else {
     node = parseVariableOrLiteral(tokens, tokenIndex, tokenCount);

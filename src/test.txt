@@ -3,12 +3,10 @@ int test(int a, int b) {
   int c2;
   return d;
 }
+
 int main() {
    int c = 0;
-
    int a = test(1, 2);
    return test(1, 2);
    return a;
 }
-
-
