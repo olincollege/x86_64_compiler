@@ -41,3 +41,7 @@ void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
 void ASTVariableDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
                                      memory* mem);
 void printMemory(memory* mem);
+void ASTVariableOrLiteralNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                                   memory* mem);
+void ListOfASTFunctionNodesToX86(ASTNode** nodes, listOfX86Instructions* list,
+                                 int numberOfFunctions);

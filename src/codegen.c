@@ -312,37 +312,6 @@ void ASTReturnNodeToX86(ASTNode* node, listOfX86Instructions* list,
   newInstruction = "        ret";
   addInstruction(list, newInstruction);
 }
-
-void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                           memory* mem) {
-  switch (node->type) {
-    case AST_DECLARATION:
-      ASTDeclarationNodeToX86(node, list, mem);
-      break;
-    case AST_VARIABLE_DECLARATION:
-      ASTVariableDeclarationNodeToX86(node, list, mem);
-      break;
-    case AST_FUNCTION_CALL:
-      DEBUG_PRINT("In Function Call\n");
-      ASTFunctionCallNodeToX86(node, list, mem);
-      break;
-    case AST_RETURN:
-      DEBUG_PRINT("In Return Statement\n");
-      ASTReturnNodeToX86(node, list, mem);
-      break;
-  }
-}
-
-void ASTBlockNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                       memory* mem) {
-  DEBUG_PRINT("In blocknode%d\n", node->as.block.count);
-  for (int i = 0; i < node->as.block.count; i++) {
-    DEBUG_PRINT("Blocknode: %d\n", i);
-
-    ASTStatementNodeToX86(node->as.block.statements[i], list, mem);
-  }
-}
-
 void ASTFunctionCallNodeToX86(ASTNode* node, listOfX86Instructions* list,
                               memory* mem) {
   for (int i = 0; i < node->as.function_call.paramCount; i++) {
@@ -400,6 +369,36 @@ void ASTFunctionCallNodeToX86(ASTNode* node, listOfX86Instructions* list,
   //   newInstruction[currentNewInstructionLength] = ')';
   //   newInstruction[currentNewInstructionLength + 2] = '\0';
   addInstruction(list, newInstruction);
+}
+
+void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                           memory* mem) {
+  switch (node->type) {
+    case AST_DECLARATION:
+      ASTDeclarationNodeToX86(node, list, mem);
+      break;
+    case AST_VARIABLE_DECLARATION:
+      ASTVariableDeclarationNodeToX86(node, list, mem);
+      break;
+    case AST_FUNCTION_CALL:
+      DEBUG_PRINT("In Function Call\n");
+      ASTFunctionCallNodeToX86(node, list, mem);
+      break;
+    case AST_RETURN:
+      DEBUG_PRINT("In Return Statement\n");
+      ASTReturnNodeToX86(node, list, mem);
+      break;
+  }
+}
+
+void ASTBlockNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                       memory* mem) {
+  DEBUG_PRINT("In blocknode%d\n", node->as.block.count);
+  for (int i = 0; i < node->as.block.count; i++) {
+    DEBUG_PRINT("Blocknode: %d\n", i);
+
+    ASTStatementNodeToX86(node->as.block.statements[i], list, mem);
+  }
 }
 
 void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
