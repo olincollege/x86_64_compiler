@@ -48,6 +48,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
                         int first);
 void ASTVariableDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
                                      memory* mem);
+<<<<<<< HEAD
 void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
                              memory* mem);
 
