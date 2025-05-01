@@ -12,10 +12,8 @@ test:
         mov     rbp, rsp
         mov     DWORD PTR [rbp-4], edi
         mov     DWORD PTR [rbp-8], esi
-        mov     eax, 2
+        mov     eax, 12
         mov     DWORD PTR [rbp-12], eax
-        mov     eax, 3
-        mov     DWORD PTR [rbp-4], eax
         mov     eax, DWORD PTR [rbp-12]
         pop     rbp
         ret
@@ -29,8 +27,14 @@ main:
         mov     eax, 2
         mov     esi, eax
         call    test
-        mov     edx, 2
-        mov     eax, 6
-        add     eax, edx
+        mov     DWORD PTR [rbp-8], eax
+        mov     eax, 1
+        mov     edi, eax
+        mov     eax, 2
+        mov     esi, eax
+        call    test
+        pop     rbp
+        ret
+        mov     eax, DWORD PTR [rbp-8]
         pop     rbp
         ret

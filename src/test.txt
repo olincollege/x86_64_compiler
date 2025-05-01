@@ -1,14 +1,12 @@
 int test(int a, int b) {
-  int d = 2 ;//- 3;
-  a = 3;
-  int c;
+  int d = 12 ;//- 3;
+  int c2;
   return d;
 }
+
 int main() {
    int c = 0;
-
-   test(1, 2);
-   return 6 + 2;
+   int a = test(1, 2);
+   return test(1, 2);
+   return a;
 }
-
-

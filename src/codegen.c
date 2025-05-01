@@ -3,7 +3,6 @@
 #include "lexer.h"
 #include "parser.h"
 
-#define DEBUG
 // ASTNode constructors with added debug prints.
 
 #ifdef DEBUG
@@ -66,7 +65,7 @@ void addVariableToMemory(memory* mem, char* variableName) {
   // free(old_variable_location); Realloc frees so don't need this
 }
 
-int get_variable_memory_location(memory* mem, char* lexeme, int length) {
+int get_variable_memory_location(memory* mem, const char* lexeme, int length) {
   DEBUG_PRINT("Searching for variable: '%.*s' (length = %d)\n", length, lexeme,
               length);
 
@@ -89,7 +88,7 @@ int get_variable_memory_location(memory* mem, char* lexeme, int length) {
   return -1;  // NULL is a pointer; returning -1 is better for an int
 }
 
-char* get_variable_memory_location_with_pointer(memory* mem, char* lexeme,
+char* get_variable_memory_location_with_pointer(memory* mem, const char* lexeme,
                                                 int length) {
   int offset = get_variable_memory_location(mem, lexeme, length);
   char* buffer = malloc(32);  // plenty of room for [rbp-<offset>]
@@ -131,6 +130,8 @@ void ASTVariableLiteralOrBinaryToX86(ASTNode* node, listOfX86Instructions* list,
     ASTBinaryNodeToX86(node, list, mem, 1);
   } else if (node->type == AST_VARIABLE || node->type == AST_INT_LITERAL) {
     ASTVariableOrLiteralNodeToX86(node, list, mem);
+  } else if (node->type == AST_FUNCTION_CALL) {
+    ASTFunctionCallNodeToX86(node, list, mem);
   }
 }
 
@@ -304,7 +305,7 @@ void ASTReturnNodeToX86(ASTNode* node, listOfX86Instructions* list,
                         memory* mem) {
   DEBUG_PRINT("In Return Node\n");
 
-  ASTVariableLiteralOrBinaryToX86(node->as._return.expression, list, mem);
+  ASTStatementNodeToX86(node->as._return.expression, list, mem);
   char* newInstruction;  //= malloc(MAX_LINE_LENGTH);
 
   newInstruction = "        pop     rbp";
@@ -315,11 +316,26 @@ void ASTReturnNodeToX86(ASTNode* node, listOfX86Instructions* list,
 
 void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
                            memory* mem) {
+  DEBUG_PRINT("In Statement Node\n");
+  if (node == NULL) {
+    DEBUG_PRINT("NULL NODE\n");
+    return;
+  }
   switch (node->type) {
+    case AST_VARIABLE:
+      DEBUG_PRINT("In Variable Node\n");
+      ASTVariableOrLiteralNodeToX86(node, list, mem);
+      break;
+    case AST_INT_LITERAL:
+      DEBUG_PRINT("In Int Literal Node\n");
+      ASTVariableOrLiteralNodeToX86(node, list, mem);
+      break;
     case AST_DECLARATION:
+      DEBUG_PRINT("In Declaration Node\n");
       ASTDeclarationNodeToX86(node, list, mem);
       break;
     case AST_VARIABLE_DECLARATION:
+      DEBUG_PRINT("In Variable Declaration Node\n");
       ASTVariableDeclarationNodeToX86(node, list, mem);
       break;
     case AST_FUNCTION_CALL:
@@ -329,6 +345,9 @@ void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
     case AST_RETURN:
       DEBUG_PRINT("In Return Statement\n");
       ASTReturnNodeToX86(node, list, mem);
+      break;
+    default:
+      DEBUG_PRINT("In default case\n");
       break;
   }
 }
@@ -345,6 +364,7 @@ void ASTBlockNodeToX86(ASTNode* node, listOfX86Instructions* list,
 
 void ASTFunctionCallNodeToX86(ASTNode* node, listOfX86Instructions* list,
                               memory* mem) {
+  DEBUG_PRINT("In Function Call\n");
   for (int i = 0; i < node->as.function_call.paramCount; i++) {
     DEBUG_PRINT("1\n");
     if (node->as.function_call.parameters[i]->type == AST_INT_LITERAL) {
@@ -411,7 +431,7 @@ void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
   }
   memory* mem = malloc(sizeof(memory));
   initMemory(mem);
-  if (strncmp(node->as.function.name, "main", strlen("main")) == 0) {
+  if (strncmp(node->as.function.name->lexeme, "main", strlen("main")) == 0) {
     char* newInstruction = "main:";
     addInstruction(list, newInstruction);
   } else {
@@ -496,6 +516,23 @@ void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
 void ListOfASTFunctionNodesToX86(ASTNode** nodes, listOfX86Instructions* list,
                                  int numberOfFunctions) {
   DEBUG_PRINT("Going through %d functions.\n", numberOfFunctions);
+  char* newInstruction = ".intel_syntax noprefix";
+  addInstruction(list, newInstruction);
+  newInstruction = ".global _start";
+  addInstruction(list, newInstruction);
+  newInstruction = ".text";
+  addInstruction(list, newInstruction);
+  newInstruction = "_start:";
+  addInstruction(list, newInstruction);
+  newInstruction = "    call main";
+  addInstruction(list, newInstruction);
+  newInstruction = "    mov rdi, rax       # syscall: exit";
+  addInstruction(list, newInstruction);
+  newInstruction = "    mov rax, 60        # exit code 0";
+  addInstruction(list, newInstruction);
+  newInstruction = "    syscall";
+  addInstruction(list, newInstruction);
+
   for (int i = 0; i < numberOfFunctions; ++i) {
     if (nodes[i] != NULL) {
       ASTFunctionNodeToX86(nodes[i], list);
@@ -511,17 +548,6 @@ void printInstructions(listOfX86Instructions* list) {
     perror("Failed to open chat.s for writing");
     return;
   }
-
-  // Emit startup boilerplate
-  fprintf(file,
-          ".intel_syntax noprefix\n"
-          ".global _start\n"
-          ".text\n"
-          "_start:\n"
-          "    call main\n"
-          "    mov rdi, rax       # syscall: exit\n"
-          "    mov rax, 60        # exit code 0\n"
-          "    syscall\n\n");
 
   // Add the instructions
   for (int i = 0; i < list->instructionCount; i++) {

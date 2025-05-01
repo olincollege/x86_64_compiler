@@ -8,7 +8,6 @@
 
 #include "lexer.h"
 
-#define DEBUG
 // ASTNode constructors with added debug prints.
 
 #ifdef DEBUG
@@ -331,16 +330,22 @@ ASTNode* parseExpression(Token* tokens, int* tokenIndex, int tokenCount) {
   DEBUG_PRINT("Debug: Entering parseExpression at tokenIndex = %d\n",
               *tokenIndex);
 
+  ASTNode* node = NULL;
+
+  if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type == TOKEN_LPAREN) {
+    DEBUG_PRINT("Debug: Next Left Parenthis in parseexpression");
+    node = parseFunctionCall(tokens, tokenIndex, tokenCount);
+  } else {
+    node = parseVariableOrLiteral(tokens, tokenIndex, tokenCount);
+  }
+
   // For now, this is a placeholder.
   // A complete implementation would parse an expression, possibly using
   // recursive descent.
-  if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type == TOKEN_RPAREN ||
-      peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type ==
+  if (peekAheadToken(tokens, tokenIndex, 0, tokenCount)->type == TOKEN_RPAREN ||
+      peekAheadToken(tokens, tokenIndex, 0, tokenCount)->type ==
           TOKEN_SEMICOLON) {
     DEBUG_PRINT("Debug: No expression, just value\n");
-
-    ASTNode* node = parseVariableOrLiteral(tokens, tokenIndex, tokenCount);
-    // (*tokenIndex)++;  // Skip semicolon or end parenthis
     return node;
   }
 
@@ -484,6 +489,7 @@ ASTNode* parseFunctionCall(Token* tokens, int* tokenIndex, int tokenCount) {
       return NULL;
     }
   }
+  (*tokenIndex)++;  // Skip right parenthis
   return newFunctionCallNode(name, parameters, parameterCount);
 }
 
