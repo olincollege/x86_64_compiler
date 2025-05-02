@@ -422,25 +422,6 @@ void ASTFunctionCallNodeToX86(ASTNode* node, listOfX86Instructions* list,
   addInstruction(list, newInstruction);
 }
 
-void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                           memory* mem) {
-  switch (node->type) {
-    case AST_DECLARATION:
-      ASTDeclarationNodeToX86(node, list, mem);
-      break;
-    case AST_VARIABLE_DECLARATION:
-      ASTVariableDeclarationNodeToX86(node, list, mem);
-      break;
-    case AST_FUNCTION_CALL:
-      DEBUG_PRINT("In Function Call\n");
-      ASTFunctionCallNodeToX86(node, list, mem);
-      break;
-    case AST_RETURN:
-      DEBUG_PRINT("In Return Statement\n");
-      ASTReturnNodeToX86(node, list, mem);
-      break;
-  }
-}
 void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
   DEBUG_PRINT("In function node %.*s\n", node->as.function.name->length,
               node->as.function.name->lexeme);
