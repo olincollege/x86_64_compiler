@@ -48,14 +48,22 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
                         int first);
 void ASTVariableDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
                                      memory* mem);
-<<<<<<< HEAD
 void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
                              memory* mem);
-
-void ASTVariableDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                                     memory* mem);
-void printMemory(memory* mem);
-void ASTVariableOrLiteralNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                                   memory* mem);
+void ASTReturnNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                        memory* mem);
+void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                           memory* mem);
+void ASTBlockNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem);
+void ASTFunctionCallNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                              memory* mem);
+void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list);
 void ListOfASTFunctionNodesToX86(ASTNode** nodes, listOfX86Instructions* list,
                                  int numberOfFunctions);
+
+// ───── Output ─────
+void printInstructions(listOfX86Instructions* list);
+
+// ───── Helpers ─────
+const char* get_op_name(TokenType op);
+const char* getLowLinuxRegistersName(int i);

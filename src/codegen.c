@@ -313,6 +313,55 @@ void ASTReturnNodeToX86(ASTNode* node, listOfX86Instructions* list,
   newInstruction = "        ret";
   addInstruction(list, newInstruction);
 }
+
+void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                           memory* mem) {
+  DEBUG_PRINT("In Statement Node\n");
+  if (node == NULL) {
+    DEBUG_PRINT("NULL NODE\n");
+    return;
+  }
+  switch (node->type) {
+    case AST_VARIABLE:
+      DEBUG_PRINT("In Variable Node\n");
+      ASTVariableOrLiteralNodeToX86(node, list, mem);
+      break;
+    case AST_INT_LITERAL:
+      DEBUG_PRINT("In Int Literal Node\n");
+      ASTVariableOrLiteralNodeToX86(node, list, mem);
+      break;
+    case AST_DECLARATION:
+      DEBUG_PRINT("In Declaration Node\n");
+      ASTDeclarationNodeToX86(node, list, mem);
+      break;
+    case AST_VARIABLE_DECLARATION:
+      DEBUG_PRINT("In Variable Declaration Node\n");
+      ASTVariableDeclarationNodeToX86(node, list, mem);
+      break;
+    case AST_FUNCTION_CALL:
+      DEBUG_PRINT("In Function Call\n");
+      ASTFunctionCallNodeToX86(node, list, mem);
+      break;
+    case AST_RETURN:
+      DEBUG_PRINT("In Return Statement\n");
+      ASTReturnNodeToX86(node, list, mem);
+      break;
+    default:
+      DEBUG_PRINT("In default case\n");
+      break;
+  }
+}
+
+void ASTBlockNodeToX86(ASTNode* node, listOfX86Instructions* list,
+                       memory* mem) {
+  DEBUG_PRINT("In blocknode%d\n", node->as.block.count);
+  for (int i = 0; i < node->as.block.count; i++) {
+    DEBUG_PRINT("Blocknode: %d\n", i);
+
+    ASTStatementNodeToX86(node->as.block.statements[i], list, mem);
+  }
+}
+
 void ASTFunctionCallNodeToX86(ASTNode* node, listOfX86Instructions* list,
                               memory* mem) {
   DEBUG_PRINT("In Function Call\n");
