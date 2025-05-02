@@ -12,14 +12,14 @@
 static char* read_file(const char* path) {
   FILE* f = fopen(path, "r");
   cr_assert_not_null(f, "Could not open file: %s", path);
-  fseek(f, 0, SEEK_END);
+  (void)fseek(f, 0, SEEK_END);
   long len = ftell(f);
-  rewind(f);
+  (void)rewind(f);
   char* buf = malloc(len + 1);
   cr_assert_not_null(buf, "Malloc failed");
-  fread(buf, 1, len, f);
+  (void)fread(buf, 1, len, f);
   buf[len] = '\0';
-  fclose(f);
+  (void)fclose(f);
   return buf;
 }
 
@@ -54,9 +54,8 @@ static int ast_count(ASTNode** ast) {
 
 // Test 1: Return constant
 Test(codegen, return_constant) {
-  char* src = read_file(
-      "/home/ishan/rv32i_compiler/test/test_inputs/codegen_inputs/"
-      "simple_codegen.txt");
+  char* src = read_file(CMAKE_SOURCE_DIR
+                        "/test/test_inputs/codegen_inputs/simple_codegen.txt");
   int tokc;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
@@ -83,10 +82,9 @@ Test(codegen, return_constant) {
 
 // Test 2: Return binary expression
 Test(codegen, return_binary_expression) {
-  char* src = read_file(
-      "/home/ishan/rv32i_compiler/test/test_inputs/codegen_inputs/"
-      "binary_return.txt");
-  int tokc;
+    char* src = read_file(CMAKE_SOURCE_DIR
+        "/test/test_inputs/codegen_inputs/binary_return.txt");
+int tokc;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_not_null(ast);
@@ -114,10 +112,9 @@ Test(codegen, return_binary_expression) {
 
 // Test 3: Function call
 Test(codegen, function_call) {
-  char* src = read_file(
-      "/home/ishan/rv32i_compiler/test/test_inputs/codegen_inputs/"
-      "func_call.txt");
-  int tokc;
+    char* src = read_file(CMAKE_SOURCE_DIR
+        "/test/test_inputs/codegen_inputs/func_call.txt");
+int tokc;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_not_null(ast);

@@ -33,9 +33,8 @@ static char* read_file(const char* filepath) {
 // Test that verifies the lexer skips leading whitespace and correctly parses
 // "if"
 Test(lexer, if_whitespace) {
-  char* source = read_file(
-      "/home/ishan/rv32i_compiler/test/test_inputs/lexer_inputs/"
-      "if_whitespace.txt");
+  char* source = read_file(CMAKE_SOURCE_DIR
+                           "/test/test_inputs/lexer_inputs/if_whitespace.txt");
   Lexer lexer;
   initLexer(&lexer, source);
   Token token = getNextToken(&lexer);
@@ -48,9 +47,8 @@ Test(lexer, if_whitespace) {
 
 // Test that verifies the lexer recognizes the "!=" operator
 Test(lexer, not_equals) {
-  char* source = read_file(
-      "/home/ishan/rv32i_compiler/test/test_inputs/lexer_inputs/"
-      "not_equals.txt");
+  char* source = read_file(CMAKE_SOURCE_DIR
+                           "/test/test_inputs/lexer_inputs/not_equals.txt");
   Lexer lexer;
   initLexer(&lexer, source);
   Token token = getNextToken(&lexer);
@@ -63,9 +61,8 @@ Test(lexer, not_equals) {
 
 // Test that verifies the lexer recognizes integer literals
 Test(lexer, int_literal) {
-  char* source = read_file(
-      "/home/ishan/rv32i_compiler/test/test_inputs/lexer_inputs/"
-      "int_literal.txt");
+  char* source = read_file(CMAKE_SOURCE_DIR
+                           "/test/test_inputs/lexer_inputs/int_literal.txt");
   Lexer lexer;
   initLexer(&lexer, source);
   Token token = getNextToken(&lexer);
@@ -78,8 +75,8 @@ Test(lexer, int_literal) {
 
 // Test that verifies the lexer recognizes a semicolon
 Test(lexer, semicolon) {
-  char* source = read_file(
-      "/home/ishan/rv32i_compiler/test/test_inputs/lexer_inputs/semicolon.txt");
+  char* source = read_file(CMAKE_SOURCE_DIR
+                           "/test/test_inputs/lexer_inputs/semicolon.txt");
   Lexer lexer;
   initLexer(&lexer, source);
   Token token = getNextToken(&lexer);

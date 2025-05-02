@@ -5,6 +5,8 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-conversion")
 
 list(APPEND CMAKE_CTEST_ARGUMENTS --verbose)
 
+add_compile_definitions(CMAKE_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+
 # Test for the lexer
 add_executable(test_lexer
     test_lexer.c
@@ -45,16 +47,19 @@ add_test(
     COMMAND test_codegen ${CRITERION_FLAGS}
 )
 
-# # Test for the compiler
-# add_executable(test_compiler
-#     test_compiler.c
-# )
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-conversion")
+list(APPEND CMAKE_CTEST_ARGUMENTS --verbose)
 
-# target_link_libraries(test_compiler
-#     PUBLIC ${CRITERION}
-# )
+add_executable(test_compiler
+    test_compiler.c
+)
 
-# add_test(
-#     NAME test_compiler
-#     COMMAND test_compiler ${CRITERION_FLAGS}
-# )
+target_link_libraries(test_compiler
+    PRIVATE lexer parser codegen
+    PUBLIC ${CRITERION}
+)
+
+add_test(
+    NAME test_compiler
+    COMMAND test_compiler ${CRITERION_FLAGS}
+)

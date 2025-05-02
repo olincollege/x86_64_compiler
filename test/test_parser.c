@@ -51,9 +51,8 @@ static int ast_count(ASTNode** ast) {
 }
 
 Test(parser, empty_function) {
-  char* src = read_file(
-      "/home/ishan/rv32i_compiler/test/test_inputs/parser_inputs/"
-      "empty_function.txt");
+  char* src = read_file(CMAKE_SOURCE_DIR
+                        "/test/test_inputs/parser_inputs/empty_function.txt");
   int tokc;
   Token* toks = lex_all(src, &tokc);
 
@@ -73,9 +72,8 @@ Test(parser, empty_function) {
 }
 
 Test(parser, simple_return) {
-  char* src = read_file(
-      "/home/ishan/rv32i_compiler/test/test_inputs/parser_inputs/"
-      "simple_return.txt");
+  char* src = read_file(CMAKE_SOURCE_DIR
+                        "/test/test_inputs/parser_inputs/simple_return.txt");
   int tokc;
   Token* toks = lex_all(src, &tokc);
 
@@ -98,9 +96,8 @@ Test(parser, simple_return) {
 }
 
 Test(parser, complex_main) {
-  char* src = read_file(
-      "/home/ishan/rv32i_compiler/test/test_inputs/parser_inputs/"
-      "complex_main.txt");
+  char* src = read_file(CMAKE_SOURCE_DIR
+                        "/test/test_inputs/parser_inputs/complex_main.txt");
   int tokc;
   Token* toks = lex_all(src, &tokc);
 

@@ -22,4 +22,3 @@ add_library(codegen
     codegen.c
     codegen.h
 )
-
