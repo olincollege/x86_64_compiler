@@ -48,10 +48,98 @@ typedef struct {
   int line;
 } Lexer;
 
+/*
+Determines the token type of a given identifier string.
+
+Used to distinguish keywords (like `if`, `return`) from general identifiers.
+
+Args:
+  text: Pointer to the identifier text.
+  length: Length of the identifier string.
+
+Returns:
+  TokenType indicating the type of the identifier.
+*/
 TokenType identifierType(const char* text, int length);
+
+/*
+Scans the source and returns the next token.
+
+Consumes characters from the source code and returns the next valid token,
+advancing the lexer.
+
+Args:
+  lexer: Pointer to the Lexer object.
+
+Returns:
+  Token representing the next lexical unit in the input.
+*/
 Token getNextToken(Lexer* lexer);
+
+/*
+Initializes the lexer with source code.
+
+Sets up internal pointers and line tracking for tokenization.
+
+Args:
+  lexer: Pointer to the Lexer to initialize.
+  source: String containing the source code to tokenize.
+
+Returns:
+  void
+*/
 void initLexer(Lexer* lexer, const char* source);
+
+/*
+Converts a TokenType enum to its string name.
+
+Useful for debugging or printing token types.
+
+Args:
+  type: The TokenType to convert.
+
+Returns:
+  A string representation of the token type.
+*/
 const char* tokenTypeToString(TokenType type);
+
+/*
+Prints information about the current lexer state.
+
+Displays the lexer's source pointer, current pointer, line, and offset.
+
+Args:
+  lexer: Pointer to the Lexer object.
+
+Returns:
+  void
+*/
 void printLexer(const Lexer* lexer);
+
+/*
+Prints a token to stdout or appends it to a file.
+
+If `file` is 0, prints to stdout. Otherwise, appends the token info to a file
+named "tokens".
+
+Args:
+  token: Pointer to the token to print.
+  file: 0 for stdout, nonzero for file output.
+
+Returns:
+  void
+*/
 void printTokenBoth(const Token* token, int file);
+
+/*
+Prints a token to stdout.
+
+Convenience function to print a token to the terminal.
+
+Args:
+  token: Pointer to the token.
+
+Returns:
+  void
+*/
 void printToken(const Token* token);
