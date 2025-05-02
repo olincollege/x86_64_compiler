@@ -9,7 +9,7 @@
 #include "lexer.h"
 
 // ASTNode constructors with added debug prints.
-
+#define DEBUG
 #ifdef DEBUG
 #define DEBUG_PRINT(fmt, ...) \
   fprintf(stderr, "[DEBUG] %s:%d: " fmt "\n", __func__, __LINE__, ##__VA_ARGS__)
@@ -62,7 +62,7 @@ ASTNode* newVariableDeclarationNode(Token* name, Token* type) {
   return node;
 }
 
-ASTNode* newBinaryNode(ASTNode* left, TokenType operator, ASTNode * right) {
+ASTNode* newBinaryNode(ASTNode* left, TokenType operator, ASTNode* right) {
   DEBUG_PRINT("Debug: Creating new Binary node with operator '%s'\n",
               tokenTypeToString(operator));
 
@@ -78,7 +78,7 @@ ASTNode* newBinaryNode(ASTNode* left, TokenType operator, ASTNode * right) {
   return node;
 }
 
-ASTNode* newUnaryNode(char operator, ASTNode * operand) {
+ASTNode* newUnaryNode(char operator, ASTNode* operand) {
   DEBUG_PRINT("Debug: Creating new Unary node with operator '%c'\n", operator);
 
   ASTNode* node = malloc(sizeof(ASTNode));
@@ -209,7 +209,7 @@ int isTokenDataType(Token* token) {
 }
 
 Token* peekToken(Token* tokens, int* index) {
-  DEBUG_PRINT("Debug: peekToken at index %d\n", *index);
+  // DEBUG_PRINT("Debug: peekToken at index %d\n", *index);
 
   return &tokens[(*index)];
 }
@@ -336,6 +336,7 @@ ASTNode* parseExpression(Token* tokens, int* tokenIndex, int tokenCount) {
     DEBUG_PRINT("Debug: Next Left Parenthis in parseexpression");
     node = parseFunctionCall(tokens, tokenIndex, tokenCount);
   } else {
+    DEBUG_PRINT("Debug: Next Left Parenthis not in parseexpression");
     node = parseVariableOrLiteral(tokens, tokenIndex, tokenCount);
   }
 
@@ -352,14 +353,14 @@ ASTNode* parseExpression(Token* tokens, int* tokenIndex, int tokenCount) {
   if (peekToken(tokens, tokenIndex)->type == TOKEN_LPAREN) {
     // Deal with this later
   }
-  if (isVariableOrLiteral(peekToken(tokens, tokenIndex)) == 1) {
-    ASTNode* leftSide = parseVariableOrLiteral(tokens, tokenIndex, tokenCount);
-    TokenType _operator = peekToken(tokens, tokenIndex)->type;
-    (*tokenIndex)++;
+  DEBUG_PRINT("Debug: Variable or literal with second part\n");
+  ASTNode* leftSide = node;
+  // parseVariableOrLiteral(tokens, tokenIndex, tokenCount);
+  TokenType _operator = peekToken(tokens, tokenIndex)->type;
+  (*tokenIndex)++;
 
-    return newBinaryNode(leftSide, _operator,
-                         parseExpression(tokens, tokenIndex, tokenCount));
-  }
+  return newBinaryNode(leftSide, _operator,
+                       parseExpression(tokens, tokenIndex, tokenCount));
 }
 
 // parse for

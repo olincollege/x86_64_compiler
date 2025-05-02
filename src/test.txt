@@ -5,7 +5,7 @@ int test(int a, int b) {
 }
 
 int main() {
-  int d = 23;
+  int d = 23 - 1;
   int f = 32 - d;
    int c = 0;
    int a = test(1, 2);
