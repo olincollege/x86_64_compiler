@@ -441,17 +441,6 @@ void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
       break;
   }
 }
-
-void ASTBlockNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                       memory* mem) {
-  DEBUG_PRINT("In blocknode%d\n", node->as.block.count);
-  for (int i = 0; i < node->as.block.count; i++) {
-    DEBUG_PRINT("Blocknode: %d\n", i);
-
-    ASTStatementNodeToX86(node->as.block.statements[i], list, mem);
-  }
-}
-
 void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
   DEBUG_PRINT("In function node %.*s\n", node->as.function.name->length,
               node->as.function.name->lexeme);
