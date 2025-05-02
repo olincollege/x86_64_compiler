@@ -909,7 +909,7 @@ void printASTOutput(ASTNode** nodes, int count, int outputToFile) {
 
   FILE* output;
   if (outputToFile == 1) {
-    output = fopen("ast", "w");
+    output = fopen("ast.txt", "w");
     if (output == NULL) {
       perror("Error opening file 'ast'");
       exit(EXIT_FAILURE);
