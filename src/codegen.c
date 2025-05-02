@@ -5,6 +5,8 @@
 
 // ASTNode constructors with added debug prints.
 
+#define DEBUG
+
 #ifdef DEBUG
 #define DEBUG_PRINT(fmt, ...) \
   fprintf(stderr, "[DEBUG] %s:%d: " fmt "\n", __func__, __LINE__, ##__VA_ARGS__)
@@ -169,6 +171,7 @@ void ASTVariableOrLiteralNodeToX86(ASTNode* node, listOfX86Instructions* list,
 
 void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
                         int first) {
+  DEBUG_PRINT("ASTBinaryNodeToX86");
   if (node->as.binary.right->type == AST_INT_LITERAL) {
     ASTNode* rightNode = node->as.binary.right;
     char* newInstruction = malloc(MAX_LINE_LENGTH);

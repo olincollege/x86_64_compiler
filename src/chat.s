@@ -19,16 +19,22 @@ test:
 main:
         push    rbp
         mov     rbp, rsp
+        mov     edx, 1
         mov     eax, 23
+        sub     eax, edx
         mov     DWORD PTR [rbp-4], eax
-        mov     eax, 0
+        mov     edx, DWORD PTR [rbp-4]
+        mov     eax, 32
+        sub     eax, edx
         mov     DWORD PTR [rbp-8], eax
+        mov     eax, 0
+        mov     DWORD PTR [rbp-12], eax
         mov     eax, 1
         mov     edi, eax
         mov     eax, 2
         mov     esi, eax
         call    test
-        mov     DWORD PTR [rbp-12], eax
+        mov     DWORD PTR [rbp-16], eax
         mov     eax, 1
         mov     edi, eax
         mov     eax, 2
@@ -36,6 +42,6 @@ main:
         call    test
         pop     rbp
         ret
-        mov     eax, DWORD PTR [rbp-12]
+        mov     eax, DWORD PTR [rbp-16]
         pop     rbp
         ret
