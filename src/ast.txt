@@ -1,0 +1,49 @@
+Printing AST for the entire file:
+
+--- AST Node 0 ---
+Function Declaration: test returns int
+  Parameters (2):
+    Variable Declaration: a of type int
+    Variable Declaration: b of type int
+  Body Statements:
+    Block with 3 statement(s):
+      Declaration:
+        Variable Declaration:
+          Variable Declaration: d of type int
+        Expression:
+          IntLiteral: 12
+      Variable Declaration: c2 of type int
+      Return Statement:
+        Expression:
+          Variable: d
+
+--- AST Node 1 ---
+Function Declaration: main returns int
+  Parameters (0):
+  Body Statements:
+    Block with 5 statement(s):
+      Declaration:
+        Variable Declaration:
+          Variable Declaration: d of type int
+        Expression:
+          IntLiteral: 23
+      Declaration:
+        Variable Declaration:
+          Variable Declaration: c of type int
+        Expression:
+          IntLiteral: 0
+      Declaration:
+        Variable Declaration:
+          Variable Declaration: a of type int
+        Expression:
+          Function Call: test with 2 argument(s)
+            IntLiteral: 1
+            IntLiteral: 2
+      Return Statement:
+        Expression:
+          Function Call: test with 2 argument(s)
+            IntLiteral: 1
+            IntLiteral: 2
+      Return Statement:
+        Expression:
+          Variable: a
