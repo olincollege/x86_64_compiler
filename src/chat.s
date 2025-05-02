@@ -6,7 +6,6 @@ _start:
     mov rdi, rax       # syscall: exit
     mov rax, 60        # exit code 0
     syscall
-
 test:
         push    rbp
         mov     rbp, rsp
@@ -20,14 +19,16 @@ test:
 main:
         push    rbp
         mov     rbp, rsp
-        mov     eax, 0
+        mov     eax, 23
         mov     DWORD PTR [rbp-4], eax
+        mov     eax, 0
+        mov     DWORD PTR [rbp-8], eax
         mov     eax, 1
         mov     edi, eax
         mov     eax, 2
         mov     esi, eax
         call    test
-        mov     DWORD PTR [rbp-8], eax
+        mov     DWORD PTR [rbp-12], eax
         mov     eax, 1
         mov     edi, eax
         mov     eax, 2
@@ -35,6 +36,6 @@ main:
         call    test
         pop     rbp
         ret
-        mov     eax, DWORD PTR [rbp-8]
+        mov     eax, DWORD PTR [rbp-12]
         pop     rbp
         ret

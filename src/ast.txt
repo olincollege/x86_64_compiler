@@ -21,7 +21,12 @@ Function Declaration: test returns int
 Function Declaration: main returns int
   Parameters (0):
   Body Statements:
-    Block with 4 statement(s):
+    Block with 5 statement(s):
+      Declaration:
+        Variable Declaration:
+          Variable Declaration: d of type int
+        Expression:
+          IntLiteral: 23
       Declaration:
         Variable Declaration:
           Variable Declaration: c of type int
