@@ -8,4 +8,17 @@
 # or similar. The PRIVATE/INTERFACE/PUBLIC keyword will depend on whether the
 # library is used only in function bodies (PRIVATE), only in function
 # signatures/types (INTERFACE), or both (PUBLIC).
-add_library(lexer lexer.c lexer.h)
+add_library(lexer
+    lexer.c
+    lexer.h
+)
+
+add_library(parser
+    parser.c
+    parser.h
+)
+
+add_library(codegen
+    codegen.c
+    codegen.h
+)
