@@ -25,7 +25,7 @@ typedef struct listOfX86Instructions {
 } listOfX86Instructions;
 
 typedef struct {
-  char symbol;
+  TokenType symbol;
   const char* name;
 } map;
 
@@ -197,8 +197,7 @@ Args:
 Returns:
   void
 */
-void ASTVariableDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                                     memory* mem);
+void ASTVariableDeclarationNodeToX86(ASTNode* node, memory* mem);
 
 /*
 Generates x86 code for a full declaration (type + assignment).

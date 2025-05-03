@@ -23,8 +23,12 @@ static int files_equal(const char* path1, const char* path2) {
   FILE* f1 = fopen(path1, "r");
   FILE* f2 = fopen(path2, "r");
   if (!f1 || !f2) {
-    if (f1) fclose(f1);
-    if (f2) fclose(f2);
+    if (f1) {
+      fclose(f1);
+    }
+    if (f2) {
+      fclose(f2);
+    }
     fprintf(stderr, "Could not open one of the files: %s or %s\n", path1,
             path2);
     return 0;
@@ -77,8 +81,10 @@ static int files_equal(const char* path1, const char* path2) {
 
 static int run_and_get_exit(const char* command) {
   int status = system(command);
-  if (WIFEXITED(status)) return WEXITSTATUS(status);
-  return -1;
+  if (WIFEXITED(status)) {
+    return WEXITSTATUS(status);
+    return -1;
+  }
 }
 
 Test(compiler, full_system_simple_return) {

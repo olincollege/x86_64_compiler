@@ -40,8 +40,8 @@ typedef struct ASTNode {
     // For a variable or identifier.
     struct {
       Token* name;  // The name of the variable.
-      Token* type;  // TODO: Rename to variabletype // Type of variable, e.g.,
-                    // "int", "float"
+      Token* type;  // TODO (nividh): Rename to variabletype // Type of
+                    // variable, e.g., "int", "float"
     } variable_declaration;
 
     // For binary expressions.
@@ -528,4 +528,4 @@ Args:
 Returns:
   void
 */
-static void printIndent(FILE* output, int indent);
+// static void printIndent(FILE* output, int indent);
