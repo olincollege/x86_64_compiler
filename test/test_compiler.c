@@ -20,21 +20,60 @@ static void copy_file(const char* src_path, const char* dst_path) {
 }
 
 static int files_equal(const char* path1, const char* path2) {
-  FILE *f1 = fopen(path1, "r"), *f2 = fopen(path2, "r");
-  if (!f1 || !f2) return 0;
+  FILE* f1 = fopen(path1, "r");
+  FILE* f2 = fopen(path2, "r");
+  if (!f1 || !f2) {
+    if (f1) fclose(f1);
+    if (f2) fclose(f2);
+    fprintf(stderr, "Could not open one of the files: %s or %s\n", path1,
+            path2);
+    return 0;
+  }
 
-  int ch1, ch2;
-  while ((ch1 = fgetc(f1)) != EOF && (ch2 = fgetc(f2)) != EOF)
-    if (ch1 != ch2) {
+  char line1[1024], line2[1024];
+  int line_num = 1;
+
+  while (fgets(line1, sizeof(line1), f1) && fgets(line2, sizeof(line2), f2)) {
+    // Trim trailing whitespace
+    int len1 = strlen(line1);
+    while (len1 > 0 && (line1[len1 - 1] == ' ' || line1[len1 - 1] == '\t' ||
+                        line1[len1 - 1] == '\n'))
+      line1[--len1] = '\0';
+
+    int len2 = strlen(line2);
+    while (len2 > 0 && (line2[len2 - 1] == ' ' || line2[len2 - 1] == '\t' ||
+                        line2[len2 - 1] == '\n'))
+      line2[--len2] = '\0';
+
+    if (strcmp(line1, line2) != 0) {
+      fprintf(stderr,
+              "Difference at line %d:\n"
+              "  %s: \"%s\"\n"
+              "  %s: \"%s\"\n",
+              line_num, path1, line1, path2, line2);
       fclose(f1);
       fclose(f2);
       return 0;
     }
 
-  int result = feof(f1) && feof(f2);
+    line_num++;
+  }
+
+  // Check if either file still has lines
+  int more1 = fgets(line1, sizeof(line1), f1) != NULL;
+  int more2 = fgets(line2, sizeof(line2), f2) != NULL;
+
+  if (more1 || more2) {
+    fprintf(stderr, "Files differ in number of lines at line %d\n",
+            line_num);
+    fclose(f1);
+    fclose(f2);
+    return 0;
+  }
+
   fclose(f1);
   fclose(f2);
-  return result;
+  return 1;
 }
 
 static int run_and_get_exit(const char* command) {
@@ -44,26 +83,27 @@ static int run_and_get_exit(const char* command) {
 }
 
 Test(compiler, full_system_simple_return) {
-  // 1. Copy test C file to test.txt (input to compiler)
-  copy_file(CMAKE_SOURCE_DIR "/test/test_inputs/compiler_inputs/simple_return.c",
+  copy_file(CMAKE_SOURCE_DIR
+            "/test/test_inputs/compiler_inputs/simple_return.c",
             "test.txt");
 
-  // 2. Compile main.c as compiler, generate chat.s
   char command[256];
-  snprintf(command, sizeof(command), "gcc %s/src/*.c -o compiler_main", CMAKE_SOURCE_DIR);
-  int compile_compiler = system(command);
-  cr_assert_eq(compile_compiler, 0, "Failed to compile compiler with: %s", command);
-  
-  int run_compiler = system("./compiler_main");
-  cr_assert_eq(run_compiler, 0, "Compiler failed to run");
+  snprintf(command, sizeof(command), "gcc %s/src/*.c -o compiler_main",
+           CMAKE_SOURCE_DIR);
+  cr_assert_eq(system(command), 0, "Failed to compile compiler");
+
+  cr_assert_eq(system("./compiler_main"), 0, "Compiler failed to run");
 
   cr_assert(access("chat.s", F_OK) == 0, "chat.s was not generated");
 
-  // 3. Compare generated .s to expected
-  cr_assert(files_equal("chat.s", "test/test_expected_outputs/simple_return.s"),
+  char expected[512];
+  snprintf(expected, sizeof(expected),
+           "%s/test/test_expected_outputs/simple_return.s", CMAKE_SOURCE_DIR);
+  cr_assert(access(expected, F_OK) == 0, "Expected file not found");
+
+  cr_assert(files_equal("chat.s", expected),
             "chat.s does not match expected output");
 
-  // 4. Assemble, link, and run program
   cr_assert_eq(system("as -o abcd.o chat.s"), 0, "Assembly failed");
   cr_assert_eq(system("ld -o abcd abcd.o"), 0, "Linking failed");
 

@@ -82,9 +82,9 @@ Test(codegen, return_constant) {
 
 // Test 2: Return binary expression
 Test(codegen, return_binary_expression) {
-    char* src = read_file(CMAKE_SOURCE_DIR
-        "/test/test_inputs/codegen_inputs/binary_return.txt");
-int tokc;
+  char* src = read_file(CMAKE_SOURCE_DIR
+                        "/test/test_inputs/codegen_inputs/binary_return.txt");
+  int tokc;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_not_null(ast);
@@ -112,9 +112,9 @@ int tokc;
 
 // Test 3: Function call
 Test(codegen, function_call) {
-    char* src = read_file(CMAKE_SOURCE_DIR
-        "/test/test_inputs/codegen_inputs/func_call.txt");
-int tokc;
+  char* src = read_file(CMAKE_SOURCE_DIR
+                        "/test/test_inputs/codegen_inputs/func_call.txt");
+  int tokc;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_not_null(ast);
