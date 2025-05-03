@@ -9,6 +9,8 @@ _start:
 main:
         push    rbp
         mov     rbp, rsp
-        mov     eax, 3
+        mov     edx, 2
+        mov     eax, 6
+        add     eax, edx
         pop     rbp
         ret
