@@ -6,7 +6,6 @@ _start:
     mov rdi, rax       # syscall: exit
     mov rax, 60        # exit code 0
     syscall
-
 main:
         push    rbp
         mov     rbp, rsp
