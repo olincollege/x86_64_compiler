@@ -64,8 +64,7 @@ static int files_equal(const char* path1, const char* path2) {
   int more2 = fgets(line2, sizeof(line2), f2) != NULL;
 
   if (more1 || more2) {
-    fprintf(stderr, "Files differ in number of lines at line %d\n",
-            line_num);
+    fprintf(stderr, "Files differ in number of lines at line %d\n", line_num);
     fclose(f1);
     fclose(f2);
     return 0;
