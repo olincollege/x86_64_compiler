@@ -44,6 +44,17 @@ static void skipWhitespace(Lexer* lexer) {
           while (peek(lexer) != '\n' && !atEnd(lexer)) {
             advance(lexer);
           }
+        } else if (peekNext(lexer) == '*') {
+          advance(lexer);
+          advance(lexer);
+          while (!atEnd(lexer)) {
+            advance(lexer);
+            advance(lexer);
+            if (peek(lexer) == '*' && peekNext(lexer) == '/') {
+              advance(lexer);
+              break;
+            }
+          }
         } else {
           return;
         }
