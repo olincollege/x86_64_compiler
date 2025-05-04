@@ -12,7 +12,7 @@ static char* read_file(const char* path) {
   FILE* f = fopen(path, "r");
   cr_assert_neq(f, NULL, "Could not open %s", path);
   fseek(f, 0, SEEK_END);
-  long len = ftell(f);
+  size_t len = (size_t)ftell(f);
   rewind(f);
   char* buf = malloc(len + 1);
   cr_assert_neq(buf, NULL, "Alloc failed");
@@ -53,7 +53,7 @@ static int ast_count(ASTNode** ast) {
 Test(parser, empty_function) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/parser_inputs/empty_function.c");
-  int tokc;
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
 
   ASTNode** ast = parseFile(toks, tokc);
@@ -74,7 +74,7 @@ Test(parser, empty_function) {
 Test(parser, simple_return) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/parser_inputs/simple_return.c");
-  int tokc;
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
 
   ASTNode** ast = parseFile(toks, tokc);
@@ -98,7 +98,7 @@ Test(parser, simple_return) {
 Test(parser, complex_main) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/parser_inputs/complex_main.c");
-  int tokc;
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
 
   ASTNode** ast = parseFile(toks, tokc);

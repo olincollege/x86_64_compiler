@@ -25,7 +25,7 @@ typedef struct listOfX86Instructions {
 } listOfX86Instructions;
 
 typedef struct {
-  char symbol;
+  TokenType symbol;
   const char* name;
 } map;
 
@@ -197,8 +197,7 @@ Args:
 Returns:
   void
 */
-void ASTVariableDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                                     memory* mem);
+void ASTVariableDeclarationNodeToX86(ASTNode* node, memory* mem);
 
 /*
 Generates x86 code for a full declaration (type + assignment).
@@ -337,7 +336,7 @@ Args:
 Returns:
   String with x86 operation name, or NULL if unknown.
 */
-const char* get_op_name(TokenType op);
+const char* get_op_name(TokenType operator);
 
 /*
 Returns the name of a general-purpose Linux x86 register.
@@ -350,4 +349,4 @@ Args:
 Returns:
   Name of the corresponding register (e.g., "edi", "esi", etc.).
 */
-const char* getLowLinuxRegistersName(int i);
+const char* getLowLinuxRegistersName(int index);
