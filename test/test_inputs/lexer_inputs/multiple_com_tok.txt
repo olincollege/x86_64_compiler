@@ -1,0 +1,2 @@
+// line comment
+int x = 3; // another comment

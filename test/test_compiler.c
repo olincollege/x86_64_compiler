@@ -113,5 +113,147 @@ Test(compiler, full_system_simple_return) {
   cr_assert_eq(system("ld -o abcd abcd.o"), 0, "Linking failed");
 
   int ret_code = run_and_get_exit("./abcd");
-  cr_expect_eq(ret_code, 42, "Expected return value of 42 from binary");
+  cr_expect_eq(ret_code, 3, "Expected return value of 3 from binary");
+}
+
+// Test 2: full system binary add (6 + 2 → 8)
+Test(compiler, full_system_binary_add) {
+  copy_file(CMAKE_SOURCE_DIR "/test/test_inputs/compiler_inputs/binary_add.c",
+            "test.txt");
+
+  // rebuild the compiler
+  char cmd[256];
+  snprintf(cmd, sizeof(cmd), "gcc %s/src/*.c -o compiler_main",
+           CMAKE_SOURCE_DIR);
+  cr_assert_eq(system(cmd), 0, "Failed to compile compiler");
+
+  // run it
+  cr_assert_eq(system("./compiler_main"), 0, "Compiler failed to run");
+  cr_assert(access("chat.s", F_OK) == 0, "chat.s was not generated");
+
+  // compare to expected
+  char expected[512];
+  snprintf(expected, sizeof(expected),
+           "%s/test/test_expected_outputs/binary_add.s", CMAKE_SOURCE_DIR);
+  cr_assert(access(expected, F_OK) == 0, "Expected file not found at %s",
+            expected);
+  cr_assert(files_equal("chat.s", expected),
+            "chat.s does not match expected output at %s", expected);
+
+  // assemble, link, run
+  cr_assert_eq(system("as -o abcd.o chat.s"), 0, "Assembly failed");
+  cr_assert_eq(system("ld -o abcd abcd.o"), 0, "Linking failed");
+  int rc = run_and_get_exit("./abcd");
+  cr_expect_eq(rc, 8, "Expected return value of 8 from binary");
+}
+
+// Test 3: full system multiplication (7 * 3 → 21)
+Test(compiler, full_system_multiplication) {
+  copy_file(CMAKE_SOURCE_DIR "/test/test_inputs/compiler_inputs/mul_return.c",
+            "test.txt");
+
+  char cmd[256];
+  snprintf(cmd, sizeof(cmd), "gcc %s/src/*.c -o compiler_main",
+           CMAKE_SOURCE_DIR);
+  cr_assert_eq(system(cmd), 0, "Failed to compile compiler");
+  cr_assert_eq(system("./compiler_main"), 0, "Compiler failed to run");
+  cr_assert(access("chat.s", F_OK) == 0, "chat.s was not generated");
+
+  char expected[512];
+  snprintf(expected, sizeof(expected),
+           "%s/test/test_expected_outputs/mul_return.s", CMAKE_SOURCE_DIR);
+  cr_assert(access(expected, F_OK) == 0, "Expected file not found at %s",
+            expected);
+  cr_assert(files_equal("chat.s", expected),
+            "chat.s does not match expected output at %s", expected);
+
+  cr_assert_eq(system("as -o abcd.o chat.s"), 0, "Assembly failed");
+  cr_assert_eq(system("ld -o abcd abcd.o"), 0, "Linking failed");
+  int rc = run_and_get_exit("./abcd");
+  cr_expect_eq(rc, 21, "Expected return value of 21 from binary");
+}
+
+// Test 4: full system var-decl + return (int x = 5; return x; → 5)
+Test(compiler, full_system_var_decl_return) {
+  copy_file(CMAKE_SOURCE_DIR
+            "/test/test_inputs/compiler_inputs/var_decl_return.c",
+            "test.txt");
+
+  char cmd[256];
+  snprintf(cmd, sizeof(cmd), "gcc %s/src/*.c -o compiler_main",
+           CMAKE_SOURCE_DIR);
+  cr_assert_eq(system(cmd), 0, "Failed to compile compiler");
+  cr_assert_eq(system("./compiler_main"), 0, "Compiler failed to run");
+  cr_assert(access("chat.s", F_OK) == 0, "chat.s was not generated");
+
+  char expected[512];
+  snprintf(expected, sizeof(expected),
+           "%s/test/test_expected_outputs/var_decl_return.s", CMAKE_SOURCE_DIR);
+  cr_assert(access(expected, F_OK) == 0, "Expected file not found at %s",
+            expected);
+  cr_assert(files_equal("chat.s", expected),
+            "chat.s does not match expected output at %s", expected);
+
+  cr_assert_eq(system("as -o abcd.o chat.s"), 0, "Assembly failed");
+  cr_assert_eq(system("ld -o abcd abcd.o"), 0, "Linking failed");
+  int rc = run_and_get_exit("./abcd");
+  cr_expect_eq(rc, 5, "Expected return value of 5 from binary");
+}
+
+// Test 5: full system with one-parameter function call
+Test(compiler, full_system_func_params) {
+  // 1) copy source into test.txt
+  copy_file(CMAKE_SOURCE_DIR
+            "/test/test_inputs/compiler_inputs/func_params_call.c",
+            "test.txt");
+
+  // 2) rebuild & run compiler
+  char cmd[256];
+  snprintf(cmd, sizeof(cmd), "gcc %s/src/*.c -o compiler_main",
+           CMAKE_SOURCE_DIR);
+  cr_assert_eq(system(cmd), 0, "Failed to compile compiler");
+  cr_assert_eq(system("./compiler_main"), 0, "Compiler run failed");
+  cr_assert(access("chat.s", F_OK) == 0, "chat.s not generated");
+
+  // 3) compare chat.s against expected
+  char expected[512];
+  snprintf(expected, sizeof(expected),
+           "%s/test/test_expected_outputs/func_params_call.s",
+           CMAKE_SOURCE_DIR);
+  cr_assert(access(expected, F_OK) == 0, "Missing expected at %s", expected);
+  cr_assert(files_equal("chat.s", expected), "chat.s does not match %s",
+            expected);
+
+  // 4) assemble, link, run and check exit code == 5
+  cr_assert_eq(system("as -o abcd.o chat.s"), 0, "as failed");
+  cr_assert_eq(system("ld -o abcd abcd.o"), 0, "ld failed");
+  int rc = run_and_get_exit("./abcd");
+  cr_expect_eq(rc, 5, "Expected return 5 from binary");
+}
+
+// Test 6: full system with three-parameter function call
+Test(compiler, full_system_three_params) {
+  copy_file(CMAKE_SOURCE_DIR
+            "/test/test_inputs/compiler_inputs/three_params_call.c",
+            "test.txt");
+
+  char cmd[256];
+  snprintf(cmd, sizeof(cmd), "gcc %s/src/*.c -o compiler_main",
+           CMAKE_SOURCE_DIR);
+  cr_assert_eq(system(cmd), 0, "Failed to compile compiler");
+  cr_assert_eq(system("./compiler_main"), 0, "Compiler run failed");
+  cr_assert(access("chat.s", F_OK) == 0, "chat.s not generated");
+
+  char expected[512];
+  snprintf(expected, sizeof(expected),
+           "%s/test/test_expected_outputs/three_params_call.s",
+           CMAKE_SOURCE_DIR);
+  cr_assert(access(expected, F_OK) == 0, "Missing expected at %s", expected);
+  cr_assert(files_equal("chat.s", expected), "chat.s does not match %s",
+            expected);
+
+  cr_assert_eq(system("as -o abcd.o chat.s"), 0, "as failed");
+  cr_assert_eq(system("ld -o abcd abcd.o"), 0, "ld failed");
+  int rc = run_and_get_exit("./abcd");
+  cr_expect_eq(rc, 10, "Expected return 10 from binary");
 }

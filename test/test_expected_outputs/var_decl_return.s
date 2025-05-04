@@ -9,6 +9,8 @@ _start:
 main:
         push    rbp
         mov     rbp, rsp
-        mov     eax, 3
+        mov     eax, 5
+        mov     DWORD PTR [rbp-4], eax
+        mov     eax, DWORD PTR [rbp-4]
         pop     rbp
         ret
