@@ -1,5 +1,6 @@
 #include "codegen.h"
 
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -118,7 +119,7 @@ char* get_variable_memory_location_with_pointer(memory* mem, const char* lexeme,
       VARIABLE_MEMORY_LOCATION_SIZE);  // plenty of room for [rbp-<offset>]
   if (!buffer) {
     perror("malloc failed");
-    exit(1);
+    pthread_exit(NULL);
   }
   if (offset > 0) {
     (void)snprintf(buffer, sizeof buffer, "[rbp+%d]",
@@ -171,7 +172,7 @@ void ASTVariableOrLiteralNodeToX86(ASTNode* node, listOfX86Instructions* list,
     char* newInstruction = malloc(MAX_LINE_LENGTH);
     if (!newInstruction) {
       perror("malloc failed");
-      exit(1);
+      pthread_exit(NULL);
     }
     (void)snprintf(newInstruction, sizeof newInstruction,
                    "        mov     eax, %d", node->as.intLiteral.intLiteral);
@@ -185,7 +186,7 @@ void ASTVariableOrLiteralNodeToX86(ASTNode* node, listOfX86Instructions* list,
         malloc(MAX_LINE_LENGTH);  // enough for full instruction line
     if (!newInstruction) {
       perror("malloc failed");
-      exit(1);
+      pthread_exit(NULL);
     }
     (void)snprintf(newInstruction, sizeof newInstruction,
                    "        mov     eax, DWORD PTR %s", operand);
@@ -204,7 +205,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
     char* newInstruction = malloc(MAX_LINE_LENGTH);
     if (!newInstruction) {
       perror("malloc failed");
-      exit(1);
+      pthread_exit(NULL);
     }
     (void)snprintf(newInstruction, sizeof newInstruction,
                    "        mov     edx, %d",
@@ -220,7 +221,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
         malloc(MAX_LINE_LENGTH);  // enough for full instruction line
     if (!newInstruction) {
       perror("malloc failed");
-      exit(1);
+      pthread_exit(NULL);
     }
     (void)snprintf(newInstruction, sizeof newInstruction,
                    "        mov     edx, DWORD PTR %s", operand);
@@ -235,7 +236,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
     char* newInstruction = malloc(MAX_LINE_LENGTH);
     if (!newInstruction) {
       perror("malloc failed");
-      exit(1);
+      pthread_exit(NULL);
     }
     (void)snprintf(newInstruction, sizeof newInstruction,
                    "        mov     eax, %d",
@@ -252,7 +253,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
         malloc(MAX_LINE_LENGTH);  // enough for full instruction line
     if (!newInstruction) {
       perror("malloc failed");
-      exit(1);
+      pthread_exit(NULL);
     }
     (void)snprintf(newInstruction, sizeof newInstruction,
                    "        mov     eax, DWORD PTR %s", operand);
@@ -265,7 +266,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
         malloc(MAX_LINE_LENGTH);  // enough for full instruction line
     if (!newInstruction) {
       perror("malloc failed");
-      exit(1);
+      pthread_exit(NULL);
     }
 
     (void)snprintf(newInstruction, sizeof newInstruction,
@@ -278,7 +279,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
         malloc(MAX_LINE_LENGTH);  // enough for full instruction line
     if (!newInstruction) {
       perror("malloc failed");
-      exit(1);
+      pthread_exit(NULL);
     }
     (void)snprintf(newInstruction, sizeof newInstruction,
                    "        %s     eax, edx",
@@ -294,7 +295,7 @@ void ASTVariableDeclarationNodeToX86(ASTNode* node, memory* mem) {
       malloc((size_t)node->as.variable_declaration.name->length + 1);
   if (!variableName) {
     perror("malloc failed");
-    exit(1);
+    pthread_exit(NULL);
   }
   strncpy(variableName, node->as.variable_declaration.name->lexeme,
           (size_t)node->as.variable_declaration.name->length);
@@ -318,7 +319,7 @@ void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
         node->as.declaration.variable->as.variableName->length);
   } else {
     printf("Error: Not a variable node\n");
-    exit(1);
+    pthread_exit(NULL);
   }
 
   ASTVariableLiteralOrBinaryToX86(node->as.declaration.expression, list, mem);
@@ -328,7 +329,7 @@ void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
       malloc(MAX_LINE_LENGTH);  // enough for full instruction line
   if (!newInstruction) {
     perror("malloc failed");
-    exit(1);
+    pthread_exit(NULL);
   }
 
   (void)snprintf(newInstruction, sizeof newInstruction,
@@ -410,7 +411,7 @@ void ASTFunctionCallNodeToX86(ASTNode* node, listOfX86Instructions* list,
     char* newInstruction = malloc(MAX_LINE_LENGTH);
     if (!newInstruction) {
       perror("malloc failed");
-      exit(1);
+      pthread_exit(NULL);
     }
     printf("2n\n");
     (void)snprintf(newInstruction, sizeof newInstruction,
@@ -460,7 +461,7 @@ void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
               node->as.function.name->lexeme);
   if (node->type != AST_FUNCTION_DECLARATION) {
     printf("Error: Not a function node\n");
-    exit(1);
+    pthread_exit(NULL);
   }
   memory* mem = malloc(sizeof(memory));
   initMemory(mem);
@@ -472,7 +473,7 @@ void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
 
     if (!newInstruction) {
       perror("malloc failed");
-      exit(1);
+      pthread_exit(NULL);
     }
 
     (void)snprintf(newInstruction, sizeof newInstruction,
@@ -520,7 +521,7 @@ void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
                                 1);
     if (!variableName) {
       perror("malloc failed");
-      exit(1);
+      pthread_exit(NULL);
     }
     strncpy(
         variableName,
@@ -608,7 +609,7 @@ void printMemory(memory* mem) {
  char* variableName = malloc(node->as.variable_declaration.name->length + 1);
   if (!variableName) {
     perror("malloc failed");
-    exit(1);
+    pthread_exit(NULL);
   }
   strncpy(variableName, node->as.variable_declaration.name->lexeme,
           node->as.variable_declaration.name->length);

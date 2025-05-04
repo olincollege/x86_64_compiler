@@ -100,6 +100,20 @@ typedef struct ASTNode {
     // you can add additional fields or even nested structs here.
   } as;
 } ASTNode;
+
+/*
+Increments the token index by one if it's less than the total number of tokens
+
+Args:
+  tokenIndex: A pointer to the current index in the token stream.
+  tokenCount: The total number of tokens available for parsing.
+
+Returns:
+  None
+*/
+
+void incrementTokenIndex(int* tokenIndex, int tokenCount);
+
 /*
 Parses a function call node from the token stream.
 
@@ -363,7 +377,7 @@ Args:
 Returns:
   Token* at the current index.
 */
-Token* peekToken(Token* tokens, int* index);
+Token* peekToken(Token* tokens, const int* index);
 
 /*
 Peeks ahead by a number of tokens.
@@ -379,7 +393,8 @@ Args:
 Returns:
   Token* at the forward offset.
 */
-Token* peekAheadToken(Token* tokens, int* index, int forward, int tokenCount);
+Token* peekAheadToken(Token* tokens, const int* index, int forward,
+                      int tokenCount);
 
 /*
 Parses a variable declaration from tokens.

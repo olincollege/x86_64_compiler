@@ -274,23 +274,24 @@ void printTokenBoth(const Token* token, int toFile)
  * ────────────────────────────────────────────────────────── */
 {
   if (toFile) {
-    /* 1.  no shadowing: parameter is now  `toFile`, variable is `fp` */
+    /* 1.  no shadowing: parameter is now  `toFile`, variable is `filePointer`
+     */
     /* 2.  use "ae" so the file is opened with O_CLOEXEC             */
-    FILE* fp = fopen("tokens", "ae");
-    if (fp == NULL) { /* safer than exit() in libs   */
+    FILE* filePointer = fopen("tokens", "ae");
+    if (filePointer == NULL) { /* safer than exit() in libs   */
       perror("fopen(\"tokens\")");
       return;
     }
 
     /* 3.  check fprintf ’s return value (CERT ERR33‑C)              */
-    if (fprintf(fp, "Token(type=%s, lexeme=\"%.*s\", length=%d)\n",
+    if (fprintf(filePointer, "Token(type=%s, lexeme=\"%.*s\", length=%d)\n",
                 tokenTypeToString(token->type), token->length, token->lexeme,
                 token->length) < 0) {
       perror("fprintf");
       /* fall through ‑ we still try to flush & close */
     }
 
-    if (fclose(fp) != 0) { /* also check fclose           */
+    if (fclose(filePointer) != 0) { /* also check fclose           */
       perror("fclose");
     }
   } else {

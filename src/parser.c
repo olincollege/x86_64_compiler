@@ -1,6 +1,7 @@
 #include "parser.h"
 
 #include <limits.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,19 +11,27 @@
 // ASTNode constructors with added debug prints.
 #define DEBUG
 #ifdef DEBUG
-#define DEBUG_PRINT(fmt, ...)                                           \
-  (void)fprintf(stderr, "[DEBUG] %s:%d: " fmt "\n", __func__, __LINE__, \
-                ##__VA_ARGS__)
+#define DEBUG_PRINT(fmt, ...)                                             \
+  /*(void)fprintf(stderr, "[DEBUG] %s:%d: " fmt "\n", __func__, __LINE__, \
+                ##__VA_ARGS__)*/
 #else
 #define DEBUG_PRINT(fmt, ...)
 #endif
+
+void incrementTokenIndex(int* tokenIndex, int tokenCount) {
+  if (*tokenIndex < tokenCount - 1) {
+    (*tokenIndex)++;
+  } else {
+    (*tokenIndex) = -1;
+  }
+}
 
 ASTNode* newIntLiteralNode(int value, Token* token) {
   DEBUG_PRINT("Debug: Creating new IntLiteral node with value = %d\n", value);
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     (void)fprintf(stderr, "Error: Out of memory in newIntLiteralNode\n");
-    exit(1);
+    pthread_exit(NULL);
   }
   node->type = AST_INT_LITERAL;
   node->as.intLiteral.intLiteral = value;
@@ -38,7 +47,7 @@ ASTNode* newVariableNode(Token* name) {
 
   if (!node) {
     (void)fprintf(stderr, "Error: Out of memory in newVariableNode\n");
-    exit(1);
+    pthread_exit(NULL);
   }
   node->type = AST_VARIABLE;  // Using the variable type for declarations.
   node->as.variableName = name;
@@ -54,7 +63,7 @@ ASTNode* newVariableDeclarationNode(Token* name, Token* type) {
   if (!node) {
     (void)fprintf(stderr,
                   "Error: Out of memory in newVariableDeclarationNode\n");
-    exit(1);
+    pthread_exit(NULL);
   }
   node->type =
       AST_VARIABLE_DECLARATION;  // Using the variable type for declarations.
@@ -70,7 +79,7 @@ ASTNode* newBinaryNode(ASTNode* left, TokenType operator, ASTNode* right) {
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     (void)fprintf(stderr, "Error: Out of memory in newBinaryNode\n");
-    exit(1);
+    pthread_exit(NULL);
   }
   node->type = AST_BINARY;
   node->as.binary.left = left;
@@ -85,7 +94,7 @@ ASTNode* newUnaryNode(char operator, ASTNode* operand) {
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     (void)fprintf(stderr, "Error: Out of memory in newUnaryNode\n");
-    exit(1);
+    pthread_exit(NULL);
   }
   node->type = AST_UNARY;
   node->as.unary._operator = operator;
@@ -116,7 +125,7 @@ ASTNode* newFunctionNode(Token* name, Token* returnType, ASTNode** parameters,
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     (void)fprintf(stderr, "Error: Out of memory in newFunctionNode\n");
-    exit(1);
+    pthread_exit(NULL);
   }
   node->type = AST_FUNCTION_DECLARATION;
   node->as.function.name = name;
@@ -148,7 +157,7 @@ ASTNode* newReturnNode(ASTNode* expression) {
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     (void)fprintf(stderr, "Error: Out of memory in newReturnNode\n");
-    exit(1);
+    pthread_exit(NULL);
   }
   node->type = AST_RETURN;
   node->as._return.expression = expression;
@@ -174,7 +183,7 @@ ASTNode* newIfElifElseNode(ASTNodeType type, ASTNode* condition,
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     (void)fprintf(stderr, "Error: Out of memory in newIfElifElseNode\n");
-    exit(1);
+    pthread_exit(NULL);
   }
   node->type = type;
   node->as.if_elif_else_statement.condition = condition;
@@ -209,13 +218,14 @@ int isTokenDataType(Token* token) {
   return 0;
 }
 
-Token* peekToken(Token* tokens, int* index) {
+Token* peekToken(Token* tokens, const int* index) {
   // DEBUG_PRINT("Debug: peekToken at index %d\n", *index);
 
   return &tokens[(*index)];
 }
 
-Token* peekAheadToken(Token* tokens, int* index, int forward, int tokenCount) {
+Token* peekAheadToken(Token* tokens, const int* index, int forward,
+                      int tokenCount) {
   DEBUG_PRINT("Debug: peekAheadToken at index %d and forward = %d\n", *index,
               forward);
   printToken(&tokens[(*index) + forward]);
@@ -243,7 +253,7 @@ ASTNode* parseVariableDeclaration(Token* tokens, int* tokenIndex,
   printToken(peekToken(tokens, tokenIndex));
 
   Token* type = peekToken(tokens, tokenIndex);
-  (*tokenIndex)++;
+  incrementTokenIndex(tokenIndex, tokenCount);
 
   // Check for identifier token.
   if (peekToken(tokens, tokenIndex)->type != TOKEN_IDENTIFIER) {
@@ -255,7 +265,7 @@ ASTNode* parseVariableDeclaration(Token* tokens, int* tokenIndex,
   printToken(peekToken(tokens, tokenIndex));
 
   Token* name = peekToken(tokens, tokenIndex);
-  (*tokenIndex)++;
+  incrementTokenIndex(tokenIndex, tokenCount);
 
   return newVariableDeclarationNode(name, type);
 }
@@ -311,13 +321,13 @@ ASTNode* parseVariableOrLiteral(Token* tokens, int* tokenIndex,
 
   if (peekToken(tokens, tokenIndex)->type == TOKEN_IDENTIFIER) {
     ASTNode* node = newVariableNode(peekToken(tokens, tokenIndex));
-    (*tokenIndex)++;
+    incrementTokenIndex(tokenIndex, tokenCount);
     return node;
   } else if (peekToken(tokens, tokenIndex)->type == TOKEN_INT_LITERAL) {
     ASTNode* node =
         newIntLiteralNode(convertTokenToInt(peekToken(tokens, tokenIndex)),
                           &(tokens[*tokenIndex]));
-    (*tokenIndex)++;
+    incrementTokenIndex(tokenIndex, tokenCount);
     return node;
   }
 }
@@ -358,7 +368,7 @@ ASTNode* parseExpression(Token* tokens, int* tokenIndex, int tokenCount) {
   ASTNode* leftSide = node;
   // parseVariableOrLiteral(tokens, tokenIndex, tokenCount);
   TokenType _operator = peekToken(tokens, tokenIndex)->type;
-  (*tokenIndex)++;
+  incrementTokenIndex(tokenIndex, tokenCount);
 
   return newBinaryNode(leftSide, _operator,
                        parseExpression(tokens, tokenIndex, tokenCount));
@@ -377,7 +387,7 @@ ASTNode* parseWhileStatement(Token* tokens, int* tokenIndex, int tokenCount) {
   if (peekToken(tokens, tokenIndex)->type != TOKEN_WHILE) {
     return NULL;
   }
-  (*tokenIndex)++;
+  incrementTokenIndex(tokenIndex, tokenCount);
 
   if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
     (void)fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n",
@@ -385,7 +395,7 @@ ASTNode* parseWhileStatement(Token* tokens, int* tokenIndex, int tokenCount) {
     return NULL;
   }
 
-  (*tokenIndex)++;  // Skip left parenthis
+  incrementTokenIndex(tokenIndex, tokenCount);  // Skip left parenthis
 
   condition = parseExpression(tokens, tokenIndex, tokenCount);
 
@@ -395,7 +405,7 @@ ASTNode* parseWhileStatement(Token* tokens, int* tokenIndex, int tokenCount) {
     return NULL;
   }
 
-  (*tokenIndex)++;  // Skip right parenthis
+  incrementTokenIndex(tokenIndex, tokenCount);  // Skip right parenthis
 
   body = parseBlock(tokens, tokenIndex, tokenCount);
 
@@ -414,21 +424,21 @@ ASTNode* parseIfElifElseStatement(Token* tokens, int* tokenIndex,
 
   if (peekToken(tokens, tokenIndex)->type == TOKEN_IF) {
     nodeType = AST_IF_STATEMENT;
-    (*tokenIndex)++;
+    incrementTokenIndex(tokenIndex, tokenCount);
   } else if (peekToken(tokens, tokenIndex)->type == TOKEN_ELSE) {
     DEBUG_PRINT("Else\n\n");
     if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type == TOKEN_IF) {
       nodeType = AST_ELSE_IF_STATEMENT;
       DEBUG_PRINT("Elseif\n\n");
 
-      (*tokenIndex)++;
-      (*tokenIndex)++;
+      incrementTokenIndex(tokenIndex, tokenCount);
+      incrementTokenIndex(tokenIndex, tokenCount);
     } else if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type ==
                TOKEN_LBRACE) {
       DEBUG_PRINT("Elseelse\n\n");
 
       nodeType = AST_ELSE_STATEMENT;
-      (*tokenIndex)++;
+      incrementTokenIndex(tokenIndex, tokenCount);
     } else {
       DEBUG_PRINT("asdfasdfsada\n");
       (void)fprintf(stderr,
@@ -452,7 +462,7 @@ ASTNode* parseIfElifElseStatement(Token* tokens, int* tokenIndex,
                     *tokenIndex);
       return NULL;
     }
-    (*tokenIndex)++;  // Skip left parenthis
+    incrementTokenIndex(tokenIndex, tokenCount);  // Skip left parenthis
 
     condition = parseExpression(tokens, tokenIndex, tokenCount);
 
@@ -462,7 +472,7 @@ ASTNode* parseIfElifElseStatement(Token* tokens, int* tokenIndex,
       return NULL;
     }
 
-    (*tokenIndex)++;  // Skip right parenthis
+    incrementTokenIndex(tokenIndex, tokenCount);  // Skip right parenthis
   }
 
   body = parseBlock(tokens, tokenIndex, tokenCount);
@@ -474,7 +484,7 @@ ASTNode* parseFunctionCall(Token* tokens, int* tokenIndex, int tokenCount) {
   DEBUG_PRINT("Debug: Entering parseFunctionCall at tokenIndex = %d\n",
               *tokenIndex);
   Token* name = peekToken(tokens, tokenIndex);
-  (*tokenIndex)++;
+  incrementTokenIndex(tokenIndex, tokenCount);
   ASTNode** parameters = (ASTNode**)malloc(
       sizeof(ASTNode*) * (10));  // TODO should not be a static number
   int parameterCount = 0;
@@ -484,20 +494,20 @@ ASTNode* parseFunctionCall(Token* tokens, int* tokenIndex, int tokenCount) {
                   *tokenIndex);
     return NULL;
   }
-  (*tokenIndex)++;  // Skip left parenthis
+  incrementTokenIndex(tokenIndex, tokenCount);  // Skip left parenthis
   while (peekToken(tokens, tokenIndex)->type != TOKEN_RPAREN) {
     parameters[parameterCount++] =
         parseVariableOrLiteral(tokens, tokenIndex, tokenCount);
     if (peekToken(tokens, tokenIndex)->type == TOKEN_RPAREN) {
       break;
     } else if (peekToken(tokens, tokenIndex)->type == TOKEN_COMMA) {
-      (*tokenIndex)++;
+      incrementTokenIndex(tokenIndex, tokenCount);
     } else {
       (void)fprintf(stderr, "Error something else expected\n");
       return NULL;
     }
   }
-  (*tokenIndex)++;  // Skip right parenthis
+  incrementTokenIndex(tokenIndex, tokenCount);  // Skip right parenthis
   return newFunctionCallNode(name, parameters, parameterCount);
 }
 
@@ -516,7 +526,7 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
     // Check if there is an assignment following the declaration.
     if (peekToken(tokens, tokenIndex) != NULL &&
         peekToken(tokens, tokenIndex)->type != TOKEN_ASSIGN) {
-      (*tokenIndex)++;
+      incrementTokenIndex(tokenIndex, tokenCount);
 
       DEBUG_PRINT(
           "Debug: No assignment operator found after variable declaration");
@@ -525,13 +535,13 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
     }
 
     // Otherwise, if an assignment operator is present, parse the expression.
-    (*tokenIndex)++;
+    incrementTokenIndex(tokenIndex, tokenCount);
     ASTNode* expression = parseExpression(tokens, tokenIndex, tokenCount);
     if (expression == NULL) {
       (void)fprintf(stderr, "Error: Failed to parse expression\n");
       return NULL;
     }
-    (*tokenIndex)++;  // Skip semicolon
+    incrementTokenIndex(tokenIndex, tokenCount);  // Skip semicolon
 
     return newDeclarationNode(variableDeclarationNode, expression);
   }
@@ -542,21 +552,21 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
 
       DEBUG_PRINT("Debug: Found 'return' keyword\n");
 
-      (*tokenIndex)++;  // Skip "Return"
+      incrementTokenIndex(tokenIndex, tokenCount);  // Skip "Return"
       ASTNode* returnExpression =
           parseExpression(tokens, tokenIndex, tokenCount);
       if (peekToken(tokens, tokenIndex)->type != TOKEN_SEMICOLON) {
         (void)fprintf(stderr, "Error: Expected semicolon after return\n");
         return NULL;
       }
-      (*tokenIndex)++;  // skip semicolon
+      incrementTokenIndex(tokenIndex, tokenCount);  // skip semicolon
 
       return newReturnNode(returnExpression);
     case TOKEN_SEMICOLON:
 
       DEBUG_PRINT("Debug: Found semicolon after statement\n");
 
-      (*tokenIndex)++;
+      incrementTokenIndex(tokenIndex, tokenCount);
       return NULL;
     case TOKEN_IF:
       return parseIfElifElseStatement(tokens, tokenIndex, tokenCount);
@@ -569,8 +579,9 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
       if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type ==
           TOKEN_ASSIGN) {
         ASTNode* varaibleName = newVariableNode(peekToken(tokens, tokenIndex));
-        (*tokenIndex)++;
-        (*tokenIndex)++;  // consume the assign operator
+        incrementTokenIndex(tokenIndex, tokenCount);
+        incrementTokenIndex(tokenIndex,
+                            tokenCount);  // consume the assign operator
         ASTNode* expressionNode =
             parseExpression(tokens, tokenIndex, tokenCount);
         return newDeclarationNode(varaibleName, expressionNode);
@@ -583,7 +594,8 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
       }
     default:
       // Placeholder for other types of statements.
-      (*tokenIndex)++;  // consume the token to avoid infinite loop
+      incrementTokenIndex(
+          tokenIndex, tokenCount);  // consume the token to avoid infinite loop
 
       return NULL;
   }
@@ -605,7 +617,8 @@ ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount) {
   }
 
   // There is a left brace
-  (*tokenIndex)++;  // Move to the next token after '{'
+  incrementTokenIndex(tokenIndex,
+                      tokenCount);  // Move to the next token after '{'
 
   ASTNode* returnExpression = NULL;
 
@@ -621,7 +634,8 @@ ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount) {
     }
   }
 
-  (*tokenIndex)++;  // Move to the next token after '}'
+  incrementTokenIndex(tokenIndex,
+                      tokenCount);  // Move to the next token after '}'
   return newBlockNode(statements, statementCount);
 }
 
@@ -644,14 +658,14 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
   printToken(peekToken(tokens, tokenIndex));
 
   returnType = peekToken(tokens, tokenIndex);
-  (*tokenIndex)++;
+  incrementTokenIndex(tokenIndex, tokenCount);
 
   // Parse function name.
   DEBUG_PRINT("Debug: Parsing function name token at index %d: ", *tokenIndex);
   printToken(peekToken(tokens, tokenIndex));
 
   name = peekToken(tokens, tokenIndex);
-  (*tokenIndex)++;
+  incrementTokenIndex(tokenIndex, tokenCount);
 
   // Ensure a '(' token follows.
   if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
@@ -662,7 +676,7 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
   DEBUG_PRINT("Debug: Found '(' token: ");
   printToken(peekToken(tokens, tokenIndex));
 
-  (*tokenIndex)++;
+  incrementTokenIndex(tokenIndex, tokenCount);
 
   // Parse parameters until a ')' token is found.
   while (peekToken(tokens, tokenIndex)->type != TOKEN_RPAREN) {
@@ -676,7 +690,7 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
       DEBUG_PRINT("Debug: Found comma token between parameters: ");
       printToken(peekToken(tokens, tokenIndex));
 
-      (*tokenIndex)++;
+      incrementTokenIndex(tokenIndex, tokenCount);
     }
   }
 
@@ -684,7 +698,7 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
   DEBUG_PRINT("Debug: Found ')' token for parameter list: ");
   printToken(peekToken(tokens, tokenIndex));
 
-  (*tokenIndex)++;
+  incrementTokenIndex(tokenIndex, tokenCount);
 
   // Check for '{' to begin the function body.
   if (peekToken(tokens, tokenIndex)->type != TOKEN_LBRACE) {
@@ -700,7 +714,7 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
   DEBUG_PRINT("Debug: Found '}' token ending function body: ");
   printToken(peekToken(tokens, tokenIndex));
 
-  //   (*tokenIndex)++;  // Skip the closing brace
+  //   incrementTokenIndex(tokenIndex, tokenCount);  // Skip the closing brace
 
   DEBUG_PRINT("Debug: Finished parsing function '%.*s'\n", name->length,
               name->lexeme);
@@ -934,7 +948,7 @@ void printASTOutput(ASTNode** nodes, int count, int outputToFile) {
     output = fopen("ast.txt", "w");
     if (output == NULL) {
       perror("Error opening file 'ast'");
-      exit(EXIT_FAILURE);
+      pthread_exit(NULL);
     }
   } else {
     output = stdout;
