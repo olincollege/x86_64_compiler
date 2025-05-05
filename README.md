@@ -19,7 +19,11 @@ x86_64_compiler/
 │   ├── parser.c         # Syntax analysis
 │   ├── codegen.c        # Code generation
 │   └── main.c           # Compiler entry point
-├── test/                # Test cases and test harnesses
+├── test/                # Unit Testing
+│   ├── test_lexer.c
+│   ├── test_parser.c
+│   ├── test_codegen.c
+│   ├── test_compiler.c
 ├── CMakeLists.txt       # Build configuration
 ├── .clang-format        # Code formatting rules
 ├── .clang-tidy          # Static analysis configuration
