@@ -18,9 +18,9 @@
 #define DEBUG_PRINT(fmt, ...)
 #endif
 
-const int MAX_LINE_LENGTH = 64;
+const size_t MAX_LINE_LENGTH = 64;
 const int INITIAL_MEMORY_CAPACITY = 8;
-
+const int BUFFER_SIZE = 32;
 const map opConstants[] = {
     {TOKEN_PLUS, "add"},
     {TOKEN_MINUS, "sub"},
@@ -32,21 +32,23 @@ const map lowLinuxRegisters[] = {
     {1, "edi"}, {2, "esi"}, {3, "edx"}, {4, "ecx"}, {5, "e8d"}, {6, "e9d"},
 };
 
-const char* get_op_name(TokenType op) {
+const char* get_op_name(TokenType operator) {
   for (int i = 0; opConstants[i].name != NULL; i++) {
-    if (opConstants[i].symbol == op) return opConstants[i].name;
+    if (opConstants[i].symbol == operator) {
+      return opConstants[i].name;
+    }
   }
   return "UNKNOWN_OP";
 }
-const char* getLowLinuxRegistersName(int i) {
-  return lowLinuxRegisters[i].name;
+const char* getLowLinuxRegistersName(int index) {
+  return lowLinuxRegisters[index].name;
 }
 
 void initMemory(memory* mem) {
   mem->variableCapacity = INITIAL_MEMORY_CAPACITY;
 
-  mem->variables = (variableInMemory**)malloc(sizeof(variableInMemory*) *
-                                              mem->variableCapacity);
+  mem->variables = (variableInMemory**)malloc(
+      sizeof(variableInMemory*) * (unsigned long)mem->variableCapacity);
   mem->numberOfVariables = 0;
   mem->nextStartingLocation = -4;  // Start at memory address 16 (2^4)
 }
@@ -64,8 +66,13 @@ void addVariableToMemory(memory* mem, char* variableName) {
     DEBUG_PRINT("Memory full! Increasing capacity to %d\n",
                 mem->variableCapacity * 2);
     mem->variableCapacity *= 2;
-    mem->variables = (variableInMemory**)realloc(
-        mem->variables, sizeof(variableInMemory*) * mem->variableCapacity);
+    variableInMemory** newLoc = (variableInMemory**)realloc(
+        (void*)mem->variables,
+        sizeof(variableInMemory*) * (long unsigned int)mem->variableCapacity);
+    if (newLoc == NULL) {
+      printf("Error reallocating memory\n");
+    }
+    mem->variables = newLoc;
   }
   mem->variables[mem->numberOfVariables] = newVariable;
   mem->numberOfVariables++;
@@ -80,7 +87,7 @@ int get_variable_memory_location(memory* mem, const char* lexeme, int length) {
   for (int i = 0; i < mem->numberOfVariables; i++) {
     char* varName = mem->variables[i]->variableName;
     int varLen = (int)strlen(varName);
-    int cmpResult = strncmp(varName, lexeme, length);
+    int cmpResult = strncmp(varName, lexeme, (unsigned long)length);
 
     DEBUG_PRINT("  Checking [%d]: name = '%s', strlen = %d, strncmp = %d\n", i,
                 varName, varLen, cmpResult);
@@ -99,10 +106,10 @@ int get_variable_memory_location(memory* mem, const char* lexeme, int length) {
 char* get_variable_memory_location_with_pointer(memory* mem, const char* lexeme,
                                                 int length) {
   int offset = get_variable_memory_location(mem, lexeme, length);
-  char* buffer = malloc(32);  // plenty of room for [rbp-<offset>]
+  char* buffer =
+      malloc((size_t)BUFFER_SIZE);  // plenty of room for [rbp-<offset>]
   if (!buffer) {
-    perror("malloc failed");
-    exit(1);
+    error_and_exit("malloc failed");
   }
   if (offset > 0) {
     sprintf(buffer, "[rbp+%d]", offset);  // format the result into the buffer
@@ -118,15 +125,23 @@ void initListOfInstructions(listOfX86Instructions* list) {
   //   list = malloc(sizeof(listOfX86Instructions));
   list->instructionCapacity = 2;
   list->instructionCount = 0;
-  list->instructions =
-      (char**)malloc(sizeof(char*) * list->instructionCapacity);
+  list->instructions = (char**)malloc(
+      sizeof(char*) * (long unsigned int)list->instructionCapacity);
 }
 
 void addInstruction(listOfX86Instructions* list, char* instruction) {
   if (list->instructionCount == list->instructionCapacity) {
     list->instructionCapacity *= 2;
-    list->instructions = (char**)realloc(
-        list->instructions, sizeof(char*) * list->instructionCapacity);
+    char** newInstructionLoc = (char**)realloc(
+        (void*)list->instructions,
+        sizeof(char*) * (long unsigned int)list->instructionCapacity);
+    if (newInstructionLoc == NULL) {
+      error_and_exit("realloc failed");
+    }
+    list->instructions = newInstructionLoc;
+  }
+  if (list->instructions == NULL) {
+    error_and_exit("list is NULL");
   }
   list->instructions[list->instructionCount] = instruction;
   list->instructionCount++;
@@ -141,6 +156,8 @@ void ASTVariableLiteralOrBinaryToX86(ASTNode* node, listOfX86Instructions* list,
     ASTVariableOrLiteralNodeToX86(node, list, mem);
   } else if (node->type == AST_FUNCTION_CALL) {
     ASTFunctionCallNodeToX86(node, list, mem);
+  } else {
+    return;
   }
 }
 
@@ -151,8 +168,7 @@ void ASTVariableOrLiteralNodeToX86(ASTNode* node, listOfX86Instructions* list,
     DEBUG_PRINT("IS Int Literal");
     char* newInstruction = malloc(MAX_LINE_LENGTH);
     if (!newInstruction) {
-      perror("malloc failed");
-      exit(1);
+      error_and_exit("malloc failed");
     }
     sprintf(newInstruction, "        mov     eax, %d",
             node->as.intLiteral.intLiteral);
@@ -162,10 +178,9 @@ void ASTVariableOrLiteralNodeToX86(ASTNode* node, listOfX86Instructions* list,
         mem, node->as.variableName->lexeme, node->as.variableName->length);
 
     char* newInstruction =
-        malloc((size_t)MAX_LINE_LENGTH);  // enough for full instruction line
+        malloc(MAX_LINE_LENGTH);  // enough for full instruction line
     if (!newInstruction) {
-      perror("malloc failed");
-      exit(1);
+      error_and_exit("malloc failed");
     }
     sprintf(newInstruction, "        mov     eax, DWORD PTR %s", operand);
     free(operand);  // don't forget to free the operand string
@@ -182,8 +197,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
     ASTNode* rightNode = node->as.binary.right;
     char* newInstruction = malloc(MAX_LINE_LENGTH);
     if (!newInstruction) {
-      perror("malloc failed");
-      exit(1);
+      error_and_exit("malloc failed");
     }
     sprintf(newInstruction, "        mov     edx, %d",
             rightNode->as.intLiteral.intLiteral);
@@ -197,8 +211,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
     char* newInstruction =
         malloc(MAX_LINE_LENGTH);  // enough for full instruction line
     if (!newInstruction) {
-      perror("malloc failed");
-      exit(1);
+      error_and_exit("malloc failed");
     }
     sprintf(newInstruction, "        mov     edx, DWORD PTR %s", operand);
     free(operand);  // don't forget to free the operand string
@@ -211,8 +224,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
     ASTNode* leftNode = node->as.binary.left;
     char* newInstruction = malloc(MAX_LINE_LENGTH);
     if (!newInstruction) {
-      perror("malloc failed");
-      exit(1);
+      error_and_exit("malloc failed");
     }
     sprintf(newInstruction, "        mov     eax, %d",
             leftNode->as.intLiteral.intLiteral);
@@ -227,8 +239,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
     char* newInstruction =
         malloc(MAX_LINE_LENGTH);  // enough for full instruction line
     if (!newInstruction) {
-      perror("malloc failed");
-      exit(1);
+      error_and_exit("malloc failed");
     }
     sprintf(newInstruction, "        mov     eax, DWORD PTR %s", operand);
     free(operand);  // don't forget to free the operand string
@@ -239,8 +250,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
     char* newInstruction =
         malloc(MAX_LINE_LENGTH);  // enough for full instruction line
     if (!newInstruction) {
-      perror("malloc failed");
-      exit(1);
+      error_and_exit("malloc failed");
     }
 
     sprintf(newInstruction, "        %s     edx, eax",
@@ -251,8 +261,7 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
     char* newInstruction =
         malloc(MAX_LINE_LENGTH);  // enough for full instruction line
     if (!newInstruction) {
-      perror("malloc failed");
-      exit(1);
+      error_and_exit("malloc failed");
     }
     sprintf(newInstruction, "        %s     eax, edx",
             get_op_name(node->as.binary._operator));
@@ -263,14 +272,14 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
 
 void ASTVariableDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
                                      memory* mem) {
-  ;
-  char* variableName = malloc(node->as.variable_declaration.name->length + 1);
+  char* variableName =
+      malloc((unsigned long)node->as.variable_declaration.name->length +
+             (unsigned long)1);
   if (!variableName) {
-    perror("malloc failed");
-    exit(1);
+    error_and_exit("malloc failed");
   }
   strncpy(variableName, node->as.variable_declaration.name->lexeme,
-          node->as.variable_declaration.name->length);
+          (size_t)node->as.variable_declaration.name->length);
   variableName[node->as.variable_declaration.name->length] = '\0';
   addVariableToMemory(mem, variableName);
 }
@@ -278,7 +287,7 @@ void ASTVariableDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
 void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
                              memory* mem) {
   DEBUG_PRINT("In ASTDeclarationNodeToX86 function\n");
-  char* variableLocationString;
+  char* variableLocationString = NULL;
   if (node->as.declaration.variable->type == AST_VARIABLE_DECLARATION) {
     ASTVariableDeclarationNodeToX86(node->as.declaration.variable, list, mem);
     variableLocationString = get_variable_memory_location_with_pointer(
@@ -290,8 +299,7 @@ void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
         mem, node->as.declaration.variable->as.variableName->lexeme,
         node->as.declaration.variable->as.variableName->length);
   } else {
-    printf("Error: Not a variable node\n");
-    exit(1);
+    error_and_exit("Error: Not a variable node\n");
   }
 
   ASTVariableLiteralOrBinaryToX86(node->as.declaration.expression, list, mem);
@@ -300,8 +308,7 @@ void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
   char* newInstruction =
       malloc(MAX_LINE_LENGTH);  // enough for full instruction line
   if (!newInstruction) {
-    perror("malloc failed");
-    exit(1);
+    error_and_exit("malloc failed");
   }
 
   sprintf(newInstruction, "        mov     DWORD PTR %s, eax",
@@ -315,7 +322,7 @@ void ASTReturnNodeToX86(ASTNode* node, listOfX86Instructions* list,
   DEBUG_PRINT("In Return Node\n");
 
   ASTStatementNodeToX86(node->as._return.expression, list, mem);
-  char* newInstruction;  //= malloc(MAX_LINE_LENGTH);
+  char* newInstruction = NULL;  //= malloc(MAX_LINE_LENGTH);
 
   newInstruction = "        pop     rbp";
   addInstruction(list, newInstruction);
@@ -385,8 +392,7 @@ void ASTFunctionCallNodeToX86(ASTNode* node, listOfX86Instructions* list,
     DEBUG_PRINT("1\n");
     char* newInstruction = malloc(MAX_LINE_LENGTH);
     if (!newInstruction) {
-      perror("malloc failed");
-      exit(1);
+      error_and_exit("malloc failed");
     }
     sprintf(newInstruction, "        mov     %s, eax",
             getLowLinuxRegistersName(i));
@@ -433,8 +439,7 @@ void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
   DEBUG_PRINT("In function node %.*s\n", node->as.function.name->length,
               node->as.function.name->lexeme);
   if (node->type != AST_FUNCTION_DECLARATION) {
-    printf("Error: Not a function node\n");
-    exit(1);
+    error_and_exit("Error: Not a function node\n");
   }
   memory* mem = malloc(sizeof(memory));
   initMemory(mem);
@@ -445,8 +450,7 @@ void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
     char* newInstruction = malloc(MAX_LINE_LENGTH);
 
     if (!newInstruction) {
-      perror("malloc failed");
-      exit(1);
+      error_and_exit("malloc failed");
     }
 
     sprintf(newInstruction, "%.*s:", node->as.function.name->length,
@@ -491,8 +495,7 @@ void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
         node->as.function.parameters[i]->as.variable_declaration.name->length +
         1);
     if (!variableName) {
-      perror("malloc failed");
-      exit(1);
+      error_and_exit("malloc failed");
     }
     strncpy(
         variableName,
@@ -512,12 +515,6 @@ void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
   }
 
   ASTBlockNodeToX86(node->as.function.statements, list, mem);
-
-  //   newInstruction = "        pop     rbp";
-  //   addInstruction(list, newInstruction);
-  //   newInstruction = "        ret";
-  //   addInstruction(list, newInstruction);
-  return;
 }
 
 void ListOfASTFunctionNodesToX86(ASTNode** nodes, listOfX86Instructions* list,
@@ -550,7 +547,7 @@ void ListOfASTFunctionNodesToX86(ASTNode** nodes, listOfX86Instructions* list,
 #include <stdio.h>
 
 void printInstructions(listOfX86Instructions* list) {
-  FILE* file = fopen("chat.s", "w");  // Overwrite/clear the file
+  FILE* file = fopen("chat.s", "we");  // Overwrite/clear the file
   if (!file) {
     perror("Failed to open chat.s for writing");
     return;
@@ -561,7 +558,7 @@ void printInstructions(listOfX86Instructions* list) {
     fprintf(file, "%s\n", list->instructions[i]);
   }
 
-  fclose(file);
+  (void)fclose(file);
 }
 
 void printMemory(memory* mem) {
@@ -577,8 +574,7 @@ void printMemory(memory* mem) {
 
  char* variableName = malloc(node->as.variable_declaration.name->length + 1);
   if (!variableName) {
-    perror("malloc failed");
-    exit(1);
+    error_and_exit("malloc failed");
   }
   strncpy(variableName, node->as.variable_declaration.name->lexeme,
           node->as.variable_declaration.name->length);

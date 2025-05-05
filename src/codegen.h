@@ -337,7 +337,7 @@ Args:
 Returns:
   String with x86 operation name, or NULL if unknown.
 */
-const char* get_op_name(TokenType op);
+const char* get_op_name(TokenType operator);
 
 /*
 Returns the name of a general-purpose Linux x86 register.
@@ -350,4 +350,4 @@ Args:
 Returns:
   Name of the corresponding register (e.g., "edi", "esi", etc.).
 */
-const char* getLowLinuxRegistersName(int i);
+const char* getLowLinuxRegistersName(int index);
