@@ -14,6 +14,8 @@ foo:
         mov     edx, DWORD PTR [rbp-8]
         mov     eax, DWORD PTR [rbp-4]
         add     eax, edx
+        mov     DWORD PTR [rbp-12], eax
+        mov     eax, DWORD PTR [rbp-12]
         pop     rbp
         ret
 main:
@@ -24,5 +26,7 @@ main:
         mov     eax, 3
         mov     esi, eax
         call    foo
+        mov     DWORD PTR [rbp-4], eax
+        mov     eax, DWORD PTR [rbp-4]
         pop     rbp
         ret

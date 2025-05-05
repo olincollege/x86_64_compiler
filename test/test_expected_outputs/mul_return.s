@@ -11,6 +11,8 @@ main:
         mov     rbp, rsp
         mov     edx, 3
         mov     eax, 7
-        imul    eax, edx
+        imul     eax, edx
+        mov     DWORD PTR [rbp-4], eax
+        mov     eax, DWORD PTR [rbp-4]
         pop     rbp
         ret

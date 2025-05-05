@@ -12,5 +12,7 @@ main:
         mov     edx, 2
         mov     eax, 6
         add     eax, edx
+        mov     DWORD PTR [rbp-4], eax
+        mov     eax, DWORD PTR [rbp-4]
         pop     rbp
         ret
