@@ -195,7 +195,7 @@ ast_node* new_declaration_node(ast_node* variable_declaration,
   return node;
 }
 
-ast_node* new_if_elif_else_node(ASTNodeType type, ast_node* condition,
+ast_node* new_if_elif_else_node(ast_node_type type, ast_node* condition,
                                 ast_node* body) {
   DEBUG_PRINT("Debug: Creating new If/Elif/Else node.\n");
 
@@ -437,16 +437,16 @@ ast_node* parse_if_elif_else_statement(Token* tokens, int* token_index,
   ast_node* condition = NULL;
   ast_node* body = NULL;
 
-  ASTNodeType nodeType = AST_INVALID;
+  ast_node_type node_type = AST_INVALID;
 
   if (peek_token(tokens, token_index)->type == TOKEN_IF) {
-    nodeType = AST_IF_STATEMENT;
+    node_type = AST_IF_STATEMENT;
     (*token_index)++;
   } else if (peek_token(tokens, token_index)->type == TOKEN_ELSE) {
     DEBUG_PRINT("Else\n\n");
     if (peek_ahead_token(tokens, token_index, 1, token_count)->type ==
         TOKEN_IF) {
-      nodeType = AST_ELSE_IF_STATEMENT;
+      node_type = AST_ELSE_IF_STATEMENT;
       DEBUG_PRINT("Elseif\n\n");
 
       (*token_index)++;
@@ -455,7 +455,7 @@ ast_node* parse_if_elif_else_statement(Token* tokens, int* token_index,
                TOKEN_LBRACE) {
       DEBUG_PRINT("Elseelse\n\n");
 
-      nodeType = AST_ELSE_STATEMENT;
+      node_type = AST_ELSE_STATEMENT;
       (*token_index)++;
     } else {
       DEBUG_PRINT("asdfasdfsada\n");
@@ -474,7 +474,7 @@ ast_node* parse_if_elif_else_statement(Token* tokens, int* token_index,
   }
 
   // Condition only for if or else if, not else
-  if (nodeType != AST_ELSE_STATEMENT) {
+  if (node_type != AST_ELSE_STATEMENT) {
     if (peek_token(tokens, token_index)->type != TOKEN_LPAREN) {
       (void)fprintf(stderr, "Error: Expected '(' at token_index = %d\n",
                     *token_index);
@@ -495,7 +495,7 @@ ast_node* parse_if_elif_else_statement(Token* tokens, int* token_index,
 
   body = parse_block(tokens, token_index, token_count);
 
-  return new_if_elif_else_node(nodeType, condition, body);
+  return new_if_elif_else_node(node_type, condition, body);
 }
 
 ast_node* parse_function_call(Token* tokens, int* token_index,
@@ -535,9 +535,9 @@ ast_node* parse_statement(Token* tokens, int* token_index, int token_count) {
 
   // If the token represents the start of a variable declaration:
   if (is_token_data_type(peek_token(tokens, token_index))) {
-    ast_node* variableDeclarationNode =
+    ast_node* variable_declaration_node =
         parse_variable_declaration(tokens, token_index, token_count);
-    if (variableDeclarationNode == NULL) {
+    if (variable_declaration_node == NULL) {
       error_and_exit("Error: Failed to parse variable declaration\n");
     }
     // Check if there is an assignment following the declaration.
@@ -548,7 +548,7 @@ ast_node* parse_statement(Token* tokens, int* token_index, int token_count) {
       DEBUG_PRINT(
           "Debug: No assignment operator found after variable declaration");
 
-      return variableDeclarationNode;
+      return variable_declaration_node;
     }
 
     // Otherwise, if an assignment operator is present, parse the expression.
@@ -559,7 +559,7 @@ ast_node* parse_statement(Token* tokens, int* token_index, int token_count) {
     }
     (*token_index)++;  // Skip semicolon
 
-    return new_declaration_node(variableDeclarationNode, expression);
+    return new_declaration_node(variable_declaration_node, expression);
   }
 
   // Case below
@@ -569,14 +569,14 @@ ast_node* parse_statement(Token* tokens, int* token_index, int token_count) {
       DEBUG_PRINT("Debug: Found 'return' keyword\n");
 
       (*token_index)++;  // Skip "Return"
-      ast_node* returnExpression =
+      ast_node* return_expression =
           parse_expression(tokens, token_index, token_count);
       if (peek_token(tokens, token_index)->type != TOKEN_SEMICOLON) {
         error_and_exit("Error: Expected semicolon after return\n");
       }
       (*token_index)++;  // skip semicolon
 
-      return new_return_node(returnExpression);
+      return new_return_node(return_expression);
     case TOKEN_SEMICOLON:
 
       DEBUG_PRINT("Debug: Found semicolon after statement\n");
@@ -592,13 +592,13 @@ ast_node* parse_statement(Token* tokens, int* token_index, int token_count) {
       // TODO (Nividh): Maybe switch case for the next part
       if (peek_ahead_token(tokens, token_index, 1, token_count)->type ==
           TOKEN_ASSIGN) {
-        ast_node* varaibleName =
+        ast_node* varaible_name =
             new_variable_node(peek_token(tokens, token_index));
         (*token_index)++;
         (*token_index)++;  // consume the assign operator
-        ast_node* expressionNode =
+        ast_node* expression_node =
             parse_expression(tokens, token_index, token_count);
-        return new_declaration_node(varaibleName, expressionNode);
+        return new_declaration_node(varaible_name, expression_node);
         // new_declaration_node()
       } else if (peek_ahead_token(tokens, token_index, 1, token_count)->type ==
                  TOKEN_LPAREN) {
@@ -624,9 +624,9 @@ ast_node* parse_block(Token* tokens, int* token_index, int token_count) {
 
   if (peek_token(tokens, token_index)->type != TOKEN_LBRACE) {
     // There isn't a left brace so only parse next statement
-    ast_node* newNode = parse_statement(tokens, token_index, token_count);
-    if (newNode != NULL) {
-      statements[statement_count++] = newNode;
+    ast_node* new_node = parse_statement(tokens, token_index, token_count);
+    if (new_node != NULL) {
+      statements[statement_count++] = new_node;
     }
     return new_block_node(statements, statement_count);
   }
@@ -640,9 +640,9 @@ ast_node* parse_block(Token* tokens, int* token_index, int token_count) {
                 statement_count + 1, *token_index);
     print_token(peek_token(tokens, token_index));
 
-    ast_node* newNode = parse_statement(tokens, token_index, token_count);
-    if (newNode != NULL) {
-      statements[statement_count++] = newNode;
+    ast_node* new_node = parse_statement(tokens, token_index, token_count);
+    if (new_node != NULL) {
+      statements[statement_count++] = new_node;
     }
   }
 
@@ -741,7 +741,7 @@ ast_node** parse_file(Token* tokens, int token_count) {
   for (int i = 0; i < MAX_NUMBER_OF_FUNCTIONS; i++) {
     ast_nodes[i] = NULL;
   }
-  int astNodesIndex = 0;
+  int ast_nodes_index = 0;
 
   // Loop until end-of-file token is reached.
   while (token_index < token_count) {
@@ -760,7 +760,7 @@ ast_node** parse_file(Token* tokens, int token_count) {
           DEBUG_PRINT("Debug: Parsing function starting at token_index %d\n",
                       token_index);
 
-          ast_nodes[astNodesIndex++] =
+          ast_nodes[ast_nodes_index++] =
               parse_function(tokens, &token_index, token_count);
           continue;
         }

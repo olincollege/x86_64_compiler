@@ -23,10 +23,10 @@ typedef enum {
   AST_ELSE_STATEMENT,
   AST_INVALID,
   // Add more as needed...
-} ASTNodeType;
+} ast_node_type;
 
 typedef struct ast_node {
-  ASTNodeType type;  // Helps identify which kind of node this is.
+  ast_node_type type;  // Helps identify which kind of node this is.
   // int line;         // Optional: storing line number for debugging or error
   // messages.
   union {
@@ -325,7 +325,7 @@ Args:
 Returns:
   ast_node* representing the conditional.
 */
-ast_node* new_if_elif_else_node(ASTNodeType type, ast_node* condition,
+ast_node* new_if_elif_else_node(ast_node_type type, ast_node* condition,
                                 ast_node* body);
 
 /*
