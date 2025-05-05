@@ -1,14 +1,11 @@
-int test(int a, int b) {
-  int d = 12 ;//- 3;
-  int c2;
-  return d;
+int test(int arg1, int arg2) {
+  int retValue = 12 - arg1;  //- 3;
+  int noUseValue = arg2;
+  return retValue;
 }
 
 int main() {
-  int d = 23 - 1;
-  int f = 32 - d;
-   int c = 0;
-   int a = test(1, 2);
-   return test(1, 2);
-   return a;
+  int var1 = 32 - 1;
+  int var2 = 32 - var1;
+  return test(var2, 2);
 }

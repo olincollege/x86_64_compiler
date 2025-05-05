@@ -6,8 +6,6 @@
 
 #include "../src/lexer.h"
 
-// NOLINTBEGIN(*-magic-numbers)
-
 // helper function to read contents of file
 static char* read_file(const char* filepath) {
   FILE* file = fopen(filepath, "re");
@@ -149,7 +147,8 @@ Test(lexer, identifier_with_underscore_and_digits_file) {
 // // Test that verifies skipping a single-line comment via file input
 // Test(lexer, comment_skipping_file) {
 //   char* source = read_file(
-//       CMAKE_SOURCE_DIR "/test/test_inputs/lexer_inputs/comment_skipping.txt");
+//       CMAKE_SOURCE_DIR
+//       "/test/test_inputs/lexer_inputs/comment_skipping.txt");
 //   Lexer lexer;
 //   initLexer(&lexer, source);
 
@@ -208,7 +207,8 @@ Test(lexer, multiline_tokens_and_line_count_file) {
 // // Test that verifies mixed comments + tokens via file input
 // Test(lexer, multiple_comments_and_tokens_file) {
 //   char* source = read_file(
-//       CMAKE_SOURCE_DIR "/test/test_inputs/lexer_inputs/multiple_com_tok.txt");
+//       CMAKE_SOURCE_DIR
+//       "/test/test_inputs/lexer_inputs/multiple_com_tok.txt");
 //   Lexer lexer;
 //   initLexer(&lexer, source);
 
@@ -237,5 +237,3 @@ Test(lexer, keyword_as_prefix_identifier_file) {
 
   free(source);
 }
-
-// NOLINTEND(*-magic-numbers)

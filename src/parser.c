@@ -1,6 +1,5 @@
 #include "parser.h"
 
-#include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +8,7 @@
 #include "lexer.h"
 
 // ASTNode constructors with added debug prints.
-#define DEBUG
+// #define DEBUG
 #ifdef DEBUG
 #define DEBUG_PRINT(fmt, ...) \
   fprintf(stderr, "[DEBUG] %s:%d: " fmt "\n", __func__, __LINE__, ##__VA_ARGS__)
@@ -208,13 +207,14 @@ int isTokenDataType(Token* token) {
   return 0;
 }
 
-Token* peekToken(Token* tokens, int* index) {
+Token* peekToken(Token* tokens, const int* index) {
   // DEBUG_PRINT("Debug: peekToken at index %d\n", *index);
 
   return &tokens[(*index)];
 }
 
-Token* peekAheadToken(Token* tokens, int* index, int forward, int tokenCount) {
+Token* peekAheadToken(Token* tokens, const int* index, int forward,
+                      int tokenCount) {
   DEBUG_PRINT("Debug: peekAheadToken at index %d and forward = %d\n", *index,
               forward);
   printToken(&tokens[(*index) + forward]);
@@ -469,10 +469,10 @@ ASTNode* parseFunctionCall(Token* tokens, int* tokenIndex, int tokenCount) {
               *tokenIndex);
   Token* name = peekToken(tokens, tokenIndex);
   (*tokenIndex)++;
-  ASTNode** parameters =
-      malloc(sizeof(ASTNode*) * (10));  // TODO should not be a static number
+  ASTNode** parameters = (ASTNode**)malloc(
+      sizeof(ASTNode*) * (10));  // TODO should not be a static number
   int parameterCount = 0;
-  ASTNode* body;
+  ASTNode* body = NULL;
   if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
     fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n", *tokenIndex);
     return NULL;
@@ -583,7 +583,7 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
 ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount) {
   DEBUG_PRINT("Debug: Entering parseBlock at tokenIndex = %d\n", *tokenIndex);
 
-  ASTNode** statements = malloc(100 * sizeof(ASTNode*));
+  ASTNode** statements = (ASTNode**)malloc(100 * sizeof(ASTNode*));
   int statementCount = 0;
 
   if (peekToken(tokens, tokenIndex)->type != TOKEN_LBRACE) {
@@ -620,14 +620,13 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
   DEBUG_PRINT("Debug: Entering parseFunction at tokenIndex = %d\n",
               *tokenIndex);
 
-  Token* name;
-  Token* returnType;
-  ASTNode** parameters = malloc(100 * sizeof(ASTNode*));
-  ASTNode* statements;
+  Token* name = NULL;
+  Token* returnType = NULL;
+  ASTNode** parameters = (ASTNode**)malloc(100 * sizeof(ASTNode*));
+  ASTNode* statements = NULL;
   ASTNode* returnStatement = NULL;
 
   int parameterCount = 0;
-  int statementCount = 0;
 
   // Parse return type.
   DEBUG_PRINT("Debug: Parsing function return type token at index %d: ",
@@ -704,7 +703,7 @@ ASTNode** parseFile(Token* tokens, int tokenCount) {
   DEBUG_PRINT("Debug: Entering parseFile. Total tokens: %d\n", tokenCount);
 
   int tokenIndex = 0;
-  ASTNode** astNodes = malloc(100 * sizeof(ASTNode*));
+  ASTNode** astNodes = (ASTNode**)malloc(100 * sizeof(ASTNode*));
   for (int i = 0; i < 100; i++) {
     astNodes[i] = NULL;
   }
