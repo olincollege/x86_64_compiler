@@ -144,7 +144,7 @@ Args:
 Returns:
   void
 */
-void printAST(FILE* output, ASTNode* node, int indent);
+void printAST(FILE* file, ASTNode* node, int indent);
 
 /*
 Prints an array of AST nodes to a file.
