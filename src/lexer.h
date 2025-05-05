@@ -49,6 +49,16 @@ typedef struct {
 } Lexer;
 
 /*
+Exits a code with the error message
+
+Args:
+  error_msg: Error message to be displayed.
+Returns:
+  void
+*/
+void error_and_exit(const char* error_msg);
+
+/*
 Determines the token type of a given identifier string.
 
 Used to distinguish keywords (like `if`, `return`) from general identifiers.

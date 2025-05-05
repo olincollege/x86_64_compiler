@@ -21,6 +21,7 @@ typedef enum {
   AST_FOR_STATEMENT,
   AST_ELSE_IF_STATEMENT,
   AST_ELSE_STATEMENT,
+  AST_INVALID,
   // Add more as needed...
 } ASTNodeType;
 
