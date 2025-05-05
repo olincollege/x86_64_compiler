@@ -1,6 +1,5 @@
 // NOLINTBEGIN(misc-include-cleaner)
-// we checked to make sure only criterian related warnings were left
-// NOLINTBEGIN(*-magic-numbers)
+// we checked to make sure only criterion related warnings were left
 
 #include <criterion/criterion.h>
 #include <criterion/new/assert.h>
@@ -31,12 +30,13 @@ static char* read_file(const char* path) {
   return buf;
 }
 
+enum { CAPACITY = 128 };
 // tokenize entire source into a dynamically sized array of Tokens
 static Token* lex_all(const char* src, int* out_count) {
   Lexer lex;
   initLexer(&lex, src);
 
-  int capacity = 128;
+  int capacity = CAPACITY;
   int count = 0;
   Token* toks = malloc(sizeof(Token) * (size_t)capacity);
   cr_assert_not_null(toks);
@@ -70,6 +70,7 @@ static int ast_count(ASTNode** ast) {
   return node;
 }
 
+// Test 1: Function with nothing else
 Test(parser, empty_function) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/parser_inputs/empty_function.c");
@@ -91,6 +92,7 @@ Test(parser, empty_function) {
   free(toks);
 }
 
+// Test 2: Just returning an int literal
 Test(parser, simple_return) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/parser_inputs/simple_return.c");
@@ -115,6 +117,9 @@ Test(parser, simple_return) {
   free(toks);
 }
 
+enum { FINAL_IDX = 7 };
+
+// Test 3: While and if-else if-else
 Test(parser, complex_main) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/parser_inputs/complex_main.c");
@@ -137,7 +142,7 @@ Test(parser, complex_main) {
   cr_expect_eq(body->as.block.statements[6]->type, AST_ELSE_STATEMENT);
 
   // final return 0
-  ASTNode* last = body->as.block.statements[7];
+  ASTNode* last = body->as.block.statements[FINAL_IDX];
   cr_expect_eq(last->type, AST_RETURN);
   cr_expect_eq(last->as._return.expression->as.intLiteral.intLiteral, 0);
 
@@ -325,5 +330,4 @@ Test(parser, void_function) {
   free(toks);
 }
 
-// NOLINTEND(*-magic-numbers)
 // NOLINTEND(misc-include-cleaner)

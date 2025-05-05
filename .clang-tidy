@@ -1,7 +1,8 @@
 ---
 Checks: >
   *, -llvmlibc-restrict-system-libc-headers, -llvm-header-guard, -altera*,
-  -cert-*-cpp,
+  -cert-*-cpp, -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+
 HeaderFilterRegex: "."
 FormatStyle: google
 CheckOptions:

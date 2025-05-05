@@ -1,6 +1,5 @@
 // NOLINTBEGIN(misc-include-cleaner)
-// we checked to make sure only criterian related warnings were left
-// NOLINTBEGIN(*-magic-numbers)
+// we checked to make sure only criterion related warnings were left
 #include <criterion/criterion.h>
 #include <criterion/new/assert.h>
 #include <stdio.h>
@@ -31,12 +30,13 @@ static char* read_file(const char* path) {
   return buf;
 }
 
+enum { CAPACITY = 128 };
 // tokenize entire source into a dynamically sized array of Tokens
 static Token* lex_all(const char* src, int* out_count) {
   Lexer lex;
   initLexer(&lex, src);
 
-  int capacity = 128;
+  int capacity = CAPACITY;
   int count = 0;
   Token* toks = malloc(sizeof(Token) * (size_t)capacity);
   cr_assert_not_null(toks);
@@ -397,5 +397,4 @@ Test(codegen, decl_and_return) {
   free(toks);
 }
 
-// NOLINTEND(*-magic-numbers)
 // NOLINTEND(misc-include-cleaner)
