@@ -35,8 +35,8 @@ Test(lexer, if_whitespace) {
   char* source = read_file(CMAKE_SOURCE_DIR
                            "/test/test_inputs/lexer_inputs/if_whitespace.txt");
   Lexer lexer;
-  initLexer(&lexer, source);
-  Token token = getNextToken(&lexer);
+  init_lexer(&lexer, source);
+  Token token = get_next_token(&lexer);
   cr_assert_eq(token.type, TOKEN_IF);
   cr_assert(memcmp(token.lexeme, "if", (size_t)token.length) == 0,
             "Expected token lexeme to be \"if\"");
@@ -49,8 +49,8 @@ Test(lexer, not_equals) {
   char* source = read_file(CMAKE_SOURCE_DIR
                            "/test/test_inputs/lexer_inputs/not_equals.txt");
   Lexer lexer;
-  initLexer(&lexer, source);
-  Token token = getNextToken(&lexer);
+  init_lexer(&lexer, source);
+  Token token = get_next_token(&lexer);
   cr_assert_eq(token.type, TOKEN_NEQ);
   cr_assert(memcmp(token.lexeme, "!=", (size_t)token.length) == 0,
             "Expected token lexeme to be \"!=\"");
@@ -63,8 +63,8 @@ Test(lexer, int_literal) {
   char* source = read_file(CMAKE_SOURCE_DIR
                            "/test/test_inputs/lexer_inputs/int_literal.txt");
   Lexer lexer;
-  initLexer(&lexer, source);
-  Token token = getNextToken(&lexer);
+  init_lexer(&lexer, source);
+  Token token = get_next_token(&lexer);
   cr_assert_eq(token.type, TOKEN_INT_LITERAL);
   cr_assert(memcmp(token.lexeme, "12345", (size_t)token.length) == 0,
             "Expected token lexeme to be \"12345\"");
@@ -77,8 +77,8 @@ Test(lexer, semicolon) {
   char* source = read_file(CMAKE_SOURCE_DIR
                            "/test/test_inputs/lexer_inputs/semicolon.txt");
   Lexer lexer;
-  initLexer(&lexer, source);
-  Token token = getNextToken(&lexer);
+  init_lexer(&lexer, source);
+  Token token = get_next_token(&lexer);
   cr_assert_eq(token.type, TOKEN_SEMICOLON);
   cr_assert(memcmp(token.lexeme, ";", (size_t)token.length) == 0,
             "Expected token lexeme to be \";\"");
@@ -91,24 +91,24 @@ Test(lexer, multiple_tokens_sequence_file) {
   char* source = read_file(CMAKE_SOURCE_DIR
                            "/test/test_inputs/lexer_inputs/multi_tok_seq.txt");
   Lexer lexer;
-  initLexer(&lexer, source);
+  init_lexer(&lexer, source);
 
-  Token token1 = getNextToken(&lexer);  // int
+  Token token1 = get_next_token(&lexer);  // int
   cr_assert_eq(token1.type, TOKEN_INT_TYPE);
 
-  Token token2 = getNextToken(&lexer);  // x
+  Token token2 = get_next_token(&lexer);  // x
   cr_assert_eq(token2.type, TOKEN_IDENTIFIER);
 
-  Token token3 = getNextToken(&lexer);  // =
+  Token token3 = get_next_token(&lexer);  // =
   cr_assert_eq(token3.type, TOKEN_ASSIGN);
 
-  Token token4 = getNextToken(&lexer);  // 42
+  Token token4 = get_next_token(&lexer);  // 42
   cr_assert_eq(token4.type, TOKEN_INT_LITERAL);
 
-  Token token5 = getNextToken(&lexer);  // ;
+  Token token5 = get_next_token(&lexer);  // ;
   cr_assert_eq(token5.type, TOKEN_SEMICOLON);
 
-  Token token6 = getNextToken(&lexer);  // EOF
+  Token token6 = get_next_token(&lexer);  // EOF
   cr_assert_eq(token6.type, TOKEN_EOF);
 
   free(source);
@@ -119,13 +119,13 @@ Test(lexer, compound_operators_file) {
   char* source = read_file(
       CMAKE_SOURCE_DIR "/test/test_inputs/lexer_inputs/compound_operators.txt");
   Lexer lexer;
-  initLexer(&lexer, source);
+  init_lexer(&lexer, source);
 
-  cr_assert_eq(getNextToken(&lexer).type, TOKEN_EQ);
-  cr_assert_eq(getNextToken(&lexer).type, TOKEN_NEQ);
-  cr_assert_eq(getNextToken(&lexer).type, TOKEN_LEQ);
-  cr_assert_eq(getNextToken(&lexer).type, TOKEN_GEQ);
-  cr_assert_eq(getNextToken(&lexer).type, TOKEN_EOF);
+  cr_assert_eq(get_next_token(&lexer).type, TOKEN_EQ);
+  cr_assert_eq(get_next_token(&lexer).type, TOKEN_NEQ);
+  cr_assert_eq(get_next_token(&lexer).type, TOKEN_LEQ);
+  cr_assert_eq(get_next_token(&lexer).type, TOKEN_GEQ);
+  cr_assert_eq(get_next_token(&lexer).type, TOKEN_EOF);
 
   free(source);
 }
@@ -136,9 +136,9 @@ Test(lexer, identifier_with_underscore_and_digits_file) {
                            "/test/test_inputs/lexer_inputs/"
                            "identifier.txt");
   Lexer lexer;
-  initLexer(&lexer, source);
+  init_lexer(&lexer, source);
 
-  Token token = getNextToken(&lexer);
+  Token token = get_next_token(&lexer);
   cr_assert_eq(token.type, TOKEN_IDENTIFIER);
   cr_assert_eq(token.length, 9);
   cr_assert(strncmp(token.lexeme, "_myVar123", (size_t)token.length) == 0);
@@ -152,9 +152,9 @@ Test(lexer, invalid_exclamation_file) {
       read_file(CMAKE_SOURCE_DIR
                 "/test/test_inputs/lexer_inputs/invalid_exclamation.txt");
   Lexer lexer;
-  initLexer(&lexer, source);
+  init_lexer(&lexer, source);
 
-  Token token = getNextToken(&lexer);
+  Token token = get_next_token(&lexer);
   cr_assert_eq(token.type, TOKEN_UNKNOWN);
   cr_assert(strncmp(token.lexeme, "Unexpected '!'", (size_t)token.length) ==
             (size_t)0);
@@ -168,9 +168,9 @@ Test(lexer, unexpected_character_file) {
       read_file(CMAKE_SOURCE_DIR
                 "/test/test_inputs/lexer_inputs/unexpected_character.txt");
   Lexer lexer;
-  initLexer(&lexer, source);
+  init_lexer(&lexer, source);
 
-  Token token = getNextToken(&lexer);
+  Token token = get_next_token(&lexer);
   cr_assert_eq(token.type, TOKEN_UNKNOWN);
 
   free(source);
@@ -181,13 +181,13 @@ Test(lexer, multiline_tokens_and_line_count_file) {
   char* source = read_file(CMAKE_SOURCE_DIR
                            "/test/test_inputs/lexer_inputs/multiline.txt");
   Lexer lexer;
-  initLexer(&lexer, source);
+  init_lexer(&lexer, source);
 
-  cr_assert_eq(getNextToken(&lexer).line, 1);  // int
-  cr_assert_eq(getNextToken(&lexer).line, 2);  // x
-  cr_assert_eq(getNextToken(&lexer).line, 3);  // =
-  cr_assert_eq(getNextToken(&lexer).line, 4);  // 123
-  cr_assert_eq(getNextToken(&lexer).line, 4);  // ;
+  cr_assert_eq(get_next_token(&lexer).line, 1);  // int
+  cr_assert_eq(get_next_token(&lexer).line, 2);  // x
+  cr_assert_eq(get_next_token(&lexer).line, 3);  // =
+  cr_assert_eq(get_next_token(&lexer).line, 4);  // 123
+  cr_assert_eq(get_next_token(&lexer).line, 4);  // ;
 
   free(source);
 }
@@ -197,12 +197,12 @@ Test(lexer, keyword_as_prefix_identifier_file) {
   char* source = read_file(CMAKE_SOURCE_DIR
                            "/test/test_inputs/lexer_inputs/keyword_pre_id.txt");
   Lexer lexer;
-  initLexer(&lexer, source);
+  init_lexer(&lexer, source);
 
-  Token token1 = getNextToken(&lexer);
+  Token token1 = get_next_token(&lexer);
   cr_assert_eq(token1.type, TOKEN_IDENTIFIER);  // "intif"
 
-  Token token2 = getNextToken(&lexer);
+  Token token2 = get_next_token(&lexer);
   cr_assert_eq(token2.type, TOKEN_IDENTIFIER);  // "iffy"
 
   free(source);

@@ -70,7 +70,7 @@ Args:
 Returns:
   TokenType indicating the type of the identifier.
 */
-TokenType identifierType(const char* text, int length);
+TokenType identifier_type(const char* text, int length);
 
 /*
 Scans the source and returns the next token.
@@ -84,7 +84,7 @@ Args:
 Returns:
   Token representing the next lexical unit in the input.
 */
-Token getNextToken(Lexer* lexer);
+Token get_next_token(Lexer* lexer);
 
 /*
 Initializes the lexer with source code.
@@ -98,7 +98,7 @@ Args:
 Returns:
   void
 */
-void initLexer(Lexer* lexer, const char* source);
+void init_lexer(Lexer* lexer, const char* source);
 
 /*
 Converts a TokenType enum to its string name.
@@ -111,7 +111,7 @@ Args:
 Returns:
   A string representation of the token type.
 */
-const char* tokenTypeToString(TokenType type);
+const char* token_type_to_string(TokenType type);
 
 /*
 Prints information about the current lexer state.
@@ -124,7 +124,7 @@ Args:
 Returns:
   void
 */
-void printLexer(const Lexer* lexer);
+void print_lexer(const Lexer* lexer);
 
 /*
 Prints a token to stdout or appends it to a file.
@@ -139,7 +139,7 @@ Args:
 Returns:
   void
 */
-void printTokenBoth(const Token* token, int file);
+void print_token_both(const Token* token, int file);
 
 /*
 Prints a token to stdout.
@@ -152,4 +152,4 @@ Args:
 Returns:
   void
 */
-void printToken(const Token* token);
+void print_token(const Token* token);
