@@ -8,7 +8,7 @@
 #include "lexer.h"
 
 // ASTNode constructors with added debug prints.
-#define DEBUG
+// #define DEBUG
 #ifdef DEBUG
 #define DEBUG_PRINT(fmt, ...) \
   fprintf(stderr, "[DEBUG] %s:%d: " fmt "\n", __func__, __LINE__, ##__VA_ARGS__)

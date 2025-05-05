@@ -1,3 +1,4 @@
+
 #include "codegen.h"
 
 #include <stdlib.h>  // for free()
@@ -8,7 +9,7 @@
 
 // ASTNode constructors with added debug prints.
 
-#define DEBUG
+// #define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_PRINT(fmt, ...) \
@@ -387,10 +388,8 @@ void ASTFunctionCallNodeToX86(ASTNode* node, listOfX86Instructions* list,
       perror("malloc failed");
       exit(1);
     }
-    printf("2n\n");
     sprintf(newInstruction, "        mov     %s, eax",
             getLowLinuxRegistersName(i));
-    printf("2n\n");
     addInstruction(list, newInstruction);
   }
   DEBUG_PRINT("1\n");
