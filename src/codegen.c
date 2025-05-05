@@ -1,5 +1,8 @@
 #include "codegen.h"
 
+#include <stdlib.h>  // for free()
+#include <string.h>
+
 #include "lexer.h"
 #include "parser.h"
 
@@ -15,14 +18,16 @@
 #endif
 
 const int MAX_LINE_LENGTH = 64;
+const int INITIAL_MEMORY_CAPACITY = 8;
 
-map opConstants[] = {{TOKEN_PLUS, "add"},
-                     {TOKEN_MINUS, "sub"},
-                     {TOKEN_STAR, "imul"},
-                     {TOKEN_SLASH, "idiv"},  // ← added this line for division
-                     {0, NULL}};
+const map opConstants[] = {
+    {TOKEN_PLUS, "add"},
+    {TOKEN_MINUS, "sub"},
+    {TOKEN_STAR, "imul"},
+    {TOKEN_SLASH, "idiv"},  // ← added this line for division
+    {0, NULL}};
 
-map lowLinuxRegisters[] = {
+const map lowLinuxRegisters[] = {
     {1, "edi"}, {2, "esi"}, {3, "edx"}, {4, "ecx"}, {5, "e8d"}, {6, "e9d"},
 };
 
@@ -37,17 +42,17 @@ const char* getLowLinuxRegistersName(int i) {
 }
 
 void initMemory(memory* mem) {
-  mem;
+  mem->variableCapacity = INITIAL_MEMORY_CAPACITY;
 
-  mem->variableCapacity = 8;
-
-  mem->variables = malloc(sizeof(variableInMemory*) * mem->variableCapacity);
+  mem->variables = (variableInMemory**)malloc(sizeof(variableInMemory*) *
+                                              mem->variableCapacity);
   mem->numberOfVariables = 0;
   mem->nextStartingLocation = -4;  // Start at memory address 16 (2^4)
 }
 
 void addVariableToMemory(memory* mem, char* variableName) {
-  variableInMemory* newVariable = malloc(sizeof(variableInMemory));
+  variableInMemory* newVariable =
+      (variableInMemory*)malloc(sizeof(variableInMemory));
   newVariable->variableName = variableName;
   newVariable->memory_difference = mem->nextStartingLocation;
   DEBUG_PRINT("Adding variable %s to memory at location %d\n", variableName,
@@ -58,8 +63,8 @@ void addVariableToMemory(memory* mem, char* variableName) {
     DEBUG_PRINT("Memory full! Increasing capacity to %d\n",
                 mem->variableCapacity * 2);
     mem->variableCapacity *= 2;
-    mem->variables = realloc(mem->variables,
-                             sizeof(variableInMemory*) * mem->variableCapacity);
+    mem->variables = (variableInMemory**)realloc(
+        mem->variables, sizeof(variableInMemory*) * mem->variableCapacity);
   }
   mem->variables[mem->numberOfVariables] = newVariable;
   mem->numberOfVariables++;
@@ -73,7 +78,7 @@ int get_variable_memory_location(memory* mem, const char* lexeme, int length) {
 
   for (int i = 0; i < mem->numberOfVariables; i++) {
     char* varName = mem->variables[i]->variableName;
-    int varLen = strlen(varName);
+    int varLen = (int)strlen(varName);
     int cmpResult = strncmp(varName, lexeme, length);
 
     DEBUG_PRINT("  Checking [%d]: name = '%s', strlen = %d, strncmp = %d\n", i,
@@ -112,14 +117,15 @@ void initListOfInstructions(listOfX86Instructions* list) {
   //   list = malloc(sizeof(listOfX86Instructions));
   list->instructionCapacity = 2;
   list->instructionCount = 0;
-  list->instructions = malloc(sizeof(char*) * list->instructionCapacity);
+  list->instructions =
+      (char**)malloc(sizeof(char*) * list->instructionCapacity);
 }
 
 void addInstruction(listOfX86Instructions* list, char* instruction) {
   if (list->instructionCount == list->instructionCapacity) {
     list->instructionCapacity *= 2;
-    list->instructions =
-        realloc(list->instructions, sizeof(char*) * list->instructionCapacity);
+    list->instructions = (char**)realloc(
+        list->instructions, sizeof(char*) * list->instructionCapacity);
   }
   list->instructions[list->instructionCount] = instruction;
   list->instructionCount++;
@@ -151,12 +157,11 @@ void ASTVariableOrLiteralNodeToX86(ASTNode* node, listOfX86Instructions* list,
             node->as.intLiteral.intLiteral);
     addInstruction(list, newInstruction);
   } else if (node->type == AST_VARIABLE) {
-    DEBUG_PRINT("IS Int Literaasdfasdfl");
     char* operand = get_variable_memory_location_with_pointer(
         mem, node->as.variableName->lexeme, node->as.variableName->length);
 
     char* newInstruction =
-        malloc(MAX_LINE_LENGTH);  // enough for full instruction line
+        malloc((size_t)MAX_LINE_LENGTH);  // enough for full instruction line
     if (!newInstruction) {
       perror("malloc failed");
       exit(1);
