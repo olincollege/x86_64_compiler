@@ -116,7 +116,8 @@ char* get_variable_memory_location_with_pointer(memory* mem, const char* lexeme,
                                                 int length) {
   int offset = get_variable_memory_location(mem, lexeme, length);
   char* buffer = malloc(
-      VARIABLE_MEMORY_LOCATION_SIZE);  // plenty of room for [rbp-<offset>]
+      (size_t)
+          VARIABLE_MEMORY_LOCATION_SIZE);  // plenty of room for [rbp-<offset>]
   if (!buffer) {
     perror("malloc failed");
     pthread_exit(NULL);
@@ -199,6 +200,10 @@ void ASTVariableOrLiteralNodeToX86(ASTNode* node, listOfX86Instructions* list,
 
 void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
                         int first) {
+  if (node == NULL) {
+    return;
+  }
+
   DEBUG_PRINT("ASTBinaryNodeToX86");
   if (node->as.binary.right->type == AST_INT_LITERAL) {
     ASTNode* rightNode = node->as.binary.right;
@@ -306,7 +311,7 @@ void ASTVariableDeclarationNodeToX86(ASTNode* node, memory* mem) {
 void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
                              memory* mem) {
   DEBUG_PRINT("In ASTDeclarationNodeToX86 function\n");
-  char* variableLocationString;
+  char* variableLocationString = NULL;
   if (node->as.declaration.variable->type == AST_VARIABLE_DECLARATION) {
     ASTVariableDeclarationNodeToX86(node->as.declaration.variable, mem);
     variableLocationString = get_variable_memory_location_with_pointer(
@@ -340,6 +345,9 @@ void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
 
 void ASTReturnNodeToX86(ASTNode* node, listOfX86Instructions* list,
                         memory* mem) {
+  if (node == NULL) {
+    return;
+  }
   DEBUG_PRINT("In Return Node\n");
 
   ASTStatementNodeToX86(node->as._return.expression, list, mem);
@@ -353,6 +361,9 @@ void ASTReturnNodeToX86(ASTNode* node, listOfX86Instructions* list,
 
 void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
                            memory* mem) {
+  if (node == NULL) {
+    return;
+  }
   DEBUG_PRINT("In Statement Node\n");
   if (node == NULL) {
     DEBUG_PRINT("NULL NODE\n");
@@ -398,6 +409,9 @@ void ASTBlockNodeToX86(ASTNode* node, listOfX86Instructions* list,
 
 void ASTFunctionCallNodeToX86(ASTNode* node, listOfX86Instructions* list,
                               memory* mem) {
+  if (node == NULL) {
+    return;
+  }
   DEBUG_PRINT("In Function Call\n");
   for (int i = 0; i < node->as.function_call.paramCount; i++) {
     DEBUG_PRINT("1\n");
@@ -592,7 +606,7 @@ void printInstructions(listOfX86Instructions* list) {
     fprintf(file, "%s\n", list->instructions[i]);
   }
 
-  fclose(file);
+  (void)fclose(file);
 }
 
 void printMemory(memory* mem) {

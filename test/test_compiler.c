@@ -83,8 +83,8 @@ static int run_and_get_exit(const char* command) {
   int status = system(command);
   if (WIFEXITED(status)) {
     return WEXITSTATUS(status);
-    return -1;
   }
+  return -1;
 }
 
 Test(compiler, full_system_simple_return) {

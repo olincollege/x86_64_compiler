@@ -18,6 +18,8 @@
 #define DEBUG_PRINT(fmt, ...)
 #endif
 
+const int NODES_IN_FILE = 100;
+
 void incrementTokenIndex(int* tokenIndex, int tokenCount) {
   if (*tokenIndex < tokenCount - 1) {
     (*tokenIndex)++;
@@ -319,17 +321,19 @@ ASTNode* parseVariableOrLiteral(Token* tokens, int* tokenIndex,
   DEBUG_PRINT("Debug: Entering parseVariableOrLiteral at tokenIndex = %d\n",
               *tokenIndex);
 
+  ASTNode* node = NULL;
+
   if (peekToken(tokens, tokenIndex)->type == TOKEN_IDENTIFIER) {
-    ASTNode* node = newVariableNode(peekToken(tokens, tokenIndex));
+    node = newVariableNode(peekToken(tokens, tokenIndex));
     incrementTokenIndex(tokenIndex, tokenCount);
-    return node;
+    // return node;
   } else if (peekToken(tokens, tokenIndex)->type == TOKEN_INT_LITERAL) {
-    ASTNode* node =
-        newIntLiteralNode(convertTokenToInt(peekToken(tokens, tokenIndex)),
-                          &(tokens[*tokenIndex]));
+    node = newIntLiteralNode(convertTokenToInt(peekToken(tokens, tokenIndex)),
+                             &(tokens[*tokenIndex]));
     incrementTokenIndex(tokenIndex, tokenCount);
-    return node;
+    // return node;
   }
+  return node;
 }
 
 static int isVariableOrLiteral(const Token* tok) {
@@ -643,14 +647,12 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
   DEBUG_PRINT("Debug: Entering parseFunction at tokenIndex = %d\n",
               *tokenIndex);
 
-  Token* name;
-  Token* returnType;
+  Token* name = NULL;
+  Token* returnType = NULL;
   ASTNode** parameters = (ASTNode**)malloc(100 * sizeof(ASTNode*));
-  ASTNode* statements;
-  ASTNode* returnStatement = NULL;
+  ASTNode* statements = NULL;
 
   int parameterCount = 0;
-  int statementCount = 0;
 
   // Parse return type.
   DEBUG_PRINT("Debug: Parsing function return type token at index %d: ",
@@ -727,8 +729,8 @@ ASTNode** parseFile(Token* tokens, int tokenCount) {
   DEBUG_PRINT("Debug: Entering parseFile. Total tokens: %d\n", tokenCount);
 
   int tokenIndex = 0;
-  ASTNode** astNodes = (ASTNode**)malloc(100 * sizeof(ASTNode*));
-  for (int i = 0; i < 100; i++) {
+  ASTNode** astNodes = (ASTNode**)malloc(NODES_IN_FILE * sizeof(ASTNode*));
+  for (int i = 0; i < NODES_IN_FILE; i++) {
     astNodes[i] = NULL;
   }
   int astNodesIndex = 0;
@@ -943,7 +945,7 @@ void printASTOutput(ASTNode** nodes, int count, int outputToFile) {
   // DEBUG_PRINT("Entering printASTOutput (count=%d, outputToFile=%d)", count,
   //             outputToFile);
 
-  FILE* output;
+  FILE* output = NULL;
   if (outputToFile == 1) {
     output = fopen("ast.txt", "w");
     if (output == NULL) {
@@ -963,7 +965,7 @@ void printASTOutput(ASTNode** nodes, int count, int outputToFile) {
   }
 
   if (outputToFile) {
-    fclose(output);
+    (void)fclose(output);
   }
 
   DEBUG_PRINT("Exiting printASTOutput");
