@@ -3,60 +3,53 @@ Printing AST for the entire file:
 --- AST Node 0 ---
 Function Declaration: test returns int
   Parameters (2):
-    Variable Declaration: a of type int
-    Variable Declaration: b of type int
+    Variable Declaration: arg1 of type int
+    Variable Declaration: arg2 of type int
   Body Statements:
     Block with 3 statement(s):
       Declaration:
         Variable Declaration:
-          Variable Declaration: d of type int
+          Variable Declaration: retValue of type int
         Expression:
-          IntLiteral: 12
-      Variable Declaration: c2 of type int
+          Binary Expression: 'MINUS'
+            Left:
+              IntLiteral: 12
+            Right:
+              Variable: arg1
+      Declaration:
+        Variable Declaration:
+          Variable Declaration: noUseValue of type int
+        Expression:
+          Variable: arg2
       Return Statement:
         Expression:
-          Variable: d
+          Variable: retValue
 
 --- AST Node 1 ---
 Function Declaration: main returns int
   Parameters (0):
   Body Statements:
-    Block with 6 statement(s):
+    Block with 3 statement(s):
       Declaration:
         Variable Declaration:
-          Variable Declaration: d of type int
-        Expression:
-          Binary Expression: 'MINUS'
-            Left:
-              IntLiteral: 23
-            Right:
-              IntLiteral: 1
-      Declaration:
-        Variable Declaration:
-          Variable Declaration: f of type int
+          Variable Declaration: var1 of type int
         Expression:
           Binary Expression: 'MINUS'
             Left:
               IntLiteral: 32
             Right:
-              Variable: d
+              IntLiteral: 1
       Declaration:
         Variable Declaration:
-          Variable Declaration: c of type int
+          Variable Declaration: var2 of type int
         Expression:
-          IntLiteral: 0
-      Declaration:
-        Variable Declaration:
-          Variable Declaration: a of type int
-        Expression:
-          Function Call: test with 2 argument(s)
-            IntLiteral: 1
-            IntLiteral: 2
+          Binary Expression: 'MINUS'
+            Left:
+              IntLiteral: 32
+            Right:
+              Variable: var1
       Return Statement:
         Expression:
           Function Call: test with 2 argument(s)
-            IntLiteral: 1
+            Variable: var2
             IntLiteral: 2
-      Return Statement:
-        Expression:
-          Variable: a
