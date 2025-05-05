@@ -11,14 +11,14 @@
 
 // #define DEBUG
 #ifdef DEBUG
-#define DEBUG_PRINT(...)                                          \
-  do {                                                            \
-    /* print the prefix */                                        \
-    (void)fprintf(stderr, "[DEBUG] %s:%d: ", __func__, __LINE__); \
-    /* print the user‑supplied format+args */                     \
-    (void)fprintf(stderr, __VA_ARGS__);                           \
-    /* newline */                                                 \
-    fputc('\n', stderr);                                          \
+#define DEBUG_PRINT(...)                                    \
+  do {                                                      \
+    /* print the prefix */                                  \
+    fprintf(stderr, "[DEBUG] %s:%d: ", __func__, __LINE__); \
+    /* print the user‑supplied format+args */               \
+    fprintf(stderr, __VA_ARGS__);                           \
+    /* newline */                                           \
+    fputc('\n', stderr);                                    \
   } while (0)
 #else
 #define DEBUG_PRINT(...) ((void)0)
@@ -145,7 +145,6 @@ void addInstruction(listOfX86Instructions* list, char* instruction) {
         sizeof(char*) * (long unsigned int)list->instructionCapacity);
     if (newInstructionLoc == NULL) {
       error_and_exit("realloc failed");
-      return;
     }
     list->instructions = newInstructionLoc;
   }
@@ -196,7 +195,7 @@ void ASTVariableOrLiteralNodeToX86(ASTNode* node, listOfX86Instructions* list,
     free(operand);  // don't forget to free the operand string
     addInstruction(list, newInstruction);
   } else {
-    (void)fprintf(stderr, "ERROR: Unknown AST node type\n");
+    fprintf(stderr, "ERROR: Unknown AST node type\n");
   }
 }
 
@@ -349,6 +348,8 @@ void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
   }
   switch (node->type) {
     case AST_VARIABLE:
+      DEBUG_PRINT("In Variable Node\n");
+      ASTVariableOrLiteralNodeToX86(node, list, mem);
       break;
     case AST_INT_LITERAL:
       DEBUG_PRINT("In Int Literal Node\n");
@@ -494,31 +495,22 @@ void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
 
     addInstruction(list, newInstruction);
   }
-  char* newInstruction = malloc(MAX_LINE_LENGTH);
-  if (!newInstruction) {
-    error_and_exit("malloc failed");
-  }
-  newInstruction = "        push    rbp";
+  char* newInstruction = "        push    rbp";
   addInstruction(list, newInstruction);
   newInstruction = "        mov     rbp, rsp";
   addInstruction(list, newInstruction);
 
   for (int i = 0; i < node->as.function.paramCount; i++) {
-    char* variableName = malloc((unsigned long)node->as.function.parameters[i]
-                                    ->as.variable_declaration.name->length +
-                                (unsigned long)1);
+    char* variableName = malloc(
+        node->as.function.parameters[i]->as.variable_declaration.name->length +
+        1);
     if (!variableName) {
       error_and_exit("malloc failed");
-    }
-    if (!variableName) {
-      error_and_exit("malloc failed");
-      return;
     }
     strncpy(
         variableName,
         node->as.function.parameters[i]->as.variable_declaration.name->lexeme,
-        (size_t)node->as.function.parameters[i]
-            ->as.variable_declaration.name->length);
+        node->as.function.parameters[i]->as.variable_declaration.name->length);
     variableName[node->as.function.parameters[i]
                      ->as.variable_declaration.name->length] = '\0';
     addVariableToMemory(mem, variableName);
@@ -530,11 +522,9 @@ void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list) {
     (void)sprintf(newInstruction, "        mov     DWORD PTR %s, %s",
                   var_loc_with_pointer, getLowLinuxRegistersName(i));
     addInstruction(list, newInstruction);
-    free(var_loc_with_pointer);
   }
 
   ASTBlockNodeToX86(node->as.function.statements, list, mem);
-  free(mem);
 }
 
 void ListOfASTFunctionNodesToX86(ASTNode** nodes, listOfX86Instructions* list,
@@ -575,7 +565,7 @@ void printInstructions(listOfX86Instructions* list) {
 
   // Add the instructions
   for (int i = 0; i < list->instructionCount; i++) {
-    (void)fprintf(file, "%s\n", list->instructions[i]);
+    fprintf(file, "%s\n", list->instructions[i]);
   }
 
   (void)fclose(file);

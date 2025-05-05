@@ -8,6 +8,27 @@
 #include "lexer.h"
 #include "parser.h"
 
+/**
+ * main – Program entry point for the compiler front‑end.
+ *
+ * Opens the input file "test.txt" for reading; on failure, prints an error
+ * message to stderr and returns 1. Otherwise, it:
+ *   1. Reads the entire file into a dynamically allocated buffer.
+ *   2. Initializes the Lexer and tokenizes the source into an array.
+ *   3. Prints all tokens to stdout.
+ *   4. Parses the tokens into an AST and prints the AST.
+ *   5. Converts each AST function node into x86 instructions.
+ *   6. Prints the generated instructions.
+ *   7. Frees all allocated memory.
+ *
+ * Parameters:
+ *   None.
+ *
+ * Return:
+ *   0 on successful execution.
+ *   1 if the source file cannot be opened.
+ * :contentReference[oaicite:0]{index=0}:contentReference[oaicite:1]{index=1}
+ */
 int main() {
   FILE* file = fopen("test.txt", "r");
   if (!file) {
