@@ -270,13 +270,13 @@ void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
   }
 }
 
-void ASTVariableDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                                     memory* mem) {
+void ASTVariableDeclarationNodeToX86(ASTNode* node, memory* mem) {
   char* variableName =
       malloc((unsigned long)node->as.variable_declaration.name->length +
              (unsigned long)1);
   if (!variableName) {
     error_and_exit("malloc failed");
+    return;
   }
   strncpy(variableName, node->as.variable_declaration.name->lexeme,
           (size_t)node->as.variable_declaration.name->length);
@@ -289,7 +289,7 @@ void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
   DEBUG_PRINT("In ASTDeclarationNodeToX86 function\n");
   char* variableLocationString = NULL;
   if (node->as.declaration.variable->type == AST_VARIABLE_DECLARATION) {
-    ASTVariableDeclarationNodeToX86(node->as.declaration.variable, list, mem);
+    ASTVariableDeclarationNodeToX86(node->as.declaration.variable, mem);
     variableLocationString = get_variable_memory_location_with_pointer(
         mem,
         node->as.declaration.variable->as.variable_declaration.name->lexeme,
@@ -352,7 +352,7 @@ void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
       break;
     case AST_VARIABLE_DECLARATION:
       DEBUG_PRINT("In Variable Declaration Node\n");
-      ASTVariableDeclarationNodeToX86(node, list, mem);
+      ASTVariableDeclarationNodeToX86(node, mem);
       break;
     case AST_FUNCTION_CALL:
       DEBUG_PRINT("In Function Call\n");
