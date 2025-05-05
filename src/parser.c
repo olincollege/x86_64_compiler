@@ -7,20 +7,36 @@
 
 #include "lexer.h"
 
-// ASTNode constructors with added debug prints.
+// ast_node constructors with added debug prints.
 // #define DEBUG
 #ifdef DEBUG
-#define DEBUG_PRINT(...)                                          \
-  do {                                                            \
-    /* print the prefix */                                        \
-    (void)fprintf(stderr, "[DEBUG] %s:%d: ", __func__, __LINE__); \
-    /* print the user‑supplied format+args */                     \
-    (void)fprintf(stderr, __VA_ARGS__);                           \
-    /* newline */                                                 \
-    fputc('\n', stderr);                                          \
-  } while (0)
+/**
+ * debug_print – Helper to emit a debug message with file, function, and line.
+ * @func:   __func__ of the caller.
+ * @line:   __LINE__ of the caller.
+ * @fmt:    printf-style format string.
+ * @...:    Arguments for fmt.
+ */
+static inline void debug_print(const char* func, int line, const char* fmt,
+                               ...) {
+  va_list args;
+  va_start(args, fmt);
+  fprintf(stderr, "[DEBUG] %s:%d: ", func, line);
+  vfprintf(stderr, fmt, args);
+  fprintf(stderr, "\n");
+  va_end(args);
+}
+#define DEBUG_PRINT(fmt, ...) \
+  debug_print(__func__, __LINE__, (fmt), ##__VA_ARGS__)
 #else
-#define DEBUG_PRINT(...) ((void)0)
+/* In release builds this becomes a no‑op with zero overhead */
+static inline void debug_print(const char* func, int line, const char* fmt,
+                               ...) {
+  (void)func;
+  (void)line;
+  (void)fmt;
+}
+#define DEBUG_PRINT(fmt, ...) ((void)0)
 #endif
 
 const int MAX_PARAMETER_SIZE = 100;
@@ -28,42 +44,42 @@ const int MAX_NUMBER_OF_FUNCTIONS = 100;
 const int MAX_VALUE_SIZE = 10;
 const int MAX_NUMBER_OF_STATEMENTS = 100;
 
-ASTNode* newIntLiteralNode(int value, Token* token) {
+ast_node* new_int_literal_node(int value, Token* token) {
   DEBUG_PRINT("Debug: Creating new IntLiteral node with value = %d\n", value);
-  ASTNode* node = malloc(sizeof(ASTNode));
+  ast_node* node = malloc(sizeof(ast_node));
   if (!node) {
-    error_and_exit("Error: Out of memory in newIntLiteralNode\n");
+    error_and_exit("Error: Out of memory in new_int_literal_node\n");
     return NULL;
   }
   node->type = AST_INT_LITERAL;
-  node->as.intLiteral.intLiteral = value;
-  node->as.intLiteral.token = token;
+  node->as.int_literal.int_literal = value;
+  node->as.int_literal.token = token;
   return node;
 }
 
-ASTNode* newVariableNode(Token* name) {
+ast_node* new_variable_node(Token* name) {
   DEBUG_PRINT("Debug: Creating new Variable node. Name: %.*s\n", name->length,
               name->lexeme);
 
-  ASTNode* node = malloc(sizeof(ASTNode));
+  ast_node* node = malloc(sizeof(ast_node));
 
   if (!node) {
-    error_and_exit("Error: Out of memory in newVariableNode\n");
+    error_and_exit("Error: Out of memory in new_variable_node\n");
     return NULL;
   }
   node->type = AST_VARIABLE;  // Using the variable type for declarations.
-  node->as.variableName = name;
+  node->as.variable_name = name;
   return node;
 }
 
-ASTNode* newVariableDeclarationNode(Token* name, Token* type) {
+ast_node* new_variable_declaration_node(Token* name, Token* type) {
   DEBUG_PRINT(
       "Debug: Creating new VariableDeclaration node. Name: %.*s, Type: %.*s\n",
       name->length, name->lexeme, type->length, type->lexeme);
 
-  ASTNode* node = malloc(sizeof(ASTNode));
+  ast_node* node = malloc(sizeof(ast_node));
   if (!node) {
-    error_and_exit("Error: Out of memory in newVariableDeclarationNode\n");
+    error_and_exit("Error: Out of memory in new_variable_declaration_node\n");
     return NULL;
   }
   node->type =
@@ -73,13 +89,13 @@ ASTNode* newVariableDeclarationNode(Token* name, Token* type) {
   return node;
 }
 
-ASTNode* newBinaryNode(ASTNode* left, TokenType operator, ASTNode* right) {
+ast_node* new_binary_node(ast_node* left, TokenType operator, ast_node* right) {
   DEBUG_PRINT("Debug: Creating new Binary node with operator '%s'\n",
-              tokenTypeToString(operator));
+              token_type_to_string(operator));
 
-  ASTNode* node = malloc(sizeof(ASTNode));
+  ast_node* node = malloc(sizeof(ast_node));
   if (!node) {
-    error_and_exit("Error: Out of memory in newBinaryNode\n");
+    error_and_exit("Error: Out of memory in new_binary_node\n");
     return NULL;
   }
   node->type = AST_BINARY;
@@ -89,12 +105,12 @@ ASTNode* newBinaryNode(ASTNode* left, TokenType operator, ASTNode* right) {
   return node;
 }
 
-ASTNode* newUnaryNode(char operator, ASTNode* operand) {
+ast_node* new_unary_node(char operator, ast_node* operand) {
   DEBUG_PRINT("Debug: Creating new Unary node with operator '%c'\n", operator);
 
-  ASTNode* node = malloc(sizeof(ASTNode));
+  ast_node* node = malloc(sizeof(ast_node));
   if (!node) {
-    (void)fprintf(stderr, "Error: Out of memory in newUnaryNode\n");
+    (void)fprintf(stderr, "Error: Out of memory in new_unary_node\n");
     return NULL;
   }
   node->type = AST_UNARY;
@@ -103,12 +119,12 @@ ASTNode* newUnaryNode(char operator, ASTNode* operand) {
   return node;
 }
 
-ASTNode* newBlockNode(ASTNode** statements, int count) {
+ast_node* new_block_node(ast_node** statements, int count) {
   DEBUG_PRINT("Debug: Creating new Block node with %d statement(s)\n", count);
 
-  ASTNode* node = malloc(sizeof(ASTNode));
+  ast_node* node = malloc(sizeof(ast_node));
   if (!node) {
-    (void)fprintf(stderr, "Error: Out of memory in newBlockNode\n");
+    (void)fprintf(stderr, "Error: Out of memory in new_block_node\n");
     return NULL;
   }
   node->type = AST_BLOCK;
@@ -117,47 +133,48 @@ ASTNode* newBlockNode(ASTNode** statements, int count) {
   return node;
 }
 
-ASTNode* newFunctionNode(Token* name, Token* returnType, ASTNode** parameters,
-                         int count, ASTNode* statements) {
+ast_node* new_function_node(Token* name, Token* return_type,
+                            ast_node** parameters, int count,
+                            ast_node* statements) {
   DEBUG_PRINT(
       "Debug: Creating new Function node. Name: %.*s, Return Type: %.*s\n",
-      name->length, name->lexeme, returnType->length, returnType->lexeme);
+      name->length, name->lexeme, return_type->length, return_type->lexeme);
 
-  ASTNode* node = malloc(sizeof(ASTNode));
+  ast_node* node = malloc(sizeof(ast_node));
   if (!node) {
-    (void)fprintf(stderr, "Error: Out of memory in newFunctionNode\n");
+    (void)fprintf(stderr, "Error: Out of memory in new_function_node\n");
     return NULL;
   }
   node->type = AST_FUNCTION_DECLARATION;
   node->as.function.name = name;
-  node->as.function.returnType = returnType;
+  node->as.function.return_type = return_type;
   node->as.function.parameters = parameters;
-  node->as.function.paramCount = count;
+  node->as.function.param_count = count;
   node->as.function.statements = statements;
   return node;
 }
 
-ASTNode* newFunctionCallNode(Token* name, ASTNode** parameters,
-                             int paramCount) {
+ast_node* new_function_call_node(Token* name, ast_node** parameters,
+                                 int param_count) {
   DEBUG_PRINT("Debug: Creating new function call");
-  ASTNode* node = malloc(sizeof(ASTNode));
+  ast_node* node = malloc(sizeof(ast_node));
   if (!node) {
-    (void)fprintf(stderr, "Error: Out of memory in newFunctionCallNode\n");
+    (void)fprintf(stderr, "Error: Out of memory in new_function_call_node\n");
     return NULL;
   }
   node->type = AST_FUNCTION_CALL;
   node->as.function_call.name = name;
   node->as.function_call.parameters = parameters;
-  node->as.function_call.paramCount = paramCount;
+  node->as.function_call.param_count = param_count;
   return node;
 }
 
-ASTNode* newReturnNode(ASTNode* expression) {
+ast_node* new_return_node(ast_node* expression) {
   DEBUG_PRINT("Debug: Creating new Return node.\n");
 
-  ASTNode* node = malloc(sizeof(ASTNode));
+  ast_node* node = malloc(sizeof(ast_node));
   if (!node) {
-    (void)fprintf(stderr, "Error: Out of memory in newReturnNode\n");
+    (void)fprintf(stderr, "Error: Out of memory in new_return_node\n");
     return NULL;
   }
   node->type = AST_RETURN;
@@ -165,25 +182,26 @@ ASTNode* newReturnNode(ASTNode* expression) {
   return node;
 }
 
-ASTNode* newDeclarationNode(ASTNode* variableDeclaration, ASTNode* expression) {
-  ASTNode* node = malloc(sizeof(ASTNode));
+ast_node* new_declaration_node(ast_node* variable_declaration,
+                               ast_node* expression) {
+  ast_node* node = malloc(sizeof(ast_node));
   if (!node) {
-    error_and_exit("Error: Out of memory in newDeclarationNode\n");
+    error_and_exit("Error: Out of memory in new_declaration_node\n");
     return NULL;
   }
   node->type = AST_DECLARATION;
-  node->as.declaration.variable = variableDeclaration;
+  node->as.declaration.variable = variable_declaration;
   node->as.declaration.expression = expression;
   return node;
 }
 
-ASTNode* newIfElifElseNode(ASTNodeType type, ASTNode* condition,
-                           ASTNode* body) {
+ast_node* new_if_elif_else_node(ASTNodeType type, ast_node* condition,
+                                ast_node* body) {
   DEBUG_PRINT("Debug: Creating new If/Elif/Else node.\n");
 
-  ASTNode* node = malloc(sizeof(ASTNode));
+  ast_node* node = malloc(sizeof(ast_node));
   if (!node) {
-    (void)fprintf(stderr, "Error: Out of memory in newIfElifElseNode\n");
+    (void)fprintf(stderr, "Error: Out of memory in new_if_elif_else_node\n");
     return NULL;
   }
   node->type = type;
@@ -192,12 +210,12 @@ ASTNode* newIfElifElseNode(ASTNodeType type, ASTNode* condition,
   return node;
 }
 
-ASTNode* newWhileNode(ASTNode* condition, ASTNode* body) {
+ast_node* new_while_node(ast_node* condition, ast_node* body) {
   DEBUG_PRINT("Debug: Creating new while node\n");
 
-  ASTNode* node = malloc(sizeof(ASTNode));
+  ast_node* node = malloc(sizeof(ast_node));
   if (!node) {
-    (void)fprintf(stderr, "Error: Out of memory in newWhileNode\n");
+    (void)fprintf(stderr, "Error: Out of memory in new_while_node\n");
     return NULL;
   }
   node->type = AST_WHILE_STATEMENT;
@@ -209,9 +227,9 @@ ASTNode* newWhileNode(ASTNode* condition, ASTNode* body) {
 //////////////////
 // Helper functions for the parser
 
-int isTokenDataType(Token* token) {
+int is_token_data_type(Token* token) {
   DEBUG_PRINT("Debug: Checking if token is data type: ");
-  printToken(token);
+  print_token(token);
 
   if (token->type == TOKEN_INT_TYPE || token->type == TOKEN_VOID_TYPE) {
     return 1;
@@ -219,19 +237,19 @@ int isTokenDataType(Token* token) {
   return 0;
 }
 
-Token* peekToken(Token* tokens, const int* index) {
-  // DEBUG_PRINT("Debug: peekToken at index %d\n", *index);
+Token* peek_token(Token* tokens, const int* index) {
+  // DEBUG_PRINT("Debug: peek_token at index %d\n", *index);
 
   return &tokens[(*index)];
 }
 
-Token* peekAheadToken(Token* tokens, const int* index, int forward,
-                      int tokenCount) {
-  DEBUG_PRINT("Debug: peekAheadToken at index %d and forward = %d\n", *index,
+Token* peek_ahead_token(Token* tokens, const int* index, int forward,
+                        int token_count) {
+  DEBUG_PRINT("Debug: peek_ahead_token at index %d and forward = %d\n", *index,
               forward);
-  printToken(&tokens[(*index) + forward]);
+  print_token(&tokens[(*index) + forward]);
 
-  if ((*index) + forward >= tokenCount) {
+  if ((*index) + forward >= token_count) {
     return NULL;
   }
   return &tokens[(*index) + forward];
@@ -239,38 +257,39 @@ Token* peekAheadToken(Token* tokens, const int* index, int forward,
 //////////////////
 // Parser functions
 
-ASTNode* parseVariableDeclaration(Token* tokens, int* tokenIndex,
-                                  int tokenCount) {
-  DEBUG_PRINT("Debug: Entering parseVariableDeclaration at tokenIndex = %d\n",
-              *tokenIndex);
+ast_node* parse_variable_declaration(Token* tokens, int* token_index,
+                                     int token_count) {
+  DEBUG_PRINT(
+      "Debug: Entering parse_variable_declaration at token_index = %d\n",
+      *token_index);
 
   // Expect a data type token first.
-  if (!isTokenDataType(peekToken(tokens, tokenIndex))) {
+  if (!is_token_data_type(peek_token(tokens, token_index))) {
     error_and_exit("Error: Expected a data type\n");
   }
 
   DEBUG_PRINT("Debug: Data type token: ");
-  printToken(peekToken(tokens, tokenIndex));
+  print_token(peek_token(tokens, token_index));
 
-  Token* type = peekAheadToken(tokens, tokenIndex, 0, tokenCount);
-  (*tokenIndex)++;
+  Token* type = peek_ahead_token(tokens, token_index, 0, token_count);
+  (*token_index)++;
 
   // Check for identifier token.
-  if (peekToken(tokens, tokenIndex)->type != TOKEN_IDENTIFIER) {
+  if (peek_token(tokens, token_index)->type != TOKEN_IDENTIFIER) {
     error_and_exit("Error: Expected an identifier\n");
   }
 
   DEBUG_PRINT("Debug: Identifier token: ");
-  printToken(peekToken(tokens, tokenIndex));
+  print_token(peek_token(tokens, token_index));
 
-  Token* name = peekToken(tokens, tokenIndex);
-  (*tokenIndex)++;
+  Token* name = peek_token(tokens, token_index);
+  (*token_index)++;
 
-  return newVariableDeclarationNode(name, type);
+  return new_variable_declaration_node(name, type);
 }
 
-int convertTokenToInt(Token* token) {
-  DEBUG_PRINT("convertTokenToInt");
+int convert_token_to_int(Token* token) {
+  DEBUG_PRINT("convert_token_to_int");
 
   // Allocate memory for a null-terminated string copy of the substring.
   char* buf = malloc((size_t)token->length + (size_t)1);
@@ -311,215 +330,220 @@ int convertTokenToInt(Token* token) {
   return (int)value;
 }
 
-ASTNode* parseVariableOrLiteral(Token* tokens, int* tokenIndex,
-                                int tokenCount) {
-  DEBUG_PRINT("Debug: Entering parseVariableOrLiteral at tokenIndex = %d\n",
-              *tokenIndex);
+ast_node* parse_variable_or_literal(Token* tokens, int* token_index,
+                                    int token_count) {
+  DEBUG_PRINT("Debug: Entering parse_variable_or_literal at token_index = %d\n",
+              *token_index);
 
-  if (peekToken(tokens, tokenIndex)->type == TOKEN_IDENTIFIER) {
-    ASTNode* node = newVariableNode(peekToken(tokens, tokenIndex));
-    (*tokenIndex)++;
+  if (peek_token(tokens, token_index)->type == TOKEN_IDENTIFIER) {
+    ast_node* node = new_variable_node(peek_token(tokens, token_index));
+    (*token_index)++;
     return node;
   }
-  if (peekAheadToken(tokens, tokenIndex, 0, tokenCount)->type ==
+  if (peek_ahead_token(tokens, token_index, 0, token_count)->type ==
       TOKEN_INT_LITERAL) {
-    ASTNode* node =
-        newIntLiteralNode(convertTokenToInt(peekToken(tokens, tokenIndex)),
-                          &(tokens[*tokenIndex]));
-    (*tokenIndex)++;
+    ast_node* node = new_int_literal_node(
+        convert_token_to_int(peek_token(tokens, token_index)),
+        &(tokens[*token_index]));
+    (*token_index)++;
     return node;
   }
   return NULL;
 }
 
-ASTNode* parseExpression(Token* tokens, int* tokenIndex, int tokenCount) {
-  DEBUG_PRINT("Debug: Entering parseExpression at tokenIndex = %d\n",
-              *tokenIndex);
+ast_node* parse_expression(Token* tokens, int* token_index, int token_count) {
+  DEBUG_PRINT("Debug: Entering parse_expression at token_index = %d\n",
+              *token_index);
 
-  ASTNode* node = NULL;
+  ast_node* node = NULL;
 
-  if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type == TOKEN_LPAREN) {
+  if (peek_ahead_token(tokens, token_index, 1, token_count)->type ==
+      TOKEN_LPAREN) {
     DEBUG_PRINT("Debug: Next Left Parenthis in parseexpression");
-    node = parseFunctionCall(tokens, tokenIndex, tokenCount);
+    node = parse_function_call(tokens, token_index, token_count);
   } else {
     DEBUG_PRINT("Debug: Next Left Parenthis not in parseexpression");
-    node = parseVariableOrLiteral(tokens, tokenIndex, tokenCount);
+    node = parse_variable_or_literal(tokens, token_index, token_count);
   }
 
   // For now, this is a placeholder.
   // A complete implementation would parse an expression, possibly using
   // recursive descent.
-  if (peekAheadToken(tokens, tokenIndex, 0, tokenCount)->type == TOKEN_RPAREN ||
-      peekAheadToken(tokens, tokenIndex, 0, tokenCount)->type ==
+  if (peek_ahead_token(tokens, token_index, 0, token_count)->type ==
+          TOKEN_RPAREN ||
+      peek_ahead_token(tokens, token_index, 0, token_count)->type ==
           TOKEN_SEMICOLON) {
     DEBUG_PRINT("Debug: No expression, just value\n");
     return node;
   }
 
-  if (peekToken(tokens, tokenIndex)->type == TOKEN_LPAREN) {
+  if (peek_token(tokens, token_index)->type == TOKEN_LPAREN) {
     // Deal with this later
   }
   DEBUG_PRINT("Debug: Variable or literal with second part\n");
-  ASTNode* leftSide = node;
-  // parseVariableOrLiteral(tokens, tokenIndex, tokenCount);
-  TokenType _operator = peekToken(tokens, tokenIndex)->type;
-  (*tokenIndex)++;
+  ast_node* leftSide = node;
+  // parse_variable_or_literal(tokens, token_index, token_count);
+  TokenType _operator = peek_token(tokens, token_index)->type;
+  (*token_index)++;
 
-  return newBinaryNode(leftSide, _operator,
-                       parseExpression(tokens, tokenIndex, tokenCount));
+  return new_binary_node(leftSide, _operator,
+                         parse_expression(tokens, token_index, token_count));
 }
 
 // parse for
 // parse while
 
-ASTNode* parseWhileStatement(Token* tokens, int* tokenIndex, int tokenCount) {
-  DEBUG_PRINT("Debug: Entering parseWhileStatement at tokenIndex = %d\n",
-              *tokenIndex);
+ast_node* parse_while_statement(Token* tokens, int* token_index,
+                                int token_count) {
+  DEBUG_PRINT("Debug: Entering parse_while_statement at token_index = %d\n",
+              *token_index);
 
-  ASTNode* condition = NULL;
-  ASTNode* body = NULL;
+  ast_node* condition = NULL;
+  ast_node* body = NULL;
 
-  if (peekToken(tokens, tokenIndex)->type != TOKEN_WHILE) {
+  if (peek_token(tokens, token_index)->type != TOKEN_WHILE) {
     return NULL;
   }
-  (*tokenIndex)++;
+  (*token_index)++;
 
-  if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
-    (void)fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n",
-                  *tokenIndex);
+  if (peek_token(tokens, token_index)->type != TOKEN_LPAREN) {
+    (void)fprintf(stderr, "Error: Expected '(' at token_index = %d\n",
+                  *token_index);
     error_and_exit("");
   }
 
-  (*tokenIndex)++;  // Skip left parenthis
+  (*token_index)++;  // Skip left parenthis
 
-  condition = parseExpression(tokens, tokenIndex, tokenCount);
+  condition = parse_expression(tokens, token_index, token_count);
 
-  if (peekToken(tokens, tokenIndex)->type != TOKEN_RPAREN) {
-    (void)fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n",
-                  *tokenIndex);
+  if (peek_token(tokens, token_index)->type != TOKEN_RPAREN) {
+    (void)fprintf(stderr, "Error: Expected '(' at token_index = %d\n",
+                  *token_index);
     error_and_exit("");
   }
 
-  (*tokenIndex)++;  // Skip right parenthis
+  (*token_index)++;  // Skip right parenthis
 
-  body = parseBlock(tokens, tokenIndex, tokenCount);
+  body = parse_block(tokens, token_index, token_count);
 
-  return newWhileNode(condition, body);
+  return new_while_node(condition, body);
 }
 
-ASTNode* parseIfElifElseStatement(Token* tokens, int* tokenIndex,
-                                  int tokenCount) {
-  DEBUG_PRINT("Debug: Entering parseIfStatement at tokenIndex = %d\n",
-              *tokenIndex);
+ast_node* parse_if_elif_else_statement(Token* tokens, int* token_index,
+                                       int token_count) {
+  DEBUG_PRINT("Debug: Entering parseIfStatement at token_index = %d\n",
+              *token_index);
 
-  ASTNode* condition = NULL;
-  ASTNode* body = NULL;
+  ast_node* condition = NULL;
+  ast_node* body = NULL;
 
   ASTNodeType nodeType = AST_INVALID;
 
-  if (peekToken(tokens, tokenIndex)->type == TOKEN_IF) {
+  if (peek_token(tokens, token_index)->type == TOKEN_IF) {
     nodeType = AST_IF_STATEMENT;
-    (*tokenIndex)++;
-  } else if (peekToken(tokens, tokenIndex)->type == TOKEN_ELSE) {
+    (*token_index)++;
+  } else if (peek_token(tokens, token_index)->type == TOKEN_ELSE) {
     DEBUG_PRINT("Else\n\n");
-    if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type == TOKEN_IF) {
+    if (peek_ahead_token(tokens, token_index, 1, token_count)->type ==
+        TOKEN_IF) {
       nodeType = AST_ELSE_IF_STATEMENT;
       DEBUG_PRINT("Elseif\n\n");
 
-      (*tokenIndex)++;
-      (*tokenIndex)++;
-    } else if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type ==
+      (*token_index)++;
+      (*token_index)++;
+    } else if (peek_ahead_token(tokens, token_index, 1, token_count)->type ==
                TOKEN_LBRACE) {
       DEBUG_PRINT("Elseelse\n\n");
 
       nodeType = AST_ELSE_STATEMENT;
-      (*tokenIndex)++;
+      (*token_index)++;
     } else {
       DEBUG_PRINT("asdfasdfsada\n");
       (void)fprintf(stderr,
                     "Error1: Expected 'if', 'else' or 'else if' at "
-                    "tokenIndex = %d\n",
-                    *tokenIndex);
+                    "token_index = %d\n",
+                    *token_index);
       return NULL;
     }
   } else {
     (void)fprintf(
         stderr,
-        "Error2: Expected 'if', 'else if' or 'else' at tokenIndex = %d\n",
-        *tokenIndex);
+        "Error2: Expected 'if', 'else if' or 'else' at token_index = %d\n",
+        *token_index);
     return NULL;
   }
 
   // Condition only for if or else if, not else
   if (nodeType != AST_ELSE_STATEMENT) {
-    if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
-      (void)fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n",
-                    *tokenIndex);
+    if (peek_token(tokens, token_index)->type != TOKEN_LPAREN) {
+      (void)fprintf(stderr, "Error: Expected '(' at token_index = %d\n",
+                    *token_index);
       return NULL;
     }
-    (*tokenIndex)++;  // Skip left parenthis
+    (*token_index)++;  // Skip left parenthis
 
-    condition = parseExpression(tokens, tokenIndex, tokenCount);
+    condition = parse_expression(tokens, token_index, token_count);
 
-    if (peekToken(tokens, tokenIndex)->type != TOKEN_RPAREN) {
-      (void)fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n",
-                    *tokenIndex);
+    if (peek_token(tokens, token_index)->type != TOKEN_RPAREN) {
+      (void)fprintf(stderr, "Error: Expected '(' at token_index = %d\n",
+                    *token_index);
       return NULL;
     }
 
-    (*tokenIndex)++;  // Skip right parenthis
+    (*token_index)++;  // Skip right parenthis
   }
 
-  body = parseBlock(tokens, tokenIndex, tokenCount);
+  body = parse_block(tokens, token_index, token_count);
 
-  return newIfElifElseNode(nodeType, condition, body);
+  return new_if_elif_else_node(nodeType, condition, body);
 }
 
-ASTNode* parseFunctionCall(Token* tokens, int* tokenIndex, int tokenCount) {
-  DEBUG_PRINT("Debug: Entering parseFunctionCall at tokenIndex = %d\n",
-              *tokenIndex);
-  Token* name = peekToken(tokens, tokenIndex);
-  (*tokenIndex)++;
-  ASTNode** parameters =
-      (ASTNode**)malloc(sizeof(ASTNode*) * (MAX_PARAMETER_SIZE));
-  int parameterCount = 0;
-  if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
-    (void)fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n",
-                  *tokenIndex);
+ast_node* parse_function_call(Token* tokens, int* token_index,
+                              int token_count) {
+  DEBUG_PRINT("Debug: Entering parse_function_call at token_index = %d\n",
+              *token_index);
+  Token* name = peek_token(tokens, token_index);
+  (*token_index)++;
+  ast_node** parameters =
+      (ast_node**)malloc(sizeof(ast_node*) * (MAX_PARAMETER_SIZE));
+  int parameter_count = 0;
+  if (peek_token(tokens, token_index)->type != TOKEN_LPAREN) {
+    (void)fprintf(stderr, "Error: Expected '(' at token_index = %d\n",
+                  *token_index);
     error_and_exit("");
   }
-  (*tokenIndex)++;  // Skip left parenthis
-  while (peekToken(tokens, tokenIndex)->type != TOKEN_RPAREN) {
-    parameters[parameterCount++] =
-        parseVariableOrLiteral(tokens, tokenIndex, tokenCount);
-    if (peekToken(tokens, tokenIndex)->type == TOKEN_RPAREN) {
+  (*token_index)++;  // Skip left parenthis
+  while (peek_token(tokens, token_index)->type != TOKEN_RPAREN) {
+    parameters[parameter_count++] =
+        parse_variable_or_literal(tokens, token_index, token_count);
+    if (peek_token(tokens, token_index)->type == TOKEN_RPAREN) {
       break;
     }
-    if (peekToken(tokens, tokenIndex)->type == TOKEN_COMMA) {
-      (*tokenIndex)++;
+    if (peek_token(tokens, token_index)->type == TOKEN_COMMA) {
+      (*token_index)++;
     } else {
       error_and_exit("Error something else expected\n");
     }
   }
-  (*tokenIndex)++;  // Skip right parenthis
-  return newFunctionCallNode(name, parameters, parameterCount);
+  (*token_index)++;  // Skip right parenthis
+  return new_function_call_node(name, parameters, parameter_count);
 }
 
-ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
-  DEBUG_PRINT("Debug: Entering parseStatement at tokenIndex = %d\n",
-              *tokenIndex);
+ast_node* parse_statement(Token* tokens, int* token_index, int token_count) {
+  DEBUG_PRINT("Debug: Entering parse_statement at token_index = %d\n",
+              *token_index);
 
   // If the token represents the start of a variable declaration:
-  if (isTokenDataType(peekToken(tokens, tokenIndex))) {
-    ASTNode* variableDeclarationNode =
-        parseVariableDeclaration(tokens, tokenIndex, tokenCount);
+  if (is_token_data_type(peek_token(tokens, token_index))) {
+    ast_node* variableDeclarationNode =
+        parse_variable_declaration(tokens, token_index, token_count);
     if (variableDeclarationNode == NULL) {
       error_and_exit("Error: Failed to parse variable declaration\n");
     }
     // Check if there is an assignment following the declaration.
-    if (peekToken(tokens, tokenIndex) != NULL &&
-        peekToken(tokens, tokenIndex)->type != TOKEN_ASSIGN) {
-      (*tokenIndex)++;
+    if (peek_token(tokens, token_index) != NULL &&
+        peek_token(tokens, token_index)->type != TOKEN_ASSIGN) {
+      (*token_index)++;
 
       DEBUG_PRINT(
           "Debug: No assignment operator found after variable declaration");
@@ -528,221 +552,223 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
     }
 
     // Otherwise, if an assignment operator is present, parse the expression.
-    (*tokenIndex)++;
-    ASTNode* expression = parseExpression(tokens, tokenIndex, tokenCount);
+    (*token_index)++;
+    ast_node* expression = parse_expression(tokens, token_index, token_count);
     if (expression == NULL) {
       error_and_exit("Error: Failed to parse expression\n");
     }
-    (*tokenIndex)++;  // Skip semicolon
+    (*token_index)++;  // Skip semicolon
 
-    return newDeclarationNode(variableDeclarationNode, expression);
+    return new_declaration_node(variableDeclarationNode, expression);
   }
 
   // Case below
-  switch (peekToken(tokens, tokenIndex)->type) {
+  switch (peek_token(tokens, token_index)->type) {
     case TOKEN_RETURN:
 
       DEBUG_PRINT("Debug: Found 'return' keyword\n");
 
-      (*tokenIndex)++;  // Skip "Return"
-      ASTNode* returnExpression =
-          parseExpression(tokens, tokenIndex, tokenCount);
-      if (peekToken(tokens, tokenIndex)->type != TOKEN_SEMICOLON) {
+      (*token_index)++;  // Skip "Return"
+      ast_node* returnExpression =
+          parse_expression(tokens, token_index, token_count);
+      if (peek_token(tokens, token_index)->type != TOKEN_SEMICOLON) {
         error_and_exit("Error: Expected semicolon after return\n");
       }
-      (*tokenIndex)++;  // skip semicolon
+      (*token_index)++;  // skip semicolon
 
-      return newReturnNode(returnExpression);
+      return new_return_node(returnExpression);
     case TOKEN_SEMICOLON:
 
       DEBUG_PRINT("Debug: Found semicolon after statement\n");
 
-      (*tokenIndex)++;
+      (*token_index)++;
       return NULL;
     case TOKEN_IF:
     case TOKEN_ELSE:
-      return parseIfElifElseStatement(tokens, tokenIndex, tokenCount);
+      return parse_if_elif_else_statement(tokens, token_index, token_count);
     case TOKEN_WHILE:
-      return parseWhileStatement(tokens, tokenIndex, tokenCount);
+      return parse_while_statement(tokens, token_index, token_count);
     case TOKEN_IDENTIFIER:
       // TODO (Nividh): Maybe switch case for the next part
-      if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type ==
+      if (peek_ahead_token(tokens, token_index, 1, token_count)->type ==
           TOKEN_ASSIGN) {
-        ASTNode* varaibleName = newVariableNode(peekToken(tokens, tokenIndex));
-        (*tokenIndex)++;
-        (*tokenIndex)++;  // consume the assign operator
-        ASTNode* expressionNode =
-            parseExpression(tokens, tokenIndex, tokenCount);
-        return newDeclarationNode(varaibleName, expressionNode);
-        // newDeclarationNode()
-      } else if (peekAheadToken(tokens, tokenIndex, 1, tokenCount)->type ==
+        ast_node* varaibleName =
+            new_variable_node(peek_token(tokens, token_index));
+        (*token_index)++;
+        (*token_index)++;  // consume the assign operator
+        ast_node* expressionNode =
+            parse_expression(tokens, token_index, token_count);
+        return new_declaration_node(varaibleName, expressionNode);
+        // new_declaration_node()
+      } else if (peek_ahead_token(tokens, token_index, 1, token_count)->type ==
                  TOKEN_LPAREN) {
-        return parseFunctionCall(tokens, tokenIndex, tokenCount);
+        return parse_function_call(tokens, token_index, token_count);
       }
       break;
     default:
       // Placeholder for other types of statements.
-      (*tokenIndex)++;  // consume the token to avoid infinite loop
+      (*token_index)++;  // consume the token to avoid infinite loop
 
       return NULL;
   }
   return NULL;
 }
 
-ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount) {
-  DEBUG_PRINT("Debug: Entering parseBlock at tokenIndex = %d\n", *tokenIndex);
+ast_node* parse_block(Token* tokens, int* token_index, int token_count) {
+  DEBUG_PRINT("Debug: Entering parse_block at token_index = %d\n",
+              *token_index);
 
-  ASTNode** statements =
-      (ASTNode**)malloc(MAX_NUMBER_OF_STATEMENTS * sizeof(ASTNode*));
-  int statementCount = 0;
+  ast_node** statements =
+      (ast_node**)malloc(MAX_NUMBER_OF_STATEMENTS * sizeof(ast_node*));
+  int statement_count = 0;
 
-  if (peekToken(tokens, tokenIndex)->type != TOKEN_LBRACE) {
+  if (peek_token(tokens, token_index)->type != TOKEN_LBRACE) {
     // There isn't a left brace so only parse next statement
-    ASTNode* newNode = parseStatement(tokens, tokenIndex, tokenCount);
+    ast_node* newNode = parse_statement(tokens, token_index, token_count);
     if (newNode != NULL) {
-      statements[statementCount++] = newNode;
+      statements[statement_count++] = newNode;
     }
-    return newBlockNode(statements, statementCount);
+    return new_block_node(statements, statement_count);
   }
 
   // There is a left brace
-  (*tokenIndex)++;  // Move to the next token after '{'
+  (*token_index)++;  // Move to the next token after '{'
 
   // Parse function body statements until a '}' is encountered.
-  while (peekToken(tokens, tokenIndex)->type != TOKEN_RBRACE) {
-    DEBUG_PRINT("Debug: Parsing statement %d at tokenIndex = %d: ",
-                statementCount + 1, *tokenIndex);
-    printToken(peekToken(tokens, tokenIndex));
+  while (peek_token(tokens, token_index)->type != TOKEN_RBRACE) {
+    DEBUG_PRINT("Debug: Parsing statement %d at token_index = %d: ",
+                statement_count + 1, *token_index);
+    print_token(peek_token(tokens, token_index));
 
-    ASTNode* newNode = parseStatement(tokens, tokenIndex, tokenCount);
+    ast_node* newNode = parse_statement(tokens, token_index, token_count);
     if (newNode != NULL) {
-      statements[statementCount++] = newNode;
+      statements[statement_count++] = newNode;
     }
   }
 
-  (*tokenIndex)++;  // Move to the next token after '}'
-  return newBlockNode(statements, statementCount);
+  (*token_index)++;  // Move to the next token after '}'
+  return new_block_node(statements, statement_count);
 }
 
-ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
-  DEBUG_PRINT("Debug: Entering parseFunction at tokenIndex = %d\n",
-              *tokenIndex);
+ast_node* parse_function(Token* tokens, int* token_index, int token_count) {
+  DEBUG_PRINT("Debug: Entering parse_function at token_index = %d\n",
+              *token_index);
 
   Token* name = NULL;
-  Token* returnType = NULL;
-  ASTNode** parameters =
-      (ASTNode**)malloc(MAX_PARAMETER_SIZE * sizeof(ASTNode*));
-  ASTNode* statements = NULL;
+  Token* return_type = NULL;
+  ast_node** parameters =
+      (ast_node**)malloc(MAX_PARAMETER_SIZE * sizeof(ast_node*));
+  ast_node* statements = NULL;
 
-  int parameterCount = 0;
+  int parameter_count = 0;
 
   // Parse return type.
   DEBUG_PRINT("Debug: Parsing function return type token at index %d: ",
-              *tokenIndex);
-  printToken(peekToken(tokens, tokenIndex));
+              *token_index);
+  print_token(peek_token(tokens, token_index));
 
-  returnType = peekToken(tokens, tokenIndex);
-  (*tokenIndex)++;
+  return_type = peek_token(tokens, token_index);
+  (*token_index)++;
 
   // Parse function name.
-  DEBUG_PRINT("Debug: Parsing function name token at index %d: ", *tokenIndex);
-  printToken(peekToken(tokens, tokenIndex));
+  DEBUG_PRINT("Debug: Parsing function name token at index %d: ", *token_index);
+  print_token(peek_token(tokens, token_index));
 
-  name = peekToken(tokens, tokenIndex);
-  (*tokenIndex)++;
+  name = peek_token(tokens, token_index);
+  (*token_index)++;
 
   // Ensure a '(' token follows.
-  if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
+  if (peek_token(tokens, token_index)->type != TOKEN_LPAREN) {
     error_and_exit("Error: Expected '(' after function name\n");
     return NULL;
   }
 
   DEBUG_PRINT("Debug: Found '(' token: ");
-  printToken(peekToken(tokens, tokenIndex));
+  print_token(peek_token(tokens, token_index));
 
-  (*tokenIndex)++;
+  (*token_index)++;
 
   // Parse parameters until a ')' token is found.
-  while (peekToken(tokens, tokenIndex)->type != TOKEN_RPAREN) {
-    DEBUG_PRINT("Debug: Parsing parameter %d at tokenIndex = %d: ",
-                parameterCount + 1, *tokenIndex);
-    printToken(peekToken(tokens, tokenIndex));
+  while (peek_token(tokens, token_index)->type != TOKEN_RPAREN) {
+    DEBUG_PRINT("Debug: Parsing parameter %d at token_index = %d: ",
+                parameter_count + 1, *token_index);
+    print_token(peek_token(tokens, token_index));
 
-    parameters[parameterCount++] =
-        parseVariableDeclaration(tokens, tokenIndex, tokenCount);
-    if (peekToken(tokens, tokenIndex)->type == TOKEN_COMMA) {
+    parameters[parameter_count++] =
+        parse_variable_declaration(tokens, token_index, token_count);
+    if (peek_token(tokens, token_index)->type == TOKEN_COMMA) {
       DEBUG_PRINT("Debug: Found comma token between parameters: ");
-      printToken(peekToken(tokens, tokenIndex));
+      print_token(peek_token(tokens, token_index));
 
-      (*tokenIndex)++;
+      (*token_index)++;
     }
   }
 
   // Skip the closing ')'
   DEBUG_PRINT("Debug: Found ')' token for parameter list: ");
-  printToken(peekToken(tokens, tokenIndex));
+  print_token(peek_token(tokens, token_index));
 
-  (*tokenIndex)++;
+  (*token_index)++;
 
   // Check for '{' to begin the function body.
-  if (peekToken(tokens, tokenIndex)->type != TOKEN_LBRACE) {
+  if (peek_token(tokens, token_index)->type != TOKEN_LBRACE) {
     error_and_exit("Error: Expected '{' after function parameters\n");
   }
 
   DEBUG_PRINT("Debug: Found '{' token for function body: ");
-  printToken(peekToken(tokens, tokenIndex));
+  print_token(peek_token(tokens, token_index));
 
-  statements = parseBlock(tokens, tokenIndex, tokenCount);
+  statements = parse_block(tokens, token_index, token_count);
 
   DEBUG_PRINT("Debug: Found '}' token ending function body: ");
-  printToken(peekToken(tokens, tokenIndex));
+  print_token(peek_token(tokens, token_index));
 
-  //   (*tokenIndex)++;  // Skip the closing brace
+  //   (*token_index)++;  // Skip the closing brace
 
   DEBUG_PRINT("Debug: Finished parsing function '%.*s'\n", name->length,
               name->lexeme);
 
-  return newFunctionNode(name, returnType, parameters, parameterCount,
-                         statements);
+  return new_function_node(name, return_type, parameters, parameter_count,
+                           statements);
 }
 
-ASTNode** parseFile(Token* tokens, int tokenCount) {
-  DEBUG_PRINT("Debug: Entering parseFile. Total tokens: %d\n", tokenCount);
+ast_node** parse_file(Token* tokens, int token_count) {
+  DEBUG_PRINT("Debug: Entering parse_file. Total tokens: %d\n", token_count);
 
-  int tokenIndex = 0;
-  ASTNode** astNodes =
-      (ASTNode**)malloc(MAX_NUMBER_OF_FUNCTIONS * sizeof(ASTNode*));
+  int token_index = 0;
+  ast_node** ast_nodes =
+      (ast_node**)malloc(MAX_NUMBER_OF_FUNCTIONS * sizeof(ast_node*));
   for (int i = 0; i < MAX_NUMBER_OF_FUNCTIONS; i++) {
-    astNodes[i] = NULL;
+    ast_nodes[i] = NULL;
   }
   int astNodesIndex = 0;
 
   // Loop until end-of-file token is reached.
-  while (tokenIndex < tokenCount) {
-    if (peekToken(tokens, &tokenIndex)->type == TOKEN_EOF) {
+  while (token_index < token_count) {
+    if (peek_token(tokens, &token_index)->type == TOKEN_EOF) {
       break;
     }
-    if (isTokenDataType(peekToken(tokens, &tokenIndex)) == 1) {
+    if (is_token_data_type(peek_token(tokens, &token_index)) == 1) {
       DEBUG_PRINT("Is data type\n");
 
-      if (peekAheadToken(tokens, &tokenIndex, 1, tokenCount)->type ==
+      if (peek_ahead_token(tokens, &token_index, 1, token_count)->type ==
           TOKEN_IDENTIFIER) {
         DEBUG_PRINT("Is identifier\n");
 
-        if (peekAheadToken(tokens, &tokenIndex, 2, tokenCount)->type ==
+        if (peek_ahead_token(tokens, &token_index, 2, token_count)->type ==
             TOKEN_LPAREN) {
-          DEBUG_PRINT("Debug: Parsing function starting at tokenIndex %d\n",
-                      tokenIndex);
+          DEBUG_PRINT("Debug: Parsing function starting at token_index %d\n",
+                      token_index);
 
-          astNodes[astNodesIndex++] =
-              parseFunction(tokens, &tokenIndex, tokenCount);
+          ast_nodes[astNodesIndex++] =
+              parse_function(tokens, &token_index, token_count);
           continue;
         }
       }
     }
-    tokenIndex++;  // Avoid infinite loop if no matching constructs are found.
+    token_index++;  // Avoid infinite loop if no matching constructs are found.
   }
-  return astNodes;
+  return ast_nodes;
 }
 
 /*
@@ -757,8 +783,8 @@ Args:
 Returns:
   void
 */
-static void printIndent(FILE* output, int indent) {
-  // DEBUG_PRINT("printIndent with indent = %d", indent);
+static void print_indent(FILE* output, int indent) {
+  // DEBUG_PRINT("print_indent with indent = %d", indent);
   for (int i = 0; i < indent; i++) {
     (void)fprintf(output, "  ");
   }
@@ -771,19 +797,20 @@ static void printIndent(FILE* output, int indent) {
 /*                                AST Printer                                 */
 /* -------------------------------------------------------------------------- */
 
-void printAST(FILE* output, ASTNode* node, int indent) {
-  // DEBUG_PRINT("Entering printAST (indent=%d)", indent);
+void print_ast(FILE* output, ast_node* node, int indent) {
+  // DEBUG_PRINT("Entering print_ast (indent=%d)", indent);
 
   if (node == NULL) {
-    printIndent(output, indent);
+    print_indent(output, indent);
     (void)fprintf(output, "NULL\n");
     return;
   }
 
-  printIndent(output, indent);
+  print_indent(output, indent);
   switch (node->type) {
     case AST_INT_LITERAL:
-      (void)fprintf(output, "IntLiteral: %d\n", node->as.intLiteral.intLiteral);
+      (void)fprintf(output, "IntLiteral: %d\n",
+                    node->as.int_literal.int_literal);
       break;
 
     case AST_VARIABLE_DECLARATION:
@@ -794,33 +821,34 @@ void printAST(FILE* output, ASTNode* node, int indent) {
                       node->as.variable_declaration.type->length,
                       node->as.variable_declaration.type->lexeme);
       } else {
-        (void)fprintf(output, "Variable: %.*s\n", node->as.variableName->length,
-                      node->as.variableName->lexeme);
+        (void)fprintf(output, "Variable: %.*s\n",
+                      node->as.variable_name->length,
+                      node->as.variable_name->lexeme);
       }
       break;
 
     case AST_VARIABLE:
-      (void)fprintf(output, "Variable: %.*s\n", node->as.variableName->length,
-                    node->as.variableName->lexeme);
+      (void)fprintf(output, "Variable: %.*s\n", node->as.variable_name->length,
+                    node->as.variable_name->lexeme);
       break;
 
     case AST_BINARY:
       (void)fprintf(output, "Binary Expression: '%s'\n",
-                    tokenTypeToString(node->as.binary._operator));
-      printIndent(output, indent + 1);
+                    token_type_to_string(node->as.binary._operator));
+      print_indent(output, indent + 1);
       (void)fprintf(output, "Left:\n");
-      printAST(output, node->as.binary.left, indent + 2);
-      printIndent(output, indent + 1);
+      print_ast(output, node->as.binary.left, indent + 2);
+      print_indent(output, indent + 1);
       (void)fprintf(output, "Right:\n");
-      printAST(output, node->as.binary.right, indent + 2);
+      print_ast(output, node->as.binary.right, indent + 2);
       break;
 
     case AST_UNARY:
       (void)fprintf(output, "Unary Expression: '%c'\n",
                     node->as.unary._operator);
-      printIndent(output, indent + 1);
+      print_indent(output, indent + 1);
       (void)fprintf(output, "Operand:\n");
-      printAST(output, node->as.unary.operand, indent + 2);
+      print_ast(output, node->as.unary.operand, indent + 2);
       break;
 
     case AST_ASSIGNMENT:
@@ -829,90 +857,91 @@ void printAST(FILE* output, ASTNode* node, int indent) {
 
     case AST_DECLARATION:
       (void)fprintf(output, "Declaration:\n");
-      printIndent(output, indent + 1);
+      print_indent(output, indent + 1);
       (void)fprintf(output, "Variable Declaration:\n");
-      printAST(output, node->as.declaration.variable, indent + 2);
-      printIndent(output, indent + 1);
+      print_ast(output, node->as.declaration.variable, indent + 2);
+      print_indent(output, indent + 1);
       (void)fprintf(output, "Expression:\n");
-      printAST(output, node->as.declaration.expression, indent + 2);
+      print_ast(output, node->as.declaration.expression, indent + 2);
       break;
 
     case AST_FUNCTION_DECLARATION:
       (void)fprintf(output, "Function Declaration: %.*s returns %.*s\n",
                     node->as.function.name->length,
                     node->as.function.name->lexeme,
-                    node->as.function.returnType->length,
-                    node->as.function.returnType->lexeme);
-      printIndent(output, indent + 1);
-      (void)fprintf(output, "Parameters (%d):\n", node->as.function.paramCount);
-      for (int i = 0; i < node->as.function.paramCount; i++) {
-        printAST(output, node->as.function.parameters[i], indent + 2);
+                    node->as.function.return_type->length,
+                    node->as.function.return_type->lexeme);
+      print_indent(output, indent + 1);
+      (void)fprintf(output, "Parameters (%d):\n",
+                    node->as.function.param_count);
+      for (int i = 0; i < node->as.function.param_count; i++) {
+        print_ast(output, node->as.function.parameters[i], indent + 2);
       }
-      printIndent(output, indent + 1);
+      print_indent(output, indent + 1);
       (void)fprintf(output, "Body Statements:\n");
-      printAST(output, node->as.function.statements, indent + 2);
+      print_ast(output, node->as.function.statements, indent + 2);
       break;
 
     case AST_FUNCTION_CALL:
       (void)fprintf(output, "Function Call: %.*s with %d argument(s)\n",
                     node->as.function_call.name->length,
                     node->as.function_call.name->lexeme,
-                    node->as.function_call.paramCount);
-      for (int i = 0; i < node->as.function_call.paramCount; i++) {
-        printAST(output, node->as.function_call.parameters[i], indent + 1);
+                    node->as.function_call.param_count);
+      for (int i = 0; i < node->as.function_call.param_count; i++) {
+        print_ast(output, node->as.function_call.parameters[i], indent + 1);
       }
       break;
 
     case AST_IF_STATEMENT:
       (void)fprintf(output, "If Statement:\n");
-      printIndent(output, indent + 1);
+      print_indent(output, indent + 1);
       (void)fprintf(output, "Condition:\n");
-      printAST(output, node->as.if_elif_else_statement.condition, indent + 2);
-      printIndent(output, indent + 1);
+      print_ast(output, node->as.if_elif_else_statement.condition, indent + 2);
+      print_indent(output, indent + 1);
       (void)fprintf(output, "Body:\n");
-      printAST(output, node->as.if_elif_else_statement.body, indent + 2);
+      print_ast(output, node->as.if_elif_else_statement.body, indent + 2);
       break;
 
     case AST_ELSE_IF_STATEMENT:
       (void)fprintf(output, "Else If Statement:\n");
-      printIndent(output, indent + 1);
+      print_indent(output, indent + 1);
       (void)fprintf(output, "Condition:\n");
-      printAST(output, node->as.if_elif_else_statement.condition, indent + 2);
-      printIndent(output, indent + 1);
+      print_ast(output, node->as.if_elif_else_statement.condition, indent + 2);
+      print_indent(output, indent + 1);
       (void)fprintf(output, "Body:\n");
-      printAST(output, node->as.if_elif_else_statement.body, indent + 2);
+      print_ast(output, node->as.if_elif_else_statement.body, indent + 2);
       break;
 
     case AST_ELSE_STATEMENT:
       (void)fprintf(output, "Else Statement:\n");
-      printIndent(output, indent + 1);
+      print_indent(output, indent + 1);
       (void)fprintf(output, "Body:\n");
-      printAST(output, node->as.if_elif_else_statement.body, indent + 2);
+      print_ast(output, node->as.if_elif_else_statement.body, indent + 2);
       break;
 
     case AST_WHILE_STATEMENT:
       (void)fprintf(output, "While Statement:\n");
-      printIndent(output, indent + 1);
+      print_indent(output, indent + 1);
       (void)fprintf(output, "Condition:\n");
-      printAST(output, node->as.while_statement.condition, indent + 2);
-      printIndent(output, indent + 1);
+      print_ast(output, node->as.while_statement.condition, indent + 2);
+      print_indent(output, indent + 1);
       (void)fprintf(output, "Body:\n");
-      printAST(output, node->as.while_statement.body, indent + 2);
+      print_ast(output, node->as.while_statement.body, indent + 2);
       break;
 
     case AST_BLOCK:
       (void)fprintf(output, "Block with %d statement(s):\n",
                     node->as.block.count);
       for (int i = 0; i < node->as.block.count; i++) {
-        printAST(output, node->as.block.statements[i], indent + 1);
+        print_ast(output, node->as.block.statements[i], indent + 1);
       }
       break;
 
     case AST_RETURN:
       (void)fprintf(output, "Return Statement:\n");
-      printIndent(output, indent + 1);
+      print_indent(output, indent + 1);
       (void)fprintf(output, "Expression:\n");
-      printAST(output, node->as._return.expression, indent + 2);
+      print_ast(output, node->as._return.expression, indent + 2);
       break;
 
     default:
@@ -923,12 +952,13 @@ void printAST(FILE* output, ASTNode* node, int indent) {
 
 /* -------------------------------------------------------------------------- */
 
-void printASTOutput(ASTNode** nodes, int count, int outputToFile) {
-  // DEBUG_PRINT("Entering printASTOutput (count=%d, outputToFile=%d)", count,
-  //             outputToFile);
+void print_ast_output(ast_node** nodes, int count, int output_to_file) {
+  // DEBUG_PRINT("Entering print_ast_output (count=%d, output_to_file=%d)",
+  // count,
+  //             output_to_file);
 
   FILE* output = NULL;
-  if (outputToFile == 1) {
+  if (output_to_file == 1) {
     output = fopen("ast.txt", "we");
     if (output == NULL) {
       error_and_exit("Error opening file 'ast'");
@@ -944,13 +974,13 @@ void printASTOutput(ASTNode** nodes, int count, int outputToFile) {
   for (int i = 0; i < count; i++) {
     if (nodes[i] != NULL) {
       (void)fprintf(output, "\n--- AST Node %d ---\n", i);
-      printAST(output, nodes[i], 0);
+      print_ast(output, nodes[i], 0);
     }
   }
 
-  if (outputToFile) {
+  if (output_to_file) {
     (void)fclose(output);
   }
 
-  DEBUG_PRINT("Exiting printASTOutput");
+  DEBUG_PRINT("Exiting print_ast_output");
 }

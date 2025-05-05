@@ -5,24 +5,24 @@
 #include "lexer.h"
 #include "parser.h"
 
-typedef struct variableInMemory {
-  char* variableName;
+typedef struct variable_in_memory {
+  char* variable_name;
   int memory_difference;
   int variable_type;
-} variableInMemory;
+} variable_in_memory;
 
 typedef struct memory {
-  variableInMemory** variables;
-  int variableCapacity;
-  int numberOfVariables;
-  int nextStartingLocation;
+  variable_in_memory** variables;
+  int variable_capacity;
+  int number_of_variables;
+  int next_starting_location;
 } memory;
 
-typedef struct listOfX86Instructions {
+typedef struct list_of_x86_instructions {
   char** instructions;
-  int instructionCount;
-  int instructionCapacity;
-} listOfX86Instructions;
+  int instruction_count;
+  int instruction_capacity;
+} list_of_x86_instructions;
 
 typedef struct {
   TokenType symbol;
@@ -43,7 +43,7 @@ Args:
 Returns:
   void
 */
-void initMemory(memory* mem);
+void init_memory(memory* mem);
 
 /*
 Adds a variable to the memory tracking system.
@@ -52,12 +52,12 @@ Stores its name and stack offset in the memory table.
 
 Args:
   mem: Pointer to memory struct.
-  variableName: Name of the variable to add.
+  variable_name: Name of the variable to add.
 
 Returns:
   void
 */
-void addVariableToMemory(memory* mem, char* variableName);
+void add_variable_to_memory(memory* mem, char* variableName);
 
 /*
 Finds the stack memory location of a variable.
@@ -97,12 +97,12 @@ Initializes a list to hold x86 instructions.
 Allocates initial memory and sets instruction count to 0.
 
 Args:
-  list: Pointer to the listOfX86Instructions struct.
+  list: Pointer to the list_of_x86_instructions struct.
 
 Returns:
   void
 */
-void initListOfInstructions(listOfX86Instructions* list);
+void init_list_of_instructions(list_of_x86_instructions* list);
 
 /*
 Adds an x86 instruction to the instruction list.
@@ -116,7 +116,7 @@ Args:
 Returns:
   void
 */
-void addInstruction(listOfX86Instructions* list, char* instruction);
+void add_instruction(list_of_x86_instructions* list, char* instruction);
 
 /*
 Prints the memory map (variable names and their offsets).
@@ -129,7 +129,7 @@ Args:
 Returns:
   void
 */
-void printMemory(memory* mem);
+void print_memory(memory* mem);
 
 // ───── Instruction Generation ─────
 
@@ -147,8 +147,9 @@ Args:
 Returns:
   void
 */
-void ASTVariableLiteralOrBinaryToX86(ASTNode* node, listOfX86Instructions* list,
-                                     memory* mem);
+void ast_variable_literal_or_binary_to_x86(ast_node* node,
+                                           list_of_x86_instructions* list,
+                                           memory* mem);
 
 /*
 Generates x86 code from either a variable or a literal.
@@ -156,15 +157,16 @@ Generates x86 code from either a variable or a literal.
 Used when the node type is guaranteed to be a simple operand.
 
 Args:
-  node: ASTNode representing the operand.
+  node: ast_node representing the operand.
   list: Instruction list.
   mem: Memory state.
 
 Returns:
   void
 */
-void ASTVariableOrLiteralNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                                   memory* mem);
+void ast_variable_or_literal_node_to_x86(ast_node* node,
+                                         list_of_x86_instructions* list,
+                                         memory* mem);
 
 /*
 Generates x86 code for a binary expression.
@@ -181,8 +183,8 @@ Args:
 Returns:
   void
 */
-void ASTBinaryNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem,
-                        int first);
+void ast_binary_node_to_x86(ast_node* node, list_of_x86_instructions* list,
+                            memory* mem, int first);
 
 /*
 Generates x86 code for a variable declaration.
@@ -197,7 +199,7 @@ Args:
 Returns:
   void
 */
-void ASTVariableDeclarationNodeToX86(ASTNode* node, memory* mem);
+void ast_variable_declaration_node_to_x86(ast_node* node, memory* mem);
 
 /*
 Generates x86 code for a full declaration (type + assignment).
@@ -212,8 +214,8 @@ Args:
 Returns:
   void
 */
-void ASTDeclarationNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                             memory* mem);
+void ast_declaration_node_to_x86(ast_node* node, list_of_x86_instructions* list,
+                                 memory* mem);
 
 /*
 Generates x86 code for a return statement.
@@ -228,8 +230,8 @@ Args:
 Returns:
   void
 */
-void ASTReturnNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                        memory* mem);
+void ast_return_node_to_x86(ast_node* node, list_of_x86_instructions* list,
+                            memory* mem);
 
 /*
 Generates x86 instructions for a general AST statement.
@@ -244,8 +246,8 @@ Args:
 Returns:
   void
 */
-void ASTStatementNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                           memory* mem);
+void ast_statement_node_to_x86(ast_node* node, list_of_x86_instructions* list,
+                               memory* mem);
 
 /*
 Generates x86 code for a block of statements.
@@ -260,7 +262,8 @@ Args:
 Returns:
   void
 */
-void ASTBlockNodeToX86(ASTNode* node, listOfX86Instructions* list, memory* mem);
+void ast_block_node_to_x86(ast_node* node, list_of_x86_instructions* list,
+                           memory* mem);
 
 /*
 Generates x86 instructions for a function call.
@@ -275,8 +278,8 @@ Args:
 Returns:
   void
 */
-void ASTFunctionCallNodeToX86(ASTNode* node, listOfX86Instructions* list,
-                              memory* mem);
+void ast_function_call_node_to_x86(ast_node* node,
+                                   list_of_x86_instructions* list, memory* mem);
 
 /*
 Generates full x86 instructions for a function.
@@ -290,7 +293,7 @@ Args:
 Returns:
   void
 */
-void ASTFunctionNodeToX86(ASTNode* node, listOfX86Instructions* list);
+void ast_function_node_to_x86(ast_node* node, list_of_x86_instructions* list);
 
 /*
 Generates x86 instructions for all top-level function nodes.
@@ -298,15 +301,16 @@ Generates x86 instructions for all top-level function nodes.
 Traverses the AST function declarations and emits their corresponding x86 code.
 
 Args:
-  nodes: Array of ASTNode pointers.
+  nodes: Array of ast_node pointers.
   list: Output instruction list.
   numberOfFunctions: Number of AST function nodes.
 
 Returns:
   void
 */
-void ListOfASTFunctionNodesToX86(ASTNode** nodes, listOfX86Instructions* list,
-                                 int numberOfFunctions);
+void list_of_ast_function_nodes_to_x86(ast_node** nodes,
+                                       list_of_x86_instructions* list,
+                                       int numberOfFunctions);
 
 // ───── Output ─────
 
@@ -321,7 +325,7 @@ Args:
 Returns:
   void
 */
-void printInstructions(listOfX86Instructions* list);
+void print_instructions(list_of_x86_instructions* list);
 
 // ───── Helpers ─────
 
@@ -349,4 +353,4 @@ Args:
 Returns:
   Name of the corresponding register (e.g., "edi", "esi", etc.).
 */
-const char* getLowLinuxRegistersName(int index);
+const char* get_low_linux_registers_name(int index);

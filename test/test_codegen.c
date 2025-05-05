@@ -34,7 +34,7 @@ enum { CAPACITY = 128 };
 // tokenize entire source into a dynamically sized array of Tokens
 static Token* lex_all(const char* src, int* out_count) {
   Lexer lex;
-  initLexer(&lex, src);
+  init_lexer(&lex, src);
 
   int capacity = CAPACITY;
   int count = 0;
@@ -43,7 +43,7 @@ static Token* lex_all(const char* src, int* out_count) {
 
   Token tok;
   do {
-    tok = getNextToken(&lex);
+    tok = get_next_token(&lex);
 
     if (count >= capacity) {
       capacity *= 2;
@@ -62,7 +62,7 @@ static Token* lex_all(const char* src, int* out_count) {
 }
 
 // Count number of non-null AST nodes
-static int ast_count(ASTNode** ast) {
+static int ast_count(ast_node** ast) {
   int node = 0;
   while (ast[node] != NULL) {
     node++;
@@ -76,18 +76,18 @@ Test(codegen, return_constant) {
                         "/test/test_inputs/codegen_inputs/simple_codegen.c");
   int tokc = 0;
   Token* toks = lex_all(src, &tokc);
-  ASTNode** ast = parseFile(toks, tokc);
+  ast_node** ast = parse_file(toks, tokc);
   cr_assert_not_null(ast);
 
   int numFns = ast_count(ast);
-  listOfX86Instructions list;
-  initListOfInstructions(&list);
-  ListOfASTFunctionNodesToX86(ast, &list, numFns);
-  printInstructions(&list);
+  list_of_x86_instructions list;
+  init_list_of_instructions(&list);
+  list_of_ast_function_nodes_to_x86(ast, &list, numFns);
+  print_instructions(&list);
 
   int foundMain = 0;
   int foundMov = 0;
-  for (int i = 0; i < list.instructionCount; i++) {
+  for (int i = 0; i < list.instruction_count; i++) {
     if (strstr(list.instructions[i], "main:")) {
       foundMain = 1;
     }
@@ -109,19 +109,19 @@ Test(codegen, return_binary_expression) {
                         "/test/test_inputs/codegen_inputs/binary_return.c");
   int tokc = 0;
   Token* toks = lex_all(src, &tokc);
-  ASTNode** ast = parseFile(toks, tokc);
+  ast_node** ast = parse_file(toks, tokc);
   cr_assert_not_null(ast);
 
   int numFns = ast_count(ast);
-  listOfX86Instructions list;
-  initListOfInstructions(&list);
-  ListOfASTFunctionNodesToX86(ast, &list, numFns);
-  printInstructions(&list);
+  list_of_x86_instructions list;
+  init_list_of_instructions(&list);
+  list_of_ast_function_nodes_to_x86(ast, &list, numFns);
+  print_instructions(&list);
 
   int found6 = 0;
   int found2 = 0;
   int foundAdd = 0;
-  for (int i = 0; i < list.instructionCount; i++) {
+  for (int i = 0; i < list.instruction_count; i++) {
     if (strstr(list.instructions[i], "mov     edx, 2")) {
       found2 = 1;
     }
@@ -147,19 +147,19 @@ Test(codegen, function_call) {
                         "/test/test_inputs/codegen_inputs/func_call.c");
   int tokc = 0;
   Token* toks = lex_all(src, &tokc);
-  ASTNode** ast = parseFile(toks, tokc);
+  ast_node** ast = parse_file(toks, tokc);
   cr_assert_not_null(ast);
 
   int numFns = ast_count(ast);
-  listOfX86Instructions list;
-  initListOfInstructions(&list);
-  ListOfASTFunctionNodesToX86(ast, &list, numFns);
-  printInstructions(&list);
+  list_of_x86_instructions list;
+  init_list_of_instructions(&list);
+  list_of_ast_function_nodes_to_x86(ast, &list, numFns);
+  print_instructions(&list);
 
   int foundCall = 0;
   int foundEdi = 0;
   int foundEsi = 0;
-  for (int i = 0; i < list.instructionCount; i++) {
+  for (int i = 0; i < list.instruction_count; i++) {
     if (strstr(list.instructions[i], "call    test")) {
       foundCall = 1;
     }
@@ -185,18 +185,18 @@ Test(codegen, var_decl_initialization) {
       read_file(CMAKE_SOURCE_DIR "/test/test_inputs/codegen_inputs/var_decl.c");
   int tokc = 0;
   Token* toks = lex_all(src, &tokc);
-  ASTNode** ast = parseFile(toks, tokc);
+  ast_node** ast = parse_file(toks, tokc);
   cr_assert_not_null(ast);
 
   int numFns = ast_count(ast);
-  listOfX86Instructions list;
-  initListOfInstructions(&list);
-  ListOfASTFunctionNodesToX86(ast, &list, numFns);
-  printInstructions(&list);
+  list_of_x86_instructions list;
+  init_list_of_instructions(&list);
+  list_of_ast_function_nodes_to_x86(ast, &list, numFns);
+  print_instructions(&list);
 
   int foundMov5 = 0;
   int foundStore = 0;
-  for (int i = 0; i < list.instructionCount; i++) {
+  for (int i = 0; i < list.instruction_count; i++) {
     const char* ins = list.instructions[i];
     if (strstr(ins, "mov     eax, 5")) {
       foundMov5 = 1;
@@ -219,19 +219,19 @@ Test(codegen, multiplication) {
       read_file(CMAKE_SOURCE_DIR "/test/test_inputs/codegen_inputs/multiply.c");
   int tokc = 0;
   Token* toks = lex_all(src, &tokc);
-  ASTNode** ast = parseFile(toks, tokc);
+  ast_node** ast = parse_file(toks, tokc);
   cr_assert_not_null(ast);
 
   int numFns = ast_count(ast);
-  listOfX86Instructions list;
-  initListOfInstructions(&list);
-  ListOfASTFunctionNodesToX86(ast, &list, numFns);
-  printInstructions(&list);
+  list_of_x86_instructions list;
+  init_list_of_instructions(&list);
+  list_of_ast_function_nodes_to_x86(ast, &list, numFns);
+  print_instructions(&list);
 
   int foundMov3 = 0;
   int foundMov7 = 0;
   int foundImul = 0;
-  for (int i = 0; i < list.instructionCount; i++) {
+  for (int i = 0; i < list.instruction_count; i++) {
     const char* ins = list.instructions[i];
     if (strstr(ins, "mov     edx, 3")) {
       foundMov3 = 1;
@@ -258,19 +258,19 @@ Test(codegen, division) {
       read_file(CMAKE_SOURCE_DIR "/test/test_inputs/codegen_inputs/division.c");
   int tokc = 0;
   Token* toks = lex_all(src, &tokc);
-  ASTNode** ast = parseFile(toks, tokc);
+  ast_node** ast = parse_file(toks, tokc);
   cr_assert_not_null(ast);
 
   int numFns = ast_count(ast);
-  listOfX86Instructions list;
-  initListOfInstructions(&list);
-  ListOfASTFunctionNodesToX86(ast, &list, numFns);
-  printInstructions(&list);
+  list_of_x86_instructions list;
+  init_list_of_instructions(&list);
+  list_of_ast_function_nodes_to_x86(ast, &list, numFns);
+  print_instructions(&list);
 
   int foundMov2 = 0;
   int foundMov10 = 0;
   int foundIdiv = 0;
-  for (int i = 0; i < list.instructionCount; i++) {
+  for (int i = 0; i < list.instruction_count; i++) {
     const char* ins = list.instructions[i];
     if (strstr(ins, "mov     edx, 2")) {
       foundMov2 = 1;
@@ -297,18 +297,18 @@ Test(codegen, function_call_no_args) {
                         "/test/test_inputs/codegen_inputs/func_call_no_args.c");
   int tokc = 0;
   Token* toks = lex_all(src, &tokc);
-  ASTNode** ast = parseFile(toks, tokc);
+  ast_node** ast = parse_file(toks, tokc);
   cr_assert_not_null(ast);
 
   int numFns = ast_count(ast);
-  listOfX86Instructions list;
-  initListOfInstructions(&list);
-  ListOfASTFunctionNodesToX86(ast, &list, numFns);
-  printInstructions(&list);
+  list_of_x86_instructions list;
+  init_list_of_instructions(&list);
+  list_of_ast_function_nodes_to_x86(ast, &list, numFns);
+  print_instructions(&list);
 
   int foundFooLabel = 0;
   int foundCallFoo = 0;
-  for (int i = 0; i < list.instructionCount; i++) {
+  for (int i = 0; i < list.instruction_count; i++) {
     const char* ins = list.instructions[i];
     if (strstr(ins, "foo:")) {
       foundFooLabel = 1;
@@ -331,18 +331,18 @@ Test(codegen, multiple_functions) {
                         "/test/test_inputs/codegen_inputs/multiple_func.c");
   int tokc = 0;
   Token* toks = lex_all(src, &tokc);
-  ASTNode** ast = parseFile(toks, tokc);
+  ast_node** ast = parse_file(toks, tokc);
   cr_assert_not_null(ast);
 
   int numFns = ast_count(ast);
-  listOfX86Instructions list;
-  initListOfInstructions(&list);
-  ListOfASTFunctionNodesToX86(ast, &list, numFns);
-  printInstructions(&list);
+  list_of_x86_instructions list;
+  init_list_of_instructions(&list);
+  list_of_ast_function_nodes_to_x86(ast, &list, numFns);
+  print_instructions(&list);
 
   int countFoo = 0;
   int countMain = 0;
-  for (int i = 0; i < list.instructionCount; i++) {
+  for (int i = 0; i < list.instruction_count; i++) {
     if (strstr(list.instructions[i], "foo:")) {
       countFoo++;
     }
@@ -364,19 +364,19 @@ Test(codegen, decl_and_return) {
                         "/test/test_inputs/codegen_inputs/decl_and_return.c");
   int tokc = 0;
   Token* toks = lex_all(src, &tokc);
-  ASTNode** ast = parseFile(toks, tokc);
+  ast_node** ast = parse_file(toks, tokc);
   cr_assert_not_null(ast);
 
   int numFns = ast_count(ast);
-  listOfX86Instructions list;
-  initListOfInstructions(&list);
-  ListOfASTFunctionNodesToX86(ast, &list, numFns);
-  printInstructions(&list);
+  list_of_x86_instructions list;
+  init_list_of_instructions(&list);
+  list_of_ast_function_nodes_to_x86(ast, &list, numFns);
+  print_instructions(&list);
 
   int foundMov9 = 0;
   int foundStoreX = 0;
   int foundLoadX = 0;
-  for (int i = 0; i < list.instructionCount; i++) {
+  for (int i = 0; i < list.instruction_count; i++) {
     const char* ins = list.instructions[i];
     if (strstr(ins, "mov     eax, 9")) {
       foundMov9 = 1;

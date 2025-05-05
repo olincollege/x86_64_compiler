@@ -25,18 +25,18 @@ typedef enum {
   // Add more as needed...
 } ASTNodeType;
 
-typedef struct ASTNode {
+typedef struct ast_node {
   ASTNodeType type;  // Helps identify which kind of node this is.
   // int line;         // Optional: storing line number for debugging or error
   // messages.
   union {
     // For integer literals.
     struct {
-      int intLiteral;
+      int int_literal;
       Token* token;  // The token representing the integer literal.
-    } intLiteral;
+    } int_literal;
 
-    Token* variableName;
+    Token* variable_name;
 
     // For a variable or identifier.
     struct {
@@ -47,75 +47,75 @@ typedef struct ASTNode {
 
     // For binary expressions.
     struct {
-      struct ASTNode* left;
+      struct ast_node* left;
       TokenType _operator;  // You might use a char or a TokenType here.
-      struct ASTNode* right;
+      struct ast_node* right;
     } binary;
 
     struct {
-      struct ASTNode* condition;
-      struct ASTNode* body;
+      struct ast_node* condition;
+      struct ast_node* body;
     } while_statement;
 
     struct {
-      struct ASTNode* condition;
-      struct ASTNode* body;
+      struct ast_node* condition;
+      struct ast_node* body;
     } if_elif_else_statement;
 
     // For unary expressions.
     struct {
       char _operator;
-      struct ASTNode* operand;
+      struct ast_node* operand;
     } unary;
 
     struct {
       Token* name;  // The name of the function.
-      Token* returnType;
-      struct ASTNode** parameters;  // List of parameters (ASTNodes).
-      int paramCount;               // Number of parameters.
-      struct ASTNode* statements;   // Block for the statements in the function.
+      Token* return_type;
+      struct ast_node** parameters;  // List of parameters (ASTNodes).
+      int param_count;               // Number of parameters.
+      struct ast_node* statements;  // Block for the statements in the function.
     } function;
 
     struct {
-      Token* name;                  // The name of the function.
-      struct ASTNode** parameters;  // List of parameters (ASTNodes).
-      int paramCount;               // Number of parameters.
+      Token* name;                   // The name of the function.
+      struct ast_node** parameters;  // List of parameters (ASTNodes).
+      int param_count;               // Number of parameters.
     } function_call;
 
     struct {
-      struct ASTNode* variable;
-      struct ASTNode* expression;
+      struct ast_node* variable;
+      struct ast_node* expression;
     } declaration;
 
     // For blocks (a list of statements).
     struct {
-      struct ASTNode** statements;
+      struct ast_node** statements;
       int count;  // The number of statements in the block.
     } block;
 
     struct {
-      struct ASTNode* expression;
+      struct ast_node* expression;
     } _return;
 
     // For an assignment, declaration, or other composite structures,
     // you can add additional fields or even nested structs here.
   } as;
-} ASTNode;
+} ast_node;
 /*
 Parses a function call node from the token stream.
 
-Scans tokens starting at `*tokenIndex` to parse a function call (e.g.,
+Scans tokens starting at `*token_index` to parse a function call (e.g.,
 `foo(arg1, arg2)`), constructing an AST node representing the function call.
 
 Args:
   tokens: Array of tokens.
-  tokenIndex: Pointer to current index in token array.
-  tokenCount: Total number of tokens.
+  token_index: Pointer to current index in token array.
+  token_count: Total number of tokens.
 
 Returns:
-  ASTNode* representing the function call.
+  ast_node* representing the function call.
 */
-ASTNode* parseFunctionCall(Token* tokens, int* tokenIndex, int tokenCount);
+ast_node* parse_function_call(Token* tokens, int* token_index, int token_count);
 
 /*
 Recursively prints the AST starting from the given node.
@@ -131,7 +131,7 @@ Args:
 Returns:
   void
 */
-void printAST(FILE* output, ASTNode* node, int indent);
+void print_ast(FILE* output, ast_node* node, int indent);
 
 /*
 Prints an array of AST nodes to a file.
@@ -140,13 +140,13 @@ Outputs all given AST nodes to a file named "ast" with indentation and
 structure.
 
 Args:
-  nodes: Array of ASTNode pointers.
+  nodes: Array of ast_node pointers.
   count: Number of AST nodes.
 
 Returns:
   void
 */
-void printASTFile(ASTNode** nodes, int count);
+void printASTFile(ast_node** nodes, int count);
 
 /*
 Prints the AST output to stdout or a file.
@@ -154,14 +154,14 @@ Prints the AST output to stdout or a file.
 Iterates over the array of AST nodes and prints each one, optionally to a file.
 
 Args:
-  nodes: Array of ASTNode pointers.
+  nodes: Array of ast_node pointers.
   count: Number of AST nodes.
   outputToFile: 1 to print to file, 0 to stdout.
 
 Returns:
   void
 */
-void printASTOutput(ASTNode** nodes, int count, int outputToFile);
+void print_ast_output(ast_node** nodes, int count, int outputToFile);
 
 /*
 Parses a block (compound statement) of code.
@@ -171,13 +171,13 @@ returns a block AST node.
 
 Args:
   tokens: Array of tokens.
-  tokenIndex: Pointer to current index in token array.
-  tokenCount: Total number of tokens.
+  token_index: Pointer to current index in token array.
+  token_count: Total number of tokens.
 
 Returns:
-  ASTNode* representing the block.
+  ast_node* representing the block.
 */
-ASTNode* parseBlock(Token* tokens, int* tokenIndex, int tokenCount);
+ast_node* parse_block(Token* tokens, int* token_index, int token_count);
 
 /*
 Creates a new AST node for an integer literal.
@@ -189,9 +189,9 @@ Args:
   token: Token representing the integer.
 
 Returns:
-  ASTNode* representing the literal.
+  ast_node* representing the literal.
 */
-ASTNode* newIntLiteralNode(int value, Token* token);
+ast_node* new_int_literal_node(int value, Token* token);
 
 /*
 Creates a new AST node for a variable.
@@ -202,9 +202,9 @@ Args:
   name: Token representing the variable name.
 
 Returns:
-  ASTNode* representing the variable.
+  ast_node* representing the variable.
 */
-ASTNode* newVariableNode(Token* name);
+ast_node* new_variable_node(Token* name);
 
 /*
 Creates a new AST node for a variable declaration.
@@ -216,9 +216,9 @@ Args:
   type: Token for variable type.
 
 Returns:
-  ASTNode* representing the declaration.
+  ast_node* representing the declaration.
 */
-ASTNode* newVariableDeclarationNode(Token* name, Token* type);
+ast_node* new_variable_declaration_node(Token* name, Token* type);
 
 /*
 Creates a new binary expression node.
@@ -232,9 +232,9 @@ Args:
   right: Right-hand expression.
 
 Returns:
-  ASTNode* representing the binary expression.
+  ast_node* representing the binary expression.
 */
-ASTNode* newBinaryNode(ASTNode* left, TokenType operator, ASTNode * right);
+ast_node* new_binary_node(ast_node* left, TokenType operator, ast_node * right);
 
 /*
 Creates a new unary expression node.
@@ -246,9 +246,9 @@ Args:
   operand: Operand node.
 
 Returns:
-  ASTNode* representing the unary expression.
+  ast_node* representing the unary expression.
 */
-ASTNode* newUnaryNode(char operator, ASTNode * operand);
+ast_node* new_unary_node(char operator, ast_node * operand);
 
 /*
 Creates a new block node containing multiple statements.
@@ -256,13 +256,13 @@ Creates a new block node containing multiple statements.
 Constructs a block node from an array of statement AST nodes.
 
 Args:
-  statements: Array of ASTNode pointers.
+  statements: Array of ast_node pointers.
   count: Number of statements.
 
 Returns:
-  ASTNode* representing the block.
+  ast_node* representing the block.
 */
-ASTNode* newBlockNode(ASTNode** statements, int count);
+ast_node* new_block_node(ast_node** statements, int count);
 
 /*
 Creates a new function declaration node.
@@ -272,16 +272,17 @@ body.
 
 Args:
   name: Token for function name.
-  returnType: Token for return type.
+  return_type: Token for return type.
   parameters: Array of parameter ASTNodes.
   count: Number of parameters.
   statements: Block node for function body.
 
 Returns:
-  ASTNode* representing the function.
+  ast_node* representing the function.
 */
-ASTNode* newFunctionNode(Token* name, Token* returnType, ASTNode** parameters,
-                         int count, ASTNode* statements);
+ast_node* new_function_node(Token* name, Token* return_type,
+                            ast_node** parameters, int count,
+                            ast_node* statements);
 
 /*
 Creates a return statement node.
@@ -289,12 +290,12 @@ Creates a return statement node.
 Constructs a node representing a `return` expression.
 
 Args:
-  expression: ASTNode for the return value.
+  expression: ast_node for the return value.
 
 Returns:
-  ASTNode* representing the return.
+  ast_node* representing the return.
 */
-ASTNode* newReturnNode(ASTNode* expression);
+ast_node* new_return_node(ast_node* expression);
 
 /*
 Creates a declaration node for a variable initialized with an expression.
@@ -302,13 +303,14 @@ Creates a declaration node for a variable initialized with an expression.
 Represents `int x = 3;` as a declaration node holding both variable and value.
 
 Args:
-  variableDeclaration: ASTNode for the variable declaration.
-  expression: ASTNode for the right-hand expression.
+  variableDeclaration: ast_node for the variable declaration.
+  expression: ast_node for the right-hand expression.
 
 Returns:
-  ASTNode* representing the full declaration.
+  ast_node* representing the full declaration.
 */
-ASTNode* newDeclarationNode(ASTNode* variableDeclaration, ASTNode* expression);
+ast_node* new_declaration_node(ast_node* variableDeclaration,
+                               ast_node* expression);
 
 /*
 Creates a conditional node for if/else if/else statements.
@@ -317,13 +319,14 @@ Constructs a conditional block node based on the type of statement.
 
 Args:
   type: One of AST_IF_STATEMENT, AST_ELSE_IF_STATEMENT, AST_ELSE_STATEMENT.
-  condition: ASTNode for the condition (NULL for else).
+  condition: ast_node for the condition (NULL for else).
   body: Block node for the statement body.
 
 Returns:
-  ASTNode* representing the conditional.
+  ast_node* representing the conditional.
 */
-ASTNode* newIfElifElseNode(ASTNodeType type, ASTNode* condition, ASTNode* body);
+ast_node* new_if_elif_else_node(ASTNodeType type, ast_node* condition,
+                                ast_node* body);
 
 /*
 Creates a node representing a while loop.
@@ -331,13 +334,13 @@ Creates a node representing a while loop.
 Constructs an AST node for the `while (condition) { body }` structure.
 
 Args:
-  condition: ASTNode for the loop condition.
-  body: ASTNode for the loop body.
+  condition: ast_node for the loop condition.
+  body: ast_node for the loop body.
 
 Returns:
-  ASTNode* representing the loop.
+  ast_node* representing the loop.
 */
-ASTNode* newWhileNode(ASTNode* condition, ASTNode* body);
+ast_node* new_while_node(ast_node* condition, ast_node* body);
 
 /*
 Checks whether the token is a data type keyword.
@@ -350,7 +353,7 @@ Args:
 Returns:
   1 if token is a data type, 0 otherwise.
 */
-int isTokenDataType(Token* token);
+int is_token_data_type(Token* token);
 
 /*
 Returns the current token without advancing.
@@ -364,7 +367,7 @@ Args:
 Returns:
   Token* at the current index.
 */
-Token* peekToken(Token* tokens, const int* index);
+Token* peek_token(Token* tokens, const int* index);
 
 /*
 Peeks ahead by a number of tokens.
@@ -375,13 +378,13 @@ Args:
   tokens: Array of tokens.
   index: Pointer to current index.
   forward: Number of tokens to look ahead.
-  tokenCount: Total number of tokens.
+  token_count: Total number of tokens.
 
 Returns:
   Token* at the forward offset.
 */
-Token* peekAheadToken(Token* tokens, const int* index, int forward,
-                      int tokenCount);
+Token* peek_ahead_token(Token* tokens, const int* index, int forward,
+                        int token_count);
 
 /*
 Parses a variable declaration from tokens.
@@ -390,14 +393,14 @@ Detects and builds an AST node for a type-name pair.
 
 Args:
   tokens: Array of tokens.
-  tokenIndex: Pointer to current token index.
-  tokenCount: Total number of tokens.
+  token_index: Pointer to current token index.
+  token_count: Total number of tokens.
 
 Returns:
-  ASTNode* representing the variable declaration.
+  ast_node* representing the variable declaration.
 */
-ASTNode* parseVariableDeclaration(Token* tokens, int* tokenIndex,
-                                  int tokenCount);
+ast_node* parse_variable_declaration(Token* tokens, int* token_index,
+                                     int token_count);
 
 /*
 Converts a token representing an integer literal to an int.
@@ -410,7 +413,7 @@ Args:
 Returns:
   int value parsed from token.
 */
-int convertTokenToInt(Token* token);
+int convert_token_to_int(Token* token);
 
 /*
 Parses either a variable or integer literal.
@@ -419,13 +422,14 @@ Handles basic expressions like identifiers or constants.
 
 Args:
   tokens: Array of tokens.
-  tokenIndex: Pointer to token index.
-  tokenCount: Total number of tokens.
+  token_index: Pointer to token index.
+  token_count: Total number of tokens.
 
 Returns:
-  ASTNode* for the variable or literal.
+  ast_node* for the variable or literal.
 */
-ASTNode* parseVariableOrLiteral(Token* tokens, int* tokenIndex, int tokenCount);
+ast_node* parse_variable_or_literal(Token* tokens, int* token_index,
+                                    int token_count);
 
 /*
 Parses a full expression (e.g., binary expressions).
@@ -434,13 +438,13 @@ Implements parsing logic for simple expressions using binary operators.
 
 Args:
   tokens: Array of tokens.
-  tokenIndex: Pointer to current token index.
-  tokenCount: Total number of tokens.
+  token_index: Pointer to current token index.
+  token_count: Total number of tokens.
 
 Returns:
-  ASTNode* representing the expression.
+  ast_node* representing the expression.
 */
-ASTNode* parseExpression(Token* tokens, int* tokenIndex, int tokenCount);
+ast_node* parse_expression(Token* tokens, int* token_index, int token_count);
 
 /*
 Parses a `while` loop statement.
@@ -449,13 +453,14 @@ Constructs the AST node representing a while loop and its body.
 
 Args:
   tokens: Array of tokens.
-  tokenIndex: Pointer to current index.
-  tokenCount: Total number of tokens.
+  token_index: Pointer to current index.
+  token_count: Total number of tokens.
 
 Returns:
-  ASTNode* for the while loop.
+  ast_node* for the while loop.
 */
-ASTNode* parseWhileStatement(Token* tokens, int* tokenIndex, int tokenCount);
+ast_node* parse_while_statement(Token* tokens, int* token_index,
+                                int token_count);
 
 /*
 Parses an `if`, `else if`, or `else` statement.
@@ -464,14 +469,14 @@ Handles conditional blocks and branching structures.
 
 Args:
   tokens: Array of tokens.
-  tokenIndex: Pointer to current index.
-  tokenCount: Total number of tokens.
+  token_index: Pointer to current index.
+  token_count: Total number of tokens.
 
 Returns:
-  ASTNode* representing the conditional.
+  ast_node* representing the conditional.
 */
-ASTNode* parseIfElifElseStatement(Token* tokens, int* tokenIndex,
-                                  int tokenCount);
+ast_node* parse_if_elif_else_statement(Token* tokens, int* token_index,
+                                       int token_count);
 
 /*
 Parses a general statement.
@@ -481,13 +486,13 @@ present.
 
 Args:
   tokens: Array of tokens.
-  tokenIndex: Pointer to current index.
-  tokenCount: Total number of tokens.
+  token_index: Pointer to current index.
+  token_count: Total number of tokens.
 
 Returns:
-  ASTNode* for the parsed statement.
+  ast_node* for the parsed statement.
 */
-ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount);
+ast_node* parse_statement(Token* tokens, int* token_index, int token_count);
 
 /*
 Parses a function declaration from tokens.
@@ -496,13 +501,13 @@ Builds an AST node representing a function with parameters and a body.
 
 Args:
   tokens: Array of tokens.
-  tokenIndex: Pointer to current index.
-  tokenCount: Total number of tokens.
+  token_index: Pointer to current index.
+  token_count: Total number of tokens.
 
 Returns:
-  ASTNode* for the function declaration.
+  ast_node* for the function declaration.
 */
-ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount);
+ast_node* parse_function(Token* tokens, int* token_index, int token_count);
 
 /*
 Parses an entire file and returns an array of top-level AST nodes.
@@ -511,9 +516,9 @@ Processes all top-level constructs like functions.
 
 Args:
   tokens: Array of tokens.
-  tokenCount: Total number of tokens.
+  token_count: Total number of tokens.
 
 Returns:
-  Array of ASTNode* representing the file's top-level structure.
+  Array of ast_node* representing the file's top-level structure.
 */
-ASTNode** parseFile(Token* tokens, int tokenCount);
+ast_node** parse_file(Token* tokens, int token_count);

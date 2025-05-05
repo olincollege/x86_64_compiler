@@ -15,7 +15,7 @@ void error_and_exit(const char* error_msg) {
   exit(EXIT_FAILURE);
 }
 
-static int atEnd(Lexer* lexer) { return *lexer->current == '\0'; }
+static int at_end(Lexer* lexer) { return *lexer->current == '\0'; }
 
 static char advance(Lexer* lexer) {
   lexer->current++;
@@ -24,14 +24,14 @@ static char advance(Lexer* lexer) {
 
 static char peek(Lexer* lexer) { return *lexer->current; }
 
-static char peekNext(Lexer* lexer) {
-  if (atEnd(lexer)) {
+static char peek_next(Lexer* lexer) {
+  if (at_end(lexer)) {
     return '\0';
   }
   return lexer->current[-1];
 }
 
-static void skipWhitespace(Lexer* lexer) {
+static void skip_whitespace(Lexer* lexer) {
   for (;;) {
     char chrc = peek(lexer);
     switch (chrc) {
@@ -46,8 +46,8 @@ static void skipWhitespace(Lexer* lexer) {
         break;
       // skipping comments
       case '/':
-        if (peekNext(lexer) == '/') {
-          while (peek(lexer) != '\n' && !atEnd(lexer)) {
+        if (peek_next(lexer) == '/') {
+          while (peek(lexer) != '\n' && !at_end(lexer)) {
             advance(lexer);
           }
         } else {
@@ -60,8 +60,8 @@ static void skipWhitespace(Lexer* lexer) {
   }
 }
 
-static Token makeToken(Lexer* lexer, TokenType type, const char* start,
-                       int length) {
+static Token make_token(Lexer* lexer, TokenType type, const char* start,
+                        int length) {
   Token token;
   token.type = type;
   token.lexeme = start;
@@ -70,27 +70,27 @@ static Token makeToken(Lexer* lexer, TokenType type, const char* start,
   return token;
 }
 
-static Token errorToken(Lexer* lexer, const char* message) {
-  return makeToken(lexer, TOKEN_UNKNOWN, message, (int)strlen(message));
+static Token error_token(Lexer* lexer, const char* message) {
+  return make_token(lexer, TOKEN_UNKNOWN, message, (int)strlen(message));
 }
 
-static int isAlphabetic(char chrc) {
+static int is_alphabetic(char chrc) {
   return (chrc >= 'a' && chrc <= 'z') || (chrc >= 'A' && chrc <= 'Z') ||
          chrc == '_';
 }
 
-static int isDigit(char chrc) { return chrc >= '0' && chrc <= '9'; }
+static int is_digit(char chrc) { return chrc >= '0' && chrc <= '9'; }
 
 static Token scanNumber(Lexer* lexer) {
   const char* start = lexer->current - 1;
-  while (isDigit(peek(lexer))) {
+  while (is_digit(peek(lexer))) {
     advance(lexer);
   }
   int length = (int)(lexer->current - start);
-  return makeToken(lexer, TOKEN_INT_LITERAL, start, length);
+  return make_token(lexer, TOKEN_INT_LITERAL, start, length);
 }
 
-TokenType identifierType(const char* text, int length) {
+TokenType identifier_type(const char* text, int length) {
   if (length == strlen("if") && strncmp(text, "if", strlen("if")) == 0) {
     return TOKEN_IF;
   }
@@ -117,87 +117,87 @@ TokenType identifierType(const char* text, int length) {
   return TOKEN_IDENTIFIER;
 }
 
-static Token scanIdentifier(Lexer* lexer) {
+static Token scan_identifier(Lexer* lexer) {
   const char* start = lexer->current - 1;
-  while (isAlphabetic(peek(lexer)) || isDigit(peek(lexer))) {
+  while (is_alphabetic(peek(lexer)) || is_digit(peek(lexer))) {
     advance(lexer);
   }
   int length = (int)(lexer->current - start);
-  return makeToken(lexer, identifierType(start, length), start, length);
+  return make_token(lexer, identifier_type(start, length), start, length);
 }
 
-Token getNextToken(Lexer* lexer) {
-  skipWhitespace(lexer);
+Token get_next_token(Lexer* lexer) {
+  skip_whitespace(lexer);
   lexer->start = lexer->current;
-  if (atEnd(lexer)) {
-    return makeToken(lexer, TOKEN_EOF, lexer->start, 0);
+  if (at_end(lexer)) {
+    return make_token(lexer, TOKEN_EOF, lexer->start, 0);
   }
   char chrc = advance(lexer);
-  if (isAlphabetic(chrc)) {
-    return scanIdentifier(lexer);
+  if (is_alphabetic(chrc)) {
+    return scan_identifier(lexer);
   }
-  if (isDigit(chrc)) {
+  if (is_digit(chrc)) {
     return scanNumber(lexer);
   }
   switch (chrc) {
     case '(':
-      return makeToken(lexer, TOKEN_LPAREN, lexer->start, 1);
+      return make_token(lexer, TOKEN_LPAREN, lexer->start, 1);
     case ')':
-      return makeToken(lexer, TOKEN_RPAREN, lexer->start, 1);
+      return make_token(lexer, TOKEN_RPAREN, lexer->start, 1);
     case '{':
-      return makeToken(lexer, TOKEN_LBRACE, lexer->start, 1);
+      return make_token(lexer, TOKEN_LBRACE, lexer->start, 1);
     case '}':
-      return makeToken(lexer, TOKEN_RBRACE, lexer->start, 1);
+      return make_token(lexer, TOKEN_RBRACE, lexer->start, 1);
     case ';':
-      return makeToken(lexer, TOKEN_SEMICOLON, lexer->start, 1);
+      return make_token(lexer, TOKEN_SEMICOLON, lexer->start, 1);
     case ',':
-      return makeToken(lexer, TOKEN_COMMA, lexer->start, 1);
+      return make_token(lexer, TOKEN_COMMA, lexer->start, 1);
     case '+':
-      return makeToken(lexer, TOKEN_PLUS, lexer->start, 1);
+      return make_token(lexer, TOKEN_PLUS, lexer->start, 1);
     case '-':
-      return makeToken(lexer, TOKEN_MINUS, lexer->start, 1);
+      return make_token(lexer, TOKEN_MINUS, lexer->start, 1);
     case '*':
-      return makeToken(lexer, TOKEN_STAR, lexer->start, 1);
+      return make_token(lexer, TOKEN_STAR, lexer->start, 1);
     case '/':
-      return makeToken(lexer, TOKEN_SLASH, lexer->start, 1);
+      return make_token(lexer, TOKEN_SLASH, lexer->start, 1);
     case '%':
-      return makeToken(lexer, TOKEN_PERCENT, lexer->start, 1);
+      return make_token(lexer, TOKEN_PERCENT, lexer->start, 1);
     case '=': {
       // equal equals
       if (peek(lexer) == '=') {
         advance(lexer);
-        return makeToken(lexer, TOKEN_EQ, lexer->start, 2);
+        return make_token(lexer, TOKEN_EQ, lexer->start, 2);
       }
-      return makeToken(lexer, TOKEN_ASSIGN, lexer->start, 1);
+      return make_token(lexer, TOKEN_ASSIGN, lexer->start, 1);
     }
     case '!': {
       // not equals
       if (peek(lexer) == '=') {
         advance(lexer);
-        return makeToken(lexer, TOKEN_NEQ, lexer->start, 2);
+        return make_token(lexer, TOKEN_NEQ, lexer->start, 2);
       }
-      return errorToken(lexer, "Unexpected '!'");
+      return error_token(lexer, "Unexpected '!'");
     }
     case '<': {
       if (peek(lexer) == '=') {
         advance(lexer);
-        return makeToken(lexer, TOKEN_LEQ, lexer->start, 2);
+        return make_token(lexer, TOKEN_LEQ, lexer->start, 2);
       }
-      return makeToken(lexer, TOKEN_LT, lexer->start, 1);
+      return make_token(lexer, TOKEN_LT, lexer->start, 1);
     }
     case '>': {
       if (peek(lexer) == '=') {
         advance(lexer);
-        return makeToken(lexer, TOKEN_GEQ, lexer->start, 2);
+        return make_token(lexer, TOKEN_GEQ, lexer->start, 2);
       }
-      return makeToken(lexer, TOKEN_GT, lexer->start, 1);
+      return make_token(lexer, TOKEN_GT, lexer->start, 1);
     }
     default:
-      return errorToken(lexer, "Unexpected character.");
+      return error_token(lexer, "Unexpected character.");
   }
 }
 
-void initLexer(Lexer* lexer, const char* source) {
+void init_lexer(Lexer* lexer, const char* source) {
   lexer->start = source;
   lexer->current = source;
   lexer->line = 1;
@@ -205,7 +205,7 @@ void initLexer(Lexer* lexer, const char* source) {
 
 // Code to print lexers and tokens
 
-const char* tokenTypeToString(TokenType type) {
+const char* token_type_to_string(TokenType type) {
   switch (type) {
     case TOKEN_EOF:
       return "EOF";
@@ -268,12 +268,12 @@ const char* tokenTypeToString(TokenType type) {
   }
 }
 
-void printLexer(const Lexer* lexer) {
+void print_lexer(const Lexer* lexer) {
   printf("Lexer(start=\"%s\", current=\"%s\", offset=%ld, line=%d)\n",
          lexer->start, lexer->current, lexer->current - lexer->start,
          lexer->line);
 }
-void printTokenBoth(const Token* token, int toFile)
+void print_token_both(const Token* token, int toFile)
 /* ────────────────────────────────────────────────────────── *
  *  toFile == 0 → print to stdout
  *  toFile != 0 → append to the file called "tokens"
@@ -291,7 +291,7 @@ void printTokenBoth(const Token* token, int toFile)
 
     /* 3.  check fprintf ’s return value (CERT ERR33‑C)              */
     if (fprintf(filePointer, "Token(type=%s, lexeme=\"%.*s\", length=%d)\n",
-                tokenTypeToString(token->type), token->length, token->lexeme,
+                token_type_to_string(token->type), token->length, token->lexeme,
                 token->length) < 0) {
       perror("fprintf");
       /* fall through ‑ we still try to flush & close */
@@ -302,9 +302,9 @@ void printTokenBoth(const Token* token, int toFile)
     }
   } else {
     printf("Token(type=%s, lexeme=\"%.*s\", length=%d, line=%d)\n",
-           tokenTypeToString(token->type), token->length, token->lexeme,
+           token_type_to_string(token->type), token->length, token->lexeme,
            token->length, token->line);
   }
 }
 
-void printToken(const Token* token) { printTokenBoth(token, 0); }
+void print_token(const Token* token) { print_token_both(token, 0); }
