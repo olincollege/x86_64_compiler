@@ -1,3 +1,7 @@
+// NOLINTBEGIN(misc-include-cleaner)
+// we checked to make sure only criterian related warnings were left
+// NOLINTBEGIN(*-magic-numbers)
+
 #include <criterion/criterion.h>
 #include <criterion/new/assert.h>
 #include <stdio.h>
@@ -9,61 +13,77 @@
 
 // helper to read a file into a string
 static char* read_file(const char* path) {
-  FILE* f = fopen(path, "r");
-  cr_assert_neq(f, NULL, "Could not open %s", path);
-  fseek(f, 0, SEEK_END);
-  long len = ftell(f);
-  rewind(f);
+  FILE* file = fopen(path, "re");
+  cr_assert_neq(file, NULL, "Could not open %s", path);
+  cr_assert_eq(fseek(file, 0, SEEK_END), 0, "Failed to seek to end of file: %s",
+               path);
+  long tmp = ftell(file);
+  cr_assert(tmp >= 0, "ftell failed on %s", path);
+  cr_assert_eq(fseek(file, 0, SEEK_SET), 0,
+               "Failed to seek back to start of file: %s", path);
+  size_t len = (size_t)tmp;
   char* buf = malloc(len + 1);
   cr_assert_neq(buf, NULL, "Alloc failed");
-  fread(buf, 1, len, f);
+  cr_assert_eq(fread(buf, 1, len, file), len, "Failed to read full file: %s",
+               path);
   buf[len] = '\0';
-  fclose(f);
+  cr_assert_eq(fclose(file), 0, "Failed to close file: %s", path);
   return buf;
 }
 
 // tokenize entire source into a dynamically sized array of Tokens
 static Token* lex_all(const char* src, int* out_count) {
-  Lexer lx;
-  initLexer(&lx, src);
-  int capacity = 128, count = 0;
-  Token* toks = malloc(sizeof(Token) * capacity);
+  Lexer lex;
+  initLexer(&lex, src);
+
+  int capacity = 128;
+  int count = 0;
+  Token* toks = malloc(sizeof(Token) * (size_t)capacity);
   cr_assert_not_null(toks);
+
   Token tok;
   do {
-    tok = getNextToken(&lx);
+    tok = getNextToken(&lex);
+
     if (count >= capacity) {
       capacity *= 2;
-      toks = realloc(toks, sizeof(Token) * capacity);
-      cr_assert_not_null(toks);
+      size_t new_size = sizeof(Token) * (size_t)capacity;
+      Token* tmp = realloc(toks, new_size);
+      cr_assert_not_null(tmp, "Could not realloc token buffer to %zu bytes",
+                         new_size);
+      toks = tmp;
     }
+
     toks[count++] = tok;
   } while (tok.type != TOKEN_EOF);
+
   *out_count = count;
   return toks;
 }
 
 // count how many non-NULL ASTNode* in the returned array
 static int ast_count(ASTNode** ast) {
-  int n = 0;
-  while (ast[n] != NULL) n++;
-  return n;
+  int node = 0;
+  while (ast[node] != NULL) {
+    node++;
+  }
+  return node;
 }
 
 Test(parser, empty_function) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/parser_inputs/empty_function.c");
-  int tokc;
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
 
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_not_null(ast, "parseFile returned NULL");
   cr_expect_eq(ast_count(ast), 1, "should find exactly one function");
 
-  ASTNode* fn = ast[0];
-  cr_expect_eq(fn->type, AST_FUNCTION_DECLARATION);
+  ASTNode* func = ast[0];
+  cr_expect_eq(func->type, AST_FUNCTION_DECLARATION);
   // check that the function body is an empty block
-  ASTNode* body = fn->as.function.statements;
+  ASTNode* body = func->as.function.statements;
   cr_expect_eq(body->type, AST_BLOCK);
   cr_expect_eq(body->as.block.count, 0);
 
@@ -74,14 +94,14 @@ Test(parser, empty_function) {
 Test(parser, simple_return) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/parser_inputs/simple_return.c");
-  int tokc;
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
 
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_eq(ast_count(ast), 1);
 
-  ASTNode* fn = ast[0];
-  ASTNode* body = fn->as.function.statements;
+  ASTNode* func = ast[0];
+  ASTNode* body = func->as.function.statements;
   cr_expect_eq(body->type, AST_BLOCK);
   cr_expect_eq(body->as.block.count, 1);
 
@@ -98,14 +118,14 @@ Test(parser, simple_return) {
 Test(parser, complex_main) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/parser_inputs/complex_main.c");
-  int tokc;
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
 
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_eq(ast_count(ast), 1);
 
-  ASTNode* fn = ast[0];
-  ASTNode* body = fn->as.function.statements;
+  ASTNode* func = ast[0];
+  ASTNode* body = func->as.function.statements;
   cr_expect_eq(body->type, AST_BLOCK);
   // a, b, c decls + while + if + else-if + else + return
   cr_expect_eq(body->as.block.count, 8);
@@ -127,15 +147,15 @@ Test(parser, complex_main) {
 
 // Test 4: Variable declaration inside function
 Test(parser, variable_declaration) {
-  char* src = read_file(CMAKE_SOURCE_DIR
-                        "/test/test_inputs/parser_inputs/var_decl.c");
-  int tokc;
+  char* src =
+      read_file(CMAKE_SOURCE_DIR "/test/test_inputs/parser_inputs/var_decl.c");
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_eq(ast_count(ast), 1);
 
-  ASTNode* fn = ast[0];
-  ASTNode* body = fn->as.function.statements;
+  ASTNode* func = ast[0];
+  ASTNode* body = func->as.function.statements;
   cr_expect_eq(body->type, AST_BLOCK);
   cr_expect_eq(body->as.block.count, 2);
 
@@ -158,7 +178,7 @@ Test(parser, variable_declaration) {
     int len = decl->as.variable_declaration.type->length;
     cr_expect_eq(len, 3, "variable type length");
     char buf[4];
-    memcpy(buf, decl->as.variable_declaration.type->lexeme, len);
+    memcpy(buf, decl->as.variable_declaration.type->lexeme, (size_t)len);
     buf[len] = '\0';
     cr_expect_str_eq(buf, "int");
   }
@@ -171,51 +191,51 @@ Test(parser, variable_declaration) {
 Test(parser, function_with_parameters) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/parser_inputs/func_params.c");
-  int tokc;
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_eq(ast_count(ast), 1);
 
-  ASTNode* fn = ast[0];
-  cr_expect_eq(fn->type, AST_FUNCTION_DECLARATION);
-  cr_expect_eq(fn->as.function.paramCount, 2);
+  ASTNode* func = ast[0];
+  cr_expect_eq(func->type, AST_FUNCTION_DECLARATION);
+  cr_expect_eq(func->as.function.paramCount, 2);
 
   // param 0: name "a", type "int"
   {
-    ASTNode* p0 = fn->as.function.parameters[0];
-    cr_expect_eq(p0->type, AST_VARIABLE_DECLARATION);
+    ASTNode* param0 = func->as.function.parameters[0];
+    cr_expect_eq(param0->type, AST_VARIABLE_DECLARATION);
 
-    int nlen = p0->as.variable_declaration.name->length;
+    int nlen = param0->as.variable_declaration.name->length;
     cr_expect_eq(nlen, 1, "param0 name length");
     char nbuf[2];
-    memcpy(nbuf, p0->as.variable_declaration.name->lexeme, nlen);
+    memcpy(nbuf, param0->as.variable_declaration.name->lexeme, nlen);
     nbuf[nlen] = '\0';
     cr_expect_str_eq(nbuf, "a");
 
-    int tlen = p0->as.variable_declaration.type->length;
+    int tlen = param0->as.variable_declaration.type->length;
     cr_expect_eq(tlen, 3, "param0 type length");
     char tbuf[4];
-    memcpy(tbuf, p0->as.variable_declaration.type->lexeme, tlen);
+    memcpy(tbuf, param0->as.variable_declaration.type->lexeme, tlen);
     tbuf[tlen] = '\0';
     cr_expect_str_eq(tbuf, "int");
   }
 
   // param 1: name "b", type "int"
   {
-    ASTNode* p1 = fn->as.function.parameters[1];
-    cr_expect_eq(p1->type, AST_VARIABLE_DECLARATION);
+    ASTNode* param1 = func->as.function.parameters[1];
+    cr_expect_eq(param1->type, AST_VARIABLE_DECLARATION);
 
-    int nlen = p1->as.variable_declaration.name->length;
+    int nlen = param1->as.variable_declaration.name->length;
     cr_expect_eq(nlen, 1, "param1 name length");
     char nbuf[2];
-    memcpy(nbuf, p1->as.variable_declaration.name->lexeme, nlen);
+    memcpy(nbuf, param1->as.variable_declaration.name->lexeme, nlen);
     nbuf[nlen] = '\0';
     cr_expect_str_eq(nbuf, "b");
 
-    int tlen = p1->as.variable_declaration.type->length;
+    int tlen = param1->as.variable_declaration.type->length;
     cr_expect_eq(tlen, 3, "param1 type length");
     char tbuf[4];
-    memcpy(tbuf, p1->as.variable_declaration.type->lexeme, tlen);
+    memcpy(tbuf, param1->as.variable_declaration.type->lexeme, tlen);
     tbuf[tlen] = '\0';
     cr_expect_str_eq(tbuf, "int");
   }
@@ -228,13 +248,13 @@ Test(parser, function_with_parameters) {
 Test(parser, assignment_and_return) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/parser_inputs/assign_and_return.c");
-  int tokc;
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_eq(ast_count(ast), 1);
 
-  ASTNode* fn = ast[0];
-  ASTNode* body = fn->as.function.statements;
+  ASTNode* func = ast[0];
+  ASTNode* body = func->as.function.statements;
   cr_expect_eq(body->as.block.count, 3);
 
   // check declaration int a;
@@ -250,15 +270,15 @@ Test(parser, assignment_and_return) {
 
 // Test 7: nested if without else
 Test(parser, nested_if_without_else) {
-  char* src = read_file(CMAKE_SOURCE_DIR
-                        "/test/test_inputs/parser_inputs/nested_if.c");
-  int tokc;
+  char* src =
+      read_file(CMAKE_SOURCE_DIR "/test/test_inputs/parser_inputs/nested_if.c");
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_eq(ast_count(ast), 1);
 
-  ASTNode* fn = ast[0];
-  ASTNode* body = fn->as.function.statements;
+  ASTNode* func = ast[0];
+  ASTNode* body = func->as.function.statements;
   cr_expect_eq(body->as.block.count, 2);
   cr_expect_eq(body->as.block.statements[0]->type, AST_IF_STATEMENT);
   cr_expect_eq(body->as.block.statements[1]->type, AST_RETURN);
@@ -271,13 +291,13 @@ Test(parser, nested_if_without_else) {
 Test(parser, while_loop) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/parser_inputs/while_loop.c");
-  int tokc;
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_eq(ast_count(ast), 1);
 
-  ASTNode* fn = ast[0];
-  ASTNode* body = fn->as.function.statements;
+  ASTNode* func = ast[0];
+  ASTNode* body = func->as.function.statements;
   cr_expect_eq(body->as.block.count, 2);
   cr_expect_eq(body->as.block.statements[0]->type, AST_WHILE_STATEMENT);
   cr_expect_eq(body->as.block.statements[1]->type, AST_RETURN);
@@ -288,19 +308,22 @@ Test(parser, while_loop) {
 
 // Test 9: void function with no params
 Test(parser, void_function) {
-  char* src = read_file(CMAKE_SOURCE_DIR
-                        "/test/test_inputs/parser_inputs/void_func.c");
-  int tokc;
+  char* src =
+      read_file(CMAKE_SOURCE_DIR "/test/test_inputs/parser_inputs/void_func.c");
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_eq(ast_count(ast), 1);
 
-  ASTNode* fn = ast[0];
-  cr_expect_eq(fn->type, AST_FUNCTION_DECLARATION);
-  cr_expect_eq(fn->as.function.paramCount, 0);
-  ASTNode* body = fn->as.function.statements;
+  ASTNode* func = ast[0];
+  cr_expect_eq(func->type, AST_FUNCTION_DECLARATION);
+  cr_expect_eq(func->as.function.paramCount, 0);
+  ASTNode* body = func->as.function.statements;
   cr_expect_eq(body->as.block.count, 0);
 
   free(src);
   free(toks);
 }
+
+// NOLINTEND(*-magic-numbers)
+// NOLINTEND(misc-include-cleaner)

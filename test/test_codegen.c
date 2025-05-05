@@ -1,3 +1,5 @@
+// NOLINTBEGIN(misc-include-cleaner)
+// we checked to make sure only criterian related warnings were left
 #include <criterion/criterion.h>
 #include <criterion/new/assert.h>
 #include <stdio.h>
@@ -142,8 +144,8 @@ Test(codegen, function_call) {
 
 // Test 4: Variable declaration with initialization
 Test(codegen, var_decl_initialization) {
-  char* src = read_file(
-      CMAKE_SOURCE_DIR "/test/test_inputs/codegen_inputs/var_decl.c");
+  char* src =
+      read_file(CMAKE_SOURCE_DIR "/test/test_inputs/codegen_inputs/var_decl.c");
   int tokc;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
@@ -172,8 +174,8 @@ Test(codegen, var_decl_initialization) {
 
 // Test 5: Multiplication operator
 Test(codegen, multiplication) {
-  char* src = read_file(CMAKE_SOURCE_DIR
-                        "/test/test_inputs/codegen_inputs/multiply.c");
+  char* src =
+      read_file(CMAKE_SOURCE_DIR "/test/test_inputs/codegen_inputs/multiply.c");
   int tokc;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
@@ -205,8 +207,8 @@ Test(codegen, multiplication) {
 
 // Test 6: Division operator
 Test(codegen, division) {
-  char* src = read_file(CMAKE_SOURCE_DIR
-                        "/test/test_inputs/codegen_inputs/division.c");
+  char* src =
+      read_file(CMAKE_SOURCE_DIR "/test/test_inputs/codegen_inputs/division.c");
   int tokc;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
@@ -238,9 +240,8 @@ Test(codegen, division) {
 
 // Test 7: Function call with no arguments
 Test(codegen, function_call_no_args) {
-  char* src =
-      read_file(CMAKE_SOURCE_DIR
-                "/test/test_inputs/codegen_inputs/func_call_no_args.c");
+  char* src = read_file(CMAKE_SOURCE_DIR
+                        "/test/test_inputs/codegen_inputs/func_call_no_args.c");
   int tokc;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
@@ -269,8 +270,8 @@ Test(codegen, function_call_no_args) {
 
 // Test 8: Multiple function definitions
 Test(codegen, multiple_functions) {
-  char* src = read_file(
-      CMAKE_SOURCE_DIR "/test/test_inputs/codegen_inputs/multiple_func.c");
+  char* src = read_file(CMAKE_SOURCE_DIR
+                        "/test/test_inputs/codegen_inputs/multiple_func.c");
   int tokc;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
@@ -328,3 +329,4 @@ Test(codegen, decl_and_return) {
   free(src);
   free(toks);
 }
+// NOLINTEND(misc-include-cleaner)

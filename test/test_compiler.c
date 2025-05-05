@@ -1,3 +1,6 @@
+// NOLINTBEGIN(misc-include-cleaner)
+// we checked to make sure only criterian related warnings were left
+
 #include <criterion/criterion.h>
 #include <criterion/new/assert.h>
 #include <stdio.h>
@@ -7,13 +10,13 @@
 #include <unistd.h>
 
 static void copy_file(const char* src_path, const char* dst_path) {
-  FILE* src = fopen(src_path, "r");
+  FILE* src = fopen(src_path, "re");
   cr_assert_not_null(src, "Could not open source file: %s", src_path);
-  FILE* dst = fopen(dst_path, "w");
+  FILE* dst = fopen(dst_path, "we");
   cr_assert_not_null(dst, "Could not open destination file: %s", dst_path);
 
-  int c;
-  while ((c = fgetc(src)) != EOF) fputc(c, dst);
+  int chrc = 0;
+  while ((chrc = fgetc(src)) != EOF) fputc(chrc, dst);
 
   fclose(src);
   fclose(dst);
@@ -137,8 +140,8 @@ Test(compiler, full_system_binary_add) {
   // assemble, link, run
   cr_assert_eq(system("as -o abcd.o chat.s"), 0, "Assembly failed");
   cr_assert_eq(system("ld -o abcd abcd.o"), 0, "Linking failed");
-  int rc = run_and_get_exit("./abcd");
-  cr_expect_eq(rc, 8, "Expected return value of 8 from binary");
+  int result = run_and_get_exit("./abcd");
+  cr_expect_eq(result, 8, "Expected return value of 8 from binary");
 }
 
 // Test 3: full system multiplication (7 * 3 = 21)
@@ -163,8 +166,8 @@ Test(compiler, full_system_multiplication) {
 
   cr_assert_eq(system("as -o abcd.o chat.s"), 0, "Assembly failed");
   cr_assert_eq(system("ld -o abcd abcd.o"), 0, "Linking failed");
-  int rc = run_and_get_exit("./abcd");
-  cr_expect_eq(rc, 21, "Expected return value of 21 from binary");
+  int result = run_and_get_exit("./abcd");
+  cr_expect_eq(result, 21, "Expected return value of 21 from binary");
 }
 
 // Test 4: full system var-decl + return
@@ -190,8 +193,8 @@ Test(compiler, full_system_var_decl_return) {
 
   cr_assert_eq(system("as -o abcd.o chat.s"), 0, "Assembly failed");
   cr_assert_eq(system("ld -o abcd abcd.o"), 0, "Linking failed");
-  int rc = run_and_get_exit("./abcd");
-  cr_expect_eq(rc, 5, "Expected return value of 5 from binary");
+  int result = run_and_get_exit("./abcd");
+  cr_expect_eq(result, 5, "Expected return value of 5 from binary");
 }
 
 // Test 5: full system with one-parameter function call
@@ -221,6 +224,8 @@ Test(compiler, full_system_func_params) {
   // 4) assemble, link, run and check exit code == 5
   cr_assert_eq(system("as -o abcd.o chat.s"), 0, "as failed");
   cr_assert_eq(system("ld -o abcd abcd.o"), 0, "ld failed");
-  int rc = run_and_get_exit("./abcd");
-  cr_expect_eq(rc, 5, "Expected return 5 from binary");
+  int result = run_and_get_exit("./abcd");
+  cr_expect_eq(result, 5, "Expected return 5 from binary");
 }
+
+// NOLINTEND(misc-include-cleaner)
