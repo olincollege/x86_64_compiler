@@ -81,7 +81,7 @@ static int is_alphabetic(char chrc) {
 
 static int is_digit(char chrc) { return chrc >= '0' && chrc <= '9'; }
 
-static Token scanNumber(Lexer* lexer) {
+static Token scan_number(Lexer* lexer) {
   const char* start = lexer->current - 1;
   while (is_digit(peek(lexer))) {
     advance(lexer);
@@ -137,7 +137,7 @@ Token get_next_token(Lexer* lexer) {
     return scan_identifier(lexer);
   }
   if (is_digit(chrc)) {
-    return scanNumber(lexer);
+    return scan_number(lexer);
   }
   switch (chrc) {
     case '(':
@@ -273,14 +273,14 @@ void print_lexer(const Lexer* lexer) {
          lexer->start, lexer->current, lexer->current - lexer->start,
          lexer->line);
 }
-void print_token_both(const Token* token, int toFile)
+void print_token_both(const Token* token, int to_file)
 /* ────────────────────────────────────────────────────────── *
- *  toFile == 0 → print to stdout
- *  toFile != 0 → append to the file called "tokens"
+ *  to_file == 0 → print to stdout
+ *  to_file != 0 → append to the file called "tokens"
  * ────────────────────────────────────────────────────────── */
 {
-  if (toFile) {
-    /* 1.  no shadowing: parameter is now  `toFile`, variable is `filePointer`
+  if (to_file) {
+    /* 1.  no shadowing: parameter is now  `to_file`, variable is `filePointer`
      */
     /* 2.  use "ae" so the file is opened with O_CLOEXEC             */
     FILE* filePointer = fopen("tokens", "ae");
