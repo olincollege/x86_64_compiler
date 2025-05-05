@@ -1,3 +1,6 @@
+// NOLINTBEGIN(misc-include-cleaner)
+// we checked to make sure only criterian related warnings were left
+// NOLINTBEGIN(*-magic-numbers)
 #include <criterion/criterion.h>
 #include <criterion/new/assert.h>
 #include <stdio.h>
@@ -10,53 +13,68 @@
 
 // Read a file into a null-terminated buffer
 static char* read_file(const char* path) {
-  FILE* f = fopen(path, "r");
-  cr_assert_not_null(f, "Could not open file: %s", path);
-  (void)fseek(f, 0, SEEK_END);
-  long len = ftell(f);
-  (void)rewind(f);
+  FILE* file = fopen(path, "re");
+  cr_assert_neq(file, NULL, "Could not open %s", path);
+  cr_assert_eq(fseek(file, 0, SEEK_END), 0, "Failed to seek to end of file: %s",
+               path);
+  long tmp = ftell(file);
+  cr_assert(tmp >= 0, "ftell failed on %s", path);
+  cr_assert_eq(fseek(file, 0, SEEK_SET), 0,
+               "Failed to seek back to start of file: %s", path);
+  size_t len = (size_t)tmp;
   char* buf = malloc(len + 1);
-  cr_assert_not_null(buf, "Malloc failed");
-  (void)fread(buf, 1, len, f);
+  cr_assert_neq(buf, NULL, "Alloc failed");
+  cr_assert_eq(fread(buf, 1, len, file), len, "Failed to read full file: %s",
+               path);
   buf[len] = '\0';
-  (void)fclose(f);
+  cr_assert_eq(fclose(file), 0, "Failed to close file: %s", path);
   return buf;
 }
 
-// Lex a source string into a token array
+// tokenize entire source into a dynamically sized array of Tokens
 static Token* lex_all(const char* src, int* out_count) {
-  Lexer lx;
-  initLexer(&lx, src);
-  int cap = 128, count = 0;
-  Token* toks = malloc(sizeof(Token) * cap);
+  Lexer lex;
+  initLexer(&lex, src);
+
+  int capacity = 128;
+  int count = 0;
+  Token* toks = malloc(sizeof(Token) * (size_t)capacity);
   cr_assert_not_null(toks);
 
   Token tok;
   do {
-    tok = getNextToken(&lx);
-    if (count >= cap) {
-      cap *= 2;
-      toks = realloc(toks, sizeof(Token) * cap);
-      cr_assert_not_null(toks);
+    tok = getNextToken(&lex);
+
+    if (count >= capacity) {
+      capacity *= 2;
+      size_t new_size = sizeof(Token) * (size_t)capacity;
+      Token* tmp = realloc(toks, new_size);
+      cr_assert_not_null(tmp, "Could not realloc token buffer to %zu bytes",
+                         new_size);
+      toks = tmp;
     }
+
     toks[count++] = tok;
   } while (tok.type != TOKEN_EOF);
+
   *out_count = count;
   return toks;
 }
 
 // Count number of non-null AST nodes
 static int ast_count(ASTNode** ast) {
-  int n = 0;
-  while (ast[n] != NULL) n++;
-  return n;
+  int node = 0;
+  while (ast[node] != NULL) {
+    node++;
+  }
+  return node;
 }
 
 // Test 1: Return constant
 Test(codegen, return_constant) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/codegen_inputs/simple_codegen.c");
-  int tokc;
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_not_null(ast);
@@ -67,10 +85,15 @@ Test(codegen, return_constant) {
   ListOfASTFunctionNodesToX86(ast, &list, numFns);
   printInstructions(&list);
 
-  int foundMain = 0, foundMov = 0;
+  int foundMain = 0;
+  int foundMov = 0;
   for (int i = 0; i < list.instructionCount; i++) {
-    if (strstr(list.instructions[i], "main:")) foundMain = 1;
-    if (strstr(list.instructions[i], "mov     eax, 42")) foundMov = 1;
+    if (strstr(list.instructions[i], "main:")) {
+      foundMain = 1;
+    }
+    if (strstr(list.instructions[i], "mov     eax, 42")) {
+      foundMov = 1;
+    }
   }
 
   cr_expect(foundMain, "Missing 'main:' label");
@@ -84,7 +107,7 @@ Test(codegen, return_constant) {
 Test(codegen, return_binary_expression) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/codegen_inputs/binary_return.c");
-  int tokc;
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_not_null(ast);
@@ -95,11 +118,19 @@ Test(codegen, return_binary_expression) {
   ListOfASTFunctionNodesToX86(ast, &list, numFns);
   printInstructions(&list);
 
-  int found6 = 0, found2 = 0, foundAdd = 0;
+  int found6 = 0;
+  int found2 = 0;
+  int foundAdd = 0;
   for (int i = 0; i < list.instructionCount; i++) {
-    if (strstr(list.instructions[i], "mov     edx, 2")) found2 = 1;
-    if (strstr(list.instructions[i], "mov     eax, 6")) found6 = 1;
-    if (strstr(list.instructions[i], "add     eax, edx")) foundAdd = 1;
+    if (strstr(list.instructions[i], "mov     edx, 2")) {
+      found2 = 1;
+    }
+    if (strstr(list.instructions[i], "mov     eax, 6")) {
+      found6 = 1;
+    }
+    if (strstr(list.instructions[i], "add     eax, edx")) {
+      foundAdd = 1;
+    }
   }
 
   cr_expect(found6, "Expected: mov eax, 6");
@@ -114,7 +145,7 @@ Test(codegen, return_binary_expression) {
 Test(codegen, function_call) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/codegen_inputs/func_call.c");
-  int tokc;
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_not_null(ast);
@@ -125,11 +156,19 @@ Test(codegen, function_call) {
   ListOfASTFunctionNodesToX86(ast, &list, numFns);
   printInstructions(&list);
 
-  int foundCall = 0, foundEdi = 0, foundEsi = 0;
+  int foundCall = 0;
+  int foundEdi = 0;
+  int foundEsi = 0;
   for (int i = 0; i < list.instructionCount; i++) {
-    if (strstr(list.instructions[i], "call    test")) foundCall = 1;
-    if (strstr(list.instructions[i], "mov     edi, eax")) foundEdi = 1;
-    if (strstr(list.instructions[i], "mov     esi, eax")) foundEsi = 1;
+    if (strstr(list.instructions[i], "call    test")) {
+      foundCall = 1;
+    }
+    if (strstr(list.instructions[i], "mov     edi, eax")) {
+      foundEdi = 1;
+    }
+    if (strstr(list.instructions[i], "mov     esi, eax")) {
+      foundEsi = 1;
+    }
   }
 
   cr_expect(foundCall, "Expected: call test");
@@ -142,9 +181,9 @@ Test(codegen, function_call) {
 
 // Test 4: Variable declaration with initialization
 Test(codegen, var_decl_initialization) {
-  char* src = read_file(
-      CMAKE_SOURCE_DIR "/test/test_inputs/codegen_inputs/var_decl.c");
-  int tokc;
+  char* src =
+      read_file(CMAKE_SOURCE_DIR "/test/test_inputs/codegen_inputs/var_decl.c");
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_not_null(ast);
@@ -159,8 +198,12 @@ Test(codegen, var_decl_initialization) {
   int foundStore = 0;
   for (int i = 0; i < list.instructionCount; i++) {
     const char* ins = list.instructions[i];
-    if (strstr(ins, "mov     eax, 5")) foundMov5 = 1;
-    if (strstr(ins, "mov     DWORD PTR [rbp-4]")) foundStore = 1;
+    if (strstr(ins, "mov     eax, 5")) {
+      foundMov5 = 1;
+    }
+    if (strstr(ins, "mov     DWORD PTR [rbp-4]")) {
+      foundStore = 1;
+    }
   }
 
   cr_expect(foundMov5, "Expected: mov     eax, 5");
@@ -172,9 +215,9 @@ Test(codegen, var_decl_initialization) {
 
 // Test 5: Multiplication operator
 Test(codegen, multiplication) {
-  char* src = read_file(CMAKE_SOURCE_DIR
-                        "/test/test_inputs/codegen_inputs/multiply.c");
-  int tokc;
+  char* src =
+      read_file(CMAKE_SOURCE_DIR "/test/test_inputs/codegen_inputs/multiply.c");
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_not_null(ast);
@@ -190,9 +233,15 @@ Test(codegen, multiplication) {
   int foundImul = 0;
   for (int i = 0; i < list.instructionCount; i++) {
     const char* ins = list.instructions[i];
-    if (strstr(ins, "mov     edx, 3")) foundMov3 = 1;
-    if (strstr(ins, "mov     eax, 7")) foundMov7 = 1;
-    if (strstr(ins, "imul     eax, edx")) foundImul = 1;
+    if (strstr(ins, "mov     edx, 3")) {
+      foundMov3 = 1;
+    }
+    if (strstr(ins, "mov     eax, 7")) {
+      foundMov7 = 1;
+    }
+    if (strstr(ins, "imul     eax, edx")) {
+      foundImul = 1;
+    }
   }
 
   cr_expect(foundMov7, "Expected: mov     eax, 7");
@@ -205,9 +254,9 @@ Test(codegen, multiplication) {
 
 // Test 6: Division operator
 Test(codegen, division) {
-  char* src = read_file(CMAKE_SOURCE_DIR
-                        "/test/test_inputs/codegen_inputs/division.c");
-  int tokc;
+  char* src =
+      read_file(CMAKE_SOURCE_DIR "/test/test_inputs/codegen_inputs/division.c");
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_not_null(ast);
@@ -223,9 +272,15 @@ Test(codegen, division) {
   int foundIdiv = 0;
   for (int i = 0; i < list.instructionCount; i++) {
     const char* ins = list.instructions[i];
-    if (strstr(ins, "mov     edx, 2")) foundMov2 = 1;
-    if (strstr(ins, "mov     eax, 10")) foundMov10 = 1;
-    if (strstr(ins, "idiv     eax, edx")) foundIdiv = 1;
+    if (strstr(ins, "mov     edx, 2")) {
+      foundMov2 = 1;
+    }
+    if (strstr(ins, "mov     eax, 10")) {
+      foundMov10 = 1;
+    }
+    if (strstr(ins, "idiv     eax, edx")) {
+      foundIdiv = 1;
+    }
   }
 
   cr_expect(foundMov10, "Expected: mov     eax, 10");
@@ -238,10 +293,9 @@ Test(codegen, division) {
 
 // Test 7: Function call with no arguments
 Test(codegen, function_call_no_args) {
-  char* src =
-      read_file(CMAKE_SOURCE_DIR
-                "/test/test_inputs/codegen_inputs/func_call_no_args.c");
-  int tokc;
+  char* src = read_file(CMAKE_SOURCE_DIR
+                        "/test/test_inputs/codegen_inputs/func_call_no_args.c");
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_not_null(ast);
@@ -256,8 +310,12 @@ Test(codegen, function_call_no_args) {
   int foundCallFoo = 0;
   for (int i = 0; i < list.instructionCount; i++) {
     const char* ins = list.instructions[i];
-    if (strstr(ins, "foo:")) foundFooLabel = 1;
-    if (strstr(ins, "call    foo")) foundCallFoo = 1;
+    if (strstr(ins, "foo:")) {
+      foundFooLabel = 1;
+    }
+    if (strstr(ins, "call    foo")) {
+      foundCallFoo = 1;
+    }
   }
 
   cr_expect(foundFooLabel, "Expected: foo: label");
@@ -269,9 +327,9 @@ Test(codegen, function_call_no_args) {
 
 // Test 8: Multiple function definitions
 Test(codegen, multiple_functions) {
-  char* src = read_file(
-      CMAKE_SOURCE_DIR "/test/test_inputs/codegen_inputs/multiple_func.c");
-  int tokc;
+  char* src = read_file(CMAKE_SOURCE_DIR
+                        "/test/test_inputs/codegen_inputs/multiple_func.c");
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_not_null(ast);
@@ -285,8 +343,12 @@ Test(codegen, multiple_functions) {
   int countFoo = 0;
   int countMain = 0;
   for (int i = 0; i < list.instructionCount; i++) {
-    if (strstr(list.instructions[i], "foo:")) countFoo++;
-    if (strstr(list.instructions[i], "main:")) countMain++;
+    if (strstr(list.instructions[i], "foo:")) {
+      countFoo++;
+    }
+    if (strstr(list.instructions[i], "main:")) {
+      countMain++;
+    }
   }
 
   cr_expect_eq(countFoo, 1, "Expected exactly one foo: label");
@@ -300,7 +362,7 @@ Test(codegen, multiple_functions) {
 Test(codegen, decl_and_return) {
   char* src = read_file(CMAKE_SOURCE_DIR
                         "/test/test_inputs/codegen_inputs/decl_and_return.c");
-  int tokc;
+  int tokc = 0;
   Token* toks = lex_all(src, &tokc);
   ASTNode** ast = parseFile(toks, tokc);
   cr_assert_not_null(ast);
@@ -316,9 +378,15 @@ Test(codegen, decl_and_return) {
   int foundLoadX = 0;
   for (int i = 0; i < list.instructionCount; i++) {
     const char* ins = list.instructions[i];
-    if (strstr(ins, "mov     eax, 9")) foundMov9 = 1;
-    if (strstr(ins, "mov     DWORD PTR [rbp-4]")) foundStoreX = 1;
-    if (strstr(ins, "mov     eax, DWORD PTR [rbp-4]")) foundLoadX = 1;
+    if (strstr(ins, "mov     eax, 9")) {
+      foundMov9 = 1;
+    }
+    if (strstr(ins, "mov     DWORD PTR [rbp-4]")) {
+      foundStoreX = 1;
+    }
+    if (strstr(ins, "mov     eax, DWORD PTR [rbp-4]")) {
+      foundLoadX = 1;
+    }
   }
 
   cr_expect(foundMov9, "Expected: mov     eax, 9");
@@ -328,3 +396,6 @@ Test(codegen, decl_and_return) {
   free(src);
   free(toks);
 }
+
+// NOLINTEND(*-magic-numbers)
+// NOLINTEND(misc-include-cleaner)

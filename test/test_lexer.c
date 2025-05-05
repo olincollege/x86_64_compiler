@@ -1,3 +1,6 @@
+// NOLINTBEGIN(misc-include-cleaner)
+// we checked to make sure only criterian related warnings were left
+
 #include <criterion/criterion.h>
 #include <criterion/new/assert.h>
 #include <stdio.h>
@@ -36,7 +39,7 @@ Test(lexer, if_whitespace) {
   initLexer(&lexer, source);
   Token token = getNextToken(&lexer);
   cr_assert_eq(token.type, TOKEN_IF);
-  cr_assert(memcmp(token.lexeme, "if", token.length) == 0,
+  cr_assert(memcmp(token.lexeme, "if", (size_t)token.length) == 0,
             "Expected token lexeme to be \"if\"");
   cr_assert_eq(token.length, 2);
   free(source);
@@ -139,7 +142,7 @@ Test(lexer, identifier_with_underscore_and_digits_file) {
   Token token = getNextToken(&lexer);
   cr_assert_eq(token.type, TOKEN_IDENTIFIER);
   cr_assert_eq(token.length, 9);
-  cr_assert(strncmp(token.lexeme, "_myVar123", token.length) == 0);
+  cr_assert(strncmp(token.lexeme, "_myVar123", (size_t)token.length) == 0);
 
   free(source);
 }
@@ -169,7 +172,7 @@ Test(lexer, invalid_exclamation_file) {
 
   Token token = getNextToken(&lexer);
   cr_assert_eq(token.type, TOKEN_UNKNOWN);
-  cr_assert(strncmp(token.lexeme, "Unexpected '!'", token.length) == 0);
+  cr_assert(strncmp(token.lexeme, "Unexpected '!'", (size_t)token.length) == 0);
 
   free(source);
 }
@@ -237,3 +240,6 @@ Test(lexer, keyword_as_prefix_identifier_file) {
 
   free(source);
 }
+
+// NOLINTEND(*-magic-numbers)
+// NOLINTEND(misc-include-cleaner)
