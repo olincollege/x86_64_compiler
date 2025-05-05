@@ -40,8 +40,8 @@ typedef struct ASTNode {
     // For a variable or identifier.
     struct {
       Token* name;  // The name of the variable.
-      Token* type;  // TODO: Rename to variabletype // Type of variable, e.g.,
-                    // "int", "float"
+      Token* type;  // TODO (nividh): Rename to variabletype // Type of
+                    // variable, e.g., "int", "float"
     } variable_declaration;
 
     // For binary expressions.
@@ -363,7 +363,7 @@ Args:
 Returns:
   Token* at the current index.
 */
-Token* peekToken(Token* tokens, int* index);
+Token* peekToken(Token* tokens, const int* index);
 
 /*
 Peeks ahead by a number of tokens.
@@ -379,7 +379,8 @@ Args:
 Returns:
   Token* at the forward offset.
 */
-Token* peekAheadToken(Token* tokens, int* index, int forward, int tokenCount);
+Token* peekAheadToken(Token* tokens, const int* index, int forward,
+                      int tokenCount);
 
 /*
 Parses a variable declaration from tokens.

@@ -9,8 +9,6 @@
 
 #include "../src/lexer.h"
 
-// NOLINTBEGIN(*-magic-numbers)
-
 // helper function to read contents of file
 static char* read_file(const char* filepath) {
   FILE* file = fopen(filepath, "re");
