@@ -168,7 +168,7 @@ Test(parser, variable_declaration) {
     int len = decl->as.variable_declaration.name->length;
     cr_expect_eq(len, 1, "variable name length");
     char buf[2];
-    memcpy(buf, decl->as.variable_declaration.name->lexeme, len);
+    memcpy(buf, decl->as.variable_declaration.name->lexeme, (size_t)len);
     buf[len] = '\0';
     cr_expect_str_eq(buf, "x");
   }
@@ -208,14 +208,14 @@ Test(parser, function_with_parameters) {
     int nlen = param0->as.variable_declaration.name->length;
     cr_expect_eq(nlen, 1, "param0 name length");
     char nbuf[2];
-    memcpy(nbuf, param0->as.variable_declaration.name->lexeme, nlen);
+    memcpy(nbuf, param0->as.variable_declaration.name->lexeme, (size_t)nlen);
     nbuf[nlen] = '\0';
     cr_expect_str_eq(nbuf, "a");
 
     int tlen = param0->as.variable_declaration.type->length;
     cr_expect_eq(tlen, 3, "param0 type length");
     char tbuf[4];
-    memcpy(tbuf, param0->as.variable_declaration.type->lexeme, tlen);
+    memcpy(tbuf, param0->as.variable_declaration.type->lexeme, (size_t)tlen);
     tbuf[tlen] = '\0';
     cr_expect_str_eq(tbuf, "int");
   }
@@ -228,14 +228,14 @@ Test(parser, function_with_parameters) {
     int nlen = param1->as.variable_declaration.name->length;
     cr_expect_eq(nlen, 1, "param1 name length");
     char nbuf[2];
-    memcpy(nbuf, param1->as.variable_declaration.name->lexeme, nlen);
+    memcpy(nbuf, param1->as.variable_declaration.name->lexeme, (size_t)nlen);
     nbuf[nlen] = '\0';
     cr_expect_str_eq(nbuf, "b");
 
     int tlen = param1->as.variable_declaration.type->length;
     cr_expect_eq(tlen, 3, "param1 type length");
     char tbuf[4];
-    memcpy(tbuf, param1->as.variable_declaration.type->lexeme, tlen);
+    memcpy(tbuf, param1->as.variable_declaration.type->lexeme, (size_t)tlen);
     tbuf[tlen] = '\0';
     cr_expect_str_eq(tbuf, "int");
   }
