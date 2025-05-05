@@ -1,7 +1,7 @@
 // NOLINTBEGIN(misc-include-cleaner)
-// we checked to make sure only criterian related warnings were left
-// NOLINTBEGIN(*-magic-numbers)
-
+// we checked to make sure only criterion related warnings were left
+// NOLINTBEGIN(cert-env33-c, concurrency-mt-unsafe)
+// these are just for the system calls
 #include <criterion/criterion.h>
 #include <criterion/new/assert.h>
 #include <stdio.h>
@@ -40,8 +40,10 @@ static int files_equal(const char* path1, const char* path2) {
     return 0;
   }
 
-  char line1[1024];
-  char line2[1024];
+  enum { MAX_LINE_LENGTH = 1024 };
+
+  char line1[MAX_LINE_LENGTH];
+  char line2[MAX_LINE_LENGTH];
   int line_num = 1;
 
   while (fgets(line1, sizeof(line1), file1) &&
@@ -98,12 +100,15 @@ static int run_and_get_exit(const char* command) {
   return -1;
 }
 
+enum { COMMAND_BUFFER_SIZE = 256, FILE_BUFFER_SIZE = 512 };
+
+// Test 1: Return 3
 Test(compiler, full_system_simple_return) {
   copy_file(CMAKE_SOURCE_DIR
             "/test/test_inputs/compiler_inputs/simple_return.c",
             "test.txt");
 
-  char command[256];
+  char command[COMMAND_BUFFER_SIZE];
   (void)snprintf(command, sizeof(command), "gcc %s/src/*.c -o compiler_main",
                  CMAKE_SOURCE_DIR);
   cr_assert_eq(system(command), 0, "Failed to compile compiler");
@@ -112,7 +117,7 @@ Test(compiler, full_system_simple_return) {
 
   cr_assert(access("chat.s", F_OK) == 0, "chat.s was not generated");
 
-  char expected[512];
+  char expected[FILE_BUFFER_SIZE];
   (void)snprintf(expected, sizeof(expected),
                  "%s/test/test_expected_outputs/simple_return.s",
                  CMAKE_SOURCE_DIR);
@@ -134,9 +139,9 @@ Test(compiler, full_system_binary_add) {
             "test.txt");
 
   // rebuild the compiler
-  char cmd[256];
+  char cmd[COMMAND_BUFFER_SIZE];
   (void)snprintf(cmd, sizeof(cmd), "gcc %s/src/*.c -o compiler_main",
-                       CMAKE_SOURCE_DIR);
+                 CMAKE_SOURCE_DIR);
   cr_assert_eq(system(cmd), 0, "Failed to compile compiler");
 
   // run it
@@ -144,10 +149,10 @@ Test(compiler, full_system_binary_add) {
   cr_assert(access("chat.s", F_OK) == 0, "chat.s was not generated");
 
   // compare to expected
-  char expected[512];
+  char expected[FILE_BUFFER_SIZE];
   (void)snprintf(expected, sizeof(expected),
-                       "%s/test/test_expected_outputs/binary_add.s",
-                       CMAKE_SOURCE_DIR);
+                 "%s/test/test_expected_outputs/binary_add.s",
+                 CMAKE_SOURCE_DIR);
   cr_assert(access(expected, F_OK) == 0, "Expected file not found at %s",
             expected);
   cr_assert(files_equal("chat.s", expected),
@@ -165,14 +170,14 @@ Test(compiler, full_system_multiplication) {
   copy_file(CMAKE_SOURCE_DIR "/test/test_inputs/compiler_inputs/mul_return.c",
             "test.txt");
 
-  char cmd[256];
+  char cmd[COMMAND_BUFFER_SIZE];
   (void)snprintf(cmd, sizeof(cmd), "gcc %s/src/*.c -o compiler_main",
                  CMAKE_SOURCE_DIR);
   cr_assert_eq(system(cmd), 0, "Failed to compile compiler");
   cr_assert_eq(system("./compiler_main"), 0, "Compiler failed to run");
   cr_assert(access("chat.s", F_OK) == 0, "chat.s was not generated");
 
-  char expected[512];
+  char expected[FILE_BUFFER_SIZE];
   (void)snprintf(expected, sizeof(expected),
                  "%s/test/test_expected_outputs/mul_return.s",
                  CMAKE_SOURCE_DIR);
@@ -193,14 +198,14 @@ Test(compiler, full_system_var_decl_return) {
             "/test/test_inputs/compiler_inputs/var_decl_return.c",
             "test.txt");
 
-  char cmd[256];
+  char cmd[COMMAND_BUFFER_SIZE];
   (void)snprintf(cmd, sizeof(cmd), "gcc %s/src/*.c -o compiler_main",
                  CMAKE_SOURCE_DIR);
   cr_assert_eq(system(cmd), 0, "Failed to compile compiler");
   cr_assert_eq(system("./compiler_main"), 0, "Compiler failed to run");
   cr_assert(access("chat.s", F_OK) == 0, "chat.s was not generated");
 
-  char expected[512];
+  char expected[FILE_BUFFER_SIZE];
   (void)snprintf(expected, sizeof(expected),
                  "%s/test/test_expected_outputs/var_decl_return.s",
                  CMAKE_SOURCE_DIR);
@@ -223,7 +228,7 @@ Test(compiler, full_system_func_params) {
             "test.txt");
 
   // 2) rebuild & run compiler
-  char cmd[256];
+  char cmd[COMMAND_BUFFER_SIZE];
   (void)snprintf(cmd, sizeof(cmd), "gcc %s/src/*.c -o compiler_main",
                  CMAKE_SOURCE_DIR);
   cr_assert_eq(system(cmd), 0, "Failed to compile compiler");
@@ -231,7 +236,7 @@ Test(compiler, full_system_func_params) {
   cr_assert(access("chat.s", F_OK) == 0, "chat.s not generated");
 
   // 3) compare chat.s against expected
-  char expected[512];
+  char expected[FILE_BUFFER_SIZE];
   (void)snprintf(expected, sizeof(expected),
                  "%s/test/test_expected_outputs/func_params_call.s",
                  CMAKE_SOURCE_DIR);
@@ -246,5 +251,5 @@ Test(compiler, full_system_func_params) {
   cr_expect_eq(result, 5, "Expected return 5 from binary");
 }
 
-// NOLINTEND(*-magic-numbers)
+// NOLINTEND(cert-env33-c, concurrency-mt-unsafe)
 // NOLINTEND(misc-include-cleaner)

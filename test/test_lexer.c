@@ -1,6 +1,5 @@
 // NOLINTBEGIN(misc-include-cleaner)
-// we checked to make sure only criterian related warnings were left
-
+// we checked to make sure only criterion related warnings were left
 #include <criterion/criterion.h>
 #include <criterion/new/assert.h>
 #include <stdio.h>
@@ -147,21 +146,6 @@ Test(lexer, identifier_with_underscore_and_digits_file) {
   free(source);
 }
 
-// // Test that verifies skipping a single-line comment via file input
-// Test(lexer, comment_skipping_file) {
-//   char* source = read_file(
-//       CMAKE_SOURCE_DIR
-//       "/test/test_inputs/lexer_inputs/comment_skipping.txt");
-//   Lexer lexer;
-//   initLexer(&lexer, source);
-
-//   Token token = getNextToken(&lexer);
-//   cr_assert_eq(token.type, TOKEN_INT_LITERAL);
-//   cr_assert(strncmp(token.lexeme, "42", token.length) == 0);
-
-//   free(source);
-// }
-
 // Test that verifies the lone '!' produces an error token via file input
 Test(lexer, invalid_exclamation_file) {
   char* source =
@@ -172,7 +156,8 @@ Test(lexer, invalid_exclamation_file) {
 
   Token token = getNextToken(&lexer);
   cr_assert_eq(token.type, TOKEN_UNKNOWN);
-  cr_assert(strncmp(token.lexeme, "Unexpected '!'", (size_t)token.length) == 0);
+  cr_assert(strncmp(token.lexeme, "Unexpected '!'", (size_t)token.length) ==
+            (size_t)0);
 
   free(source);
 }
@@ -207,24 +192,6 @@ Test(lexer, multiline_tokens_and_line_count_file) {
   free(source);
 }
 
-// // Test that verifies mixed comments + tokens via file input
-// Test(lexer, multiple_comments_and_tokens_file) {
-//   char* source = read_file(
-//       CMAKE_SOURCE_DIR
-//       "/test/test_inputs/lexer_inputs/multiple_com_tok.txt");
-//   Lexer lexer;
-//   initLexer(&lexer, source);
-
-//   cr_assert_eq(getNextToken(&lexer).type, TOKEN_INT_TYPE);
-//   cr_assert_eq(getNextToken(&lexer).type, TOKEN_IDENTIFIER);
-//   cr_assert_eq(getNextToken(&lexer).type, TOKEN_ASSIGN);
-//   cr_assert_eq(getNextToken(&lexer).type, TOKEN_INT_LITERAL);
-//   cr_assert_eq(getNextToken(&lexer).type, TOKEN_SEMICOLON);
-//   cr_assert_eq(getNextToken(&lexer).type, TOKEN_EOF);
-
-//   free(source);
-// }
-
 // Test that verifies keywords embedded in identifiers via file input
 Test(lexer, keyword_as_prefix_identifier_file) {
   char* source = read_file(CMAKE_SOURCE_DIR
@@ -241,5 +208,4 @@ Test(lexer, keyword_as_prefix_identifier_file) {
   free(source);
 }
 
-// NOLINTEND(*-magic-numbers)
 // NOLINTEND(misc-include-cleaner)
