@@ -23,8 +23,8 @@ ASTNode* newIntLiteralNode(int value, Token* token) {
   DEBUG_PRINT("Debug: Creating new IntLiteral node with value = %d\n", value);
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
-    fprintf(stderr, "Error: Out of memory in newIntLiteralNode\n");
-    exit(1);
+    error_and_exit("Error: Out of memory in newIntLiteralNode\n");
+    return NULL;
   }
   node->type = AST_INT_LITERAL;
   node->as.intLiteral.intLiteral = value;
@@ -39,8 +39,8 @@ ASTNode* newVariableNode(Token* name) {
   ASTNode* node = malloc(sizeof(ASTNode));
 
   if (!node) {
-    fprintf(stderr, "Error: Out of memory in newVariableNode\n");
-    exit(1);
+    error_and_exit("Error: Out of memory in newVariableNode\n");
+    return NULL;
   }
   node->type = AST_VARIABLE;  // Using the variable type for declarations.
   node->as.variableName = name;
@@ -54,8 +54,7 @@ ASTNode* newVariableDeclarationNode(Token* name, Token* type) {
 
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
-    fprintf(stderr, "Error: Out of memory in newVariableDeclarationNode\n");
-    exit(1);
+    error_and_exit("Error: Out of memory in newVariableDeclarationNode\n");
   }
   node->type =
       AST_VARIABLE_DECLARATION;  // Using the variable type for declarations.
@@ -70,8 +69,8 @@ ASTNode* newBinaryNode(ASTNode* left, TokenType operator, ASTNode* right) {
 
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
-    fprintf(stderr, "Error: Out of memory in newBinaryNode\n");
-    exit(1);
+    error_and_exit("Error: Out of memory in newBinaryNode\n");
+    return NULL;
   }
   node->type = AST_BINARY;
   node->as.binary.left = left;
@@ -86,7 +85,7 @@ ASTNode* newUnaryNode(char operator, ASTNode* operand) {
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     fprintf(stderr, "Error: Out of memory in newUnaryNode\n");
-    exit(1);
+    return NULL;
   }
   node->type = AST_UNARY;
   node->as.unary._operator = operator;
@@ -100,7 +99,7 @@ ASTNode* newBlockNode(ASTNode** statements, int count) {
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     fprintf(stderr, "Error: Out of memory in newBlockNode\n");
-    exit(1);
+    return NULL;
   }
   node->type = AST_BLOCK;
   node->as.block.statements = statements;
@@ -117,7 +116,7 @@ ASTNode* newFunctionNode(Token* name, Token* returnType, ASTNode** parameters,
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     fprintf(stderr, "Error: Out of memory in newFunctionNode\n");
-    exit(1);
+    return NULL;
   }
   node->type = AST_FUNCTION_DECLARATION;
   node->as.function.name = name;
@@ -134,7 +133,7 @@ ASTNode* newFunctionCallNode(Token* name, ASTNode** parameters,
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     fprintf(stderr, "Error: Out of memory in newFunctionCallNode\n");
-    exit(1);
+    return NULL;
   }
   node->type = AST_FUNCTION_CALL;
   node->as.function_call.name = name;
@@ -149,7 +148,7 @@ ASTNode* newReturnNode(ASTNode* expression) {
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     fprintf(stderr, "Error: Out of memory in newReturnNode\n");
-    exit(1);
+    return NULL;
   }
   node->type = AST_RETURN;
   node->as._return.expression = expression;
@@ -159,8 +158,8 @@ ASTNode* newReturnNode(ASTNode* expression) {
 ASTNode* newDeclarationNode(ASTNode* variableDeclaration, ASTNode* expression) {
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
-    fprintf(stderr, "Error: Out of memory in newDeclarationNode\n");
-    exit(1);
+    error_and_exit("Error: Out of memory in newDeclarationNode\n");
+    return NULL;
   }
   node->type = AST_DECLARATION;
   node->as.declaration.variable = variableDeclaration;
@@ -175,7 +174,7 @@ ASTNode* newIfElifElseNode(ASTNodeType type, ASTNode* condition,
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     fprintf(stderr, "Error: Out of memory in newIfElifElseNode\n");
-    exit(1);
+    return NULL;
   }
   node->type = type;
   node->as.if_elif_else_statement.condition = condition;
@@ -189,7 +188,7 @@ ASTNode* newWhileNode(ASTNode* condition, ASTNode* body) {
   ASTNode* node = malloc(sizeof(ASTNode));
   if (!node) {
     fprintf(stderr, "Error: Out of memory in newWhileNode\n");
-    exit(1);
+    return NULL;
   }
   node->type = AST_WHILE_STATEMENT;
   node->as.while_statement.condition = condition;
@@ -237,8 +236,7 @@ ASTNode* parseVariableDeclaration(Token* tokens, int* tokenIndex,
 
   // Expect a data type token first.
   if (!isTokenDataType(peekToken(tokens, tokenIndex))) {
-    fprintf(stderr, "Error: Expected a data type\n");
-    return NULL;
+    error_and_exit("Error: Expected a data type\n");
   }
 
   DEBUG_PRINT("Debug: Data type token: ");
@@ -249,8 +247,7 @@ ASTNode* parseVariableDeclaration(Token* tokens, int* tokenIndex,
 
   // Check for identifier token.
   if (peekToken(tokens, tokenIndex)->type != TOKEN_IDENTIFIER) {
-    fprintf(stderr, "Error: Expected an identifier\n");
-    return NULL;
+    error_and_exit("Error: Expected an identifier\n");
   }
 
   DEBUG_PRINT("Debug: Identifier token: ");
@@ -268,8 +265,7 @@ int convertTokenToInt(Token* token) {
   // Allocate memory for a null-terminated string copy of the substring.
   char* buf = malloc(token->length + 1);
   if (!buf) {
-    fprintf(stderr, "Error: Out of memory\n");
-    return 0;  // Error signal
+    error_and_exit("Error: Out of memory\n");
   }
 
   // Copy the substring and add a null terminator.
@@ -284,14 +280,13 @@ int convertTokenToInt(Token* token) {
 
   // Check if any characters were converted
   if (endptr == buf) {
-    fprintf(stderr, "Error: No digits found in substring\n");
-    return 0;
+    error_and_exit("Error: No digits found in substring\n");
   }
 
   // // Check if there are any non-digit trailing characters
   // while (*endptr != '\0') {
   //   if (!isspace((unsigned char)*endptr)) {
-  //     fprintf(stderr, "Error: Invalid characters after number%s\n",
+  //     error_and_exit("Error: Invalid characters after number%s\n",
   //     (*endptr)); return 0;
   //   }
   //   endptr++;
@@ -299,8 +294,7 @@ int convertTokenToInt(Token* token) {
 
   // Manual range check (since we're avoiding errno)
   if (value < INT_MIN || value > INT_MAX) {
-    fprintf(stderr, "Error: Number out of range for int\n");
-    return 0;
+    error_and_exit("Error: Number out of range for int\n");
   }
 
   return (int)value;
@@ -383,7 +377,7 @@ ASTNode* parseWhileStatement(Token* tokens, int* tokenIndex, int tokenCount) {
 
   if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
     fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n", *tokenIndex);
-    return NULL;
+    error_and_exit("");
   }
 
   (*tokenIndex)++;  // Skip left parenthis
@@ -392,7 +386,7 @@ ASTNode* parseWhileStatement(Token* tokens, int* tokenIndex, int tokenCount) {
 
   if (peekToken(tokens, tokenIndex)->type != TOKEN_RPAREN) {
     fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n", *tokenIndex);
-    return NULL;
+    error_and_exit("");
   }
 
   (*tokenIndex)++;  // Skip right parenthis
@@ -477,7 +471,7 @@ ASTNode* parseFunctionCall(Token* tokens, int* tokenIndex, int tokenCount) {
   int parameterCount = 0;
   if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
     fprintf(stderr, "Error: Expected '(' at tokenIndex = %d\n", *tokenIndex);
-    return NULL;
+    error_and_exit("");
   }
   (*tokenIndex)++;  // Skip left parenthis
   while (peekToken(tokens, tokenIndex)->type != TOKEN_RPAREN) {
@@ -489,8 +483,7 @@ ASTNode* parseFunctionCall(Token* tokens, int* tokenIndex, int tokenCount) {
     if (peekToken(tokens, tokenIndex)->type == TOKEN_COMMA) {
       (*tokenIndex)++;
     } else {
-      fprintf(stderr, "Error something else expected\n");
-      return NULL;
+      error_and_exit("Error something else expected\n");
     }
   }
   (*tokenIndex)++;  // Skip right parenthis
@@ -506,8 +499,7 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
     ASTNode* variableDeclarationNode =
         parseVariableDeclaration(tokens, tokenIndex, tokenCount);
     if (variableDeclarationNode == NULL) {
-      fprintf(stderr, "Error: Failed to parse variable declaration\n");
-      return NULL;
+      error_and_exit("Error: Failed to parse variable declaration\n");
     }
     // Check if there is an assignment following the declaration.
     if (peekToken(tokens, tokenIndex) != NULL &&
@@ -524,8 +516,7 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
     (*tokenIndex)++;
     ASTNode* expression = parseExpression(tokens, tokenIndex, tokenCount);
     if (expression == NULL) {
-      fprintf(stderr, "Error: Failed to parse expression\n");
-      return NULL;
+      error_and_exit("Error: Failed to parse expression\n");
     }
     (*tokenIndex)++;  // Skip semicolon
 
@@ -542,8 +533,7 @@ ASTNode* parseStatement(Token* tokens, int* tokenIndex, int tokenCount) {
       ASTNode* returnExpression =
           parseExpression(tokens, tokenIndex, tokenCount);
       if (peekToken(tokens, tokenIndex)->type != TOKEN_SEMICOLON) {
-        fprintf(stderr, "Error: Expected semicolon after return\n");
-        return NULL;
+        error_and_exit("Error: Expected semicolon after return\n");
       }
       (*tokenIndex)++;  // skip semicolon
 
@@ -646,7 +636,7 @@ ASTNode* parseFunction(Token* tokens, int* tokenIndex, int tokenCount) {
 
   // Ensure a '(' token follows.
   if (peekToken(tokens, tokenIndex)->type != TOKEN_LPAREN) {
-    fprintf(stderr, "Error: Expected '(' after function name\n");
+    error_and_exit("Error: Expected '(' after function name\n");
     return NULL;
   }
 
@@ -738,9 +728,18 @@ ASTNode** parseFile(Token* tokens, int tokenCount) {
   return astNodes;
 }
 
-// Assuming ASTNode and its related definitions are provided elsewhere
-// For example, AST_INT_LITERAL, AST_VARIABLE_DECLARATION, etc.
-// Helper function to print indentation to the given output stream.
+/*
+Prints indentation spaces to an output stream.
+
+Used to align AST pretty-printing.
+
+Args:
+  output: Output stream.
+  indent: Number of indentation levels.
+
+Returns:
+  void
+*/
 static void printIndent(FILE* output, int indent) {
   // DEBUG_PRINT("printIndent with indent = %d", indent);
   for (int i = 0; i < indent; i++) {

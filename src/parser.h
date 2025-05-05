@@ -131,7 +131,7 @@ Args:
 Returns:
   void
 */
-void printAST(FILE* file, ASTNode* node, int indent);
+void printAST(FILE* output, ASTNode* node, int indent);
 
 /*
 Prints an array of AST nodes to a file.
@@ -517,17 +517,3 @@ Returns:
   Array of ASTNode* representing the file's top-level structure.
 */
 ASTNode** parseFile(Token* tokens, int tokenCount);
-
-/*
-Prints indentation spaces to an output stream.
-
-Used to align AST pretty-printing.
-
-Args:
-  output: Output stream.
-  indent: Number of indentation levels.
-
-Returns:
-  void
-*/
-static void printIndent(FILE* output, int indent);
