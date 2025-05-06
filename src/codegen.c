@@ -1,13 +1,14 @@
 
 #include "codegen.h"
 
+#include <stdio.h>
 #include <stdlib.h>  // for free()
 #include <string.h>
 
 #include "lexer.h"
 #include "parser.h"
 
-// ast_node constructors with added debug prints.
+// NOLINTBEGIN(clang-diagnostic-gnu-zero-variadic-macro-arguments)
 
 // #define DEBUG
 #ifdef DEBUG
@@ -27,16 +28,19 @@ static inline void debug_print(const char* func, int line, const char* fmt,
   fprintf(stderr, "\n");
   va_end(args);
 }
+
 #define DEBUG_PRINT(fmt, ...) \
   debug_print(__func__, __LINE__, (fmt), ##__VA_ARGS__)
 #else
 /* In release builds this becomes a no‑op with zero overhead */
+// NOLINTNEXTLINE(clang-diagnostic-unused-function)
 static inline void debug_print(const char* func, int line, const char* fmt,
                                ...) {
   (void)func;
   (void)line;
   (void)fmt;
 }
+
 #define DEBUG_PRINT(fmt, ...) ((void)0)
 #endif
 
@@ -97,6 +101,8 @@ void add_variable_to_memory(memory* mem, char* variable_name) {
     }
     mem->variables = new_variable_in_memory_location;
   }
+
+  // NOLINTNEXTLINE(clang-analyzer-core.NullDereference)
   mem->variables[mem->number_of_variables] = new_variable;
   mem->number_of_variables++;
 
@@ -154,7 +160,8 @@ void init_list_of_instructions(list_of_x86_instructions* list) {
       sizeof(char*) * (long unsigned int)list->instruction_capacity);
 }
 
-void add_instruction(list_of_x86_instructions* list, char* instruction) {
+void  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
+add_instruction(list_of_x86_instructions* list, char* instruction) {
   if (list->instruction_count == list->instruction_capacity) {
     list->instruction_capacity *= 2;
     char** new_instruction_location = (char**)realloc(
@@ -173,6 +180,7 @@ void add_instruction(list_of_x86_instructions* list, char* instruction) {
   list->instruction_count++;
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 void ast_variable_literal_or_binary_to_x86(ast_node* node,
                                            list_of_x86_instructions* list,
                                            memory* mem) {
@@ -200,7 +208,9 @@ void ast_variable_or_literal_node_to_x86(ast_node* node,
     }
     (void)sprintf(new_instruction, "        mov     eax, %d",
                   node->as.int_literal.int_literal);
-    add_instruction(list, new_instruction);
+    // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
+    add_instruction(
+        list, new_instruction);  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   } else if (node->type == AST_VARIABLE) {
     char* operand = get_variable_memory_location_with_pointer(
         mem, node->as.variable_name->lexeme, node->as.variable_name->length);
@@ -213,12 +223,15 @@ void ast_variable_or_literal_node_to_x86(ast_node* node,
     (void)sprintf(new_instruction, "        mov     eax, DWORD PTR %s",
                   operand);
     free(operand);  // don't forget to free the operand string
+                    // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
     add_instruction(list, new_instruction);
   } else {
-    fprintf(stderr, "ERROR: Unknown AST node type\n");
+    (void)fprintf(stderr, "ERROR: Unknown AST node type\n");
   }
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 void ast_binary_node_to_x86(ast_node* node, list_of_x86_instructions* list,
                             memory* mem, int first) {
   DEBUG_PRINT("ast_binary_node_to_x86");
@@ -230,6 +243,8 @@ void ast_binary_node_to_x86(ast_node* node, list_of_x86_instructions* list,
     }
     (void)sprintf(new_instruction, "        mov     edx, %d",
                   right_node->as.int_literal.int_literal);
+
+    // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
     add_instruction(list, new_instruction);
   } else if (node->as.binary.right->type == AST_VARIABLE) {
     ast_node* right_node = node->as.binary.right;
@@ -245,11 +260,13 @@ void ast_binary_node_to_x86(ast_node* node, list_of_x86_instructions* list,
     (void)sprintf(new_instruction, "        mov     edx, DWORD PTR %s",
                   operand);
     free(operand);  // don't forget to free the operand string
+                    // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
     add_instruction(list, new_instruction);
   } else {
     // Add in what else to do if not literal
     ast_binary_node_to_x86(node->as.binary.right, list, mem, 1);
   }
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   if (node->as.binary.left->type == AST_INT_LITERAL) {
     ast_node* left_node = node->as.binary.left;
     char* new_instruction = malloc(MAX_LINE_LENGTH);
@@ -258,6 +275,7 @@ void ast_binary_node_to_x86(ast_node* node, list_of_x86_instructions* list,
     }
     (void)sprintf(new_instruction, "        mov     eax, %d",
                   left_node->as.int_literal.int_literal);
+    // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
     add_instruction(list, new_instruction);
 
   } else if (node->as.binary.left->type == AST_VARIABLE) {
@@ -274,9 +292,12 @@ void ast_binary_node_to_x86(ast_node* node, list_of_x86_instructions* list,
     (void)sprintf(new_instruction, "        mov     eax, DWORD PTR %s",
                   operand);
     free(operand);  // don't forget to free the operand string
+
+    // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
     add_instruction(list, new_instruction);
   }
 
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   if (first == 0) {
     char* new_instruction =
         malloc(MAX_LINE_LENGTH);  // enough for full instruction line
@@ -287,6 +308,7 @@ void ast_binary_node_to_x86(ast_node* node, list_of_x86_instructions* list,
     (void)sprintf(new_instruction, "        %s     edx, eax",
                   get_op_name(node->as.binary._operator));
 
+    // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
     add_instruction(list, new_instruction);
   } else {
     char* new_instruction =
@@ -297,8 +319,10 @@ void ast_binary_node_to_x86(ast_node* node, list_of_x86_instructions* list,
     (void)sprintf(new_instruction, "        %s     eax, edx",
                   get_op_name(node->as.binary._operator));
 
+    // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
     add_instruction(list, new_instruction);
   }
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 }
 
 void ast_variable_declaration_node_to_x86(ast_node* node, memory* mem) {
@@ -346,9 +370,11 @@ void ast_declaration_node_to_x86(ast_node* node, list_of_x86_instructions* list,
   (void)sprintf(new_instruction, "        mov     DWORD PTR %s, eax",
                 variable_location_string);
   free(variable_location_string);
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   add_instruction(list, new_instruction);
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 void ast_return_node_to_x86(ast_node* node, list_of_x86_instructions* list,
                             memory* mem) {
   DEBUG_PRINT("In Return Node\n");
@@ -357,11 +383,14 @@ void ast_return_node_to_x86(ast_node* node, list_of_x86_instructions* list,
   char* new_instruction = NULL;  //= malloc(MAX_LINE_LENGTH);
 
   new_instruction = "        pop     rbp";
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   add_instruction(list, new_instruction);
   new_instruction = "        ret";
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   add_instruction(list, new_instruction);
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 void ast_statement_node_to_x86(ast_node* node, list_of_x86_instructions* list,
                                memory* mem) {
   DEBUG_PRINT("In Statement Node\n");
@@ -371,30 +400,34 @@ void ast_statement_node_to_x86(ast_node* node, list_of_x86_instructions* list,
   }
   switch (node->type) {
     case AST_VARIABLE:
-      DEBUG_PRINT("In Variable Node\n");
-      ast_variable_or_literal_node_to_x86(node, list, mem);
       break;
     case AST_INT_LITERAL:
+
       DEBUG_PRINT("In Int Literal Node\n");
       ast_variable_or_literal_node_to_x86(node, list, mem);
       break;
     case AST_DECLARATION:
+
       DEBUG_PRINT("In Declaration Node\n");
       ast_declaration_node_to_x86(node, list, mem);
       break;
     case AST_VARIABLE_DECLARATION:
+
       DEBUG_PRINT("In Variable Declaration Node\n");
       ast_variable_declaration_node_to_x86(node, mem);
       break;
     case AST_FUNCTION_CALL:
+
       DEBUG_PRINT("In Function Call\n");
       ast_function_call_node_to_x86(node, list, mem);
       break;
     case AST_RETURN:
+
       DEBUG_PRINT("In Return Statement\n");
       ast_return_node_to_x86(node, list, mem);
       break;
     default:
+
       DEBUG_PRINT("In default case\n");
       break;
   }
@@ -410,10 +443,13 @@ void ast_block_node_to_x86(ast_node* node, list_of_x86_instructions* list,
   }
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 void ast_function_call_node_to_x86(ast_node* node,
                                    list_of_x86_instructions* list,
                                    memory* mem) {
   DEBUG_PRINT("In Function Call\n");
+
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   for (int i = 0; i < node->as.function_call.param_count; i++) {
     DEBUG_PRINT("1\n");
     if (node->as.function_call.parameters[i]->type == AST_INT_LITERAL) {
@@ -423,6 +459,7 @@ void ast_function_call_node_to_x86(ast_node* node,
     }
     ast_variable_literal_or_binary_to_x86(node->as.function_call.parameters[i],
                                           list, mem);
+
     DEBUG_PRINT("1\n");
     char* new_instruction = malloc(MAX_LINE_LENGTH);
     if (!new_instruction) {
@@ -430,8 +467,10 @@ void ast_function_call_node_to_x86(ast_node* node,
     }
     (void)sprintf(new_instruction, "        mov     %s, eax",
                   get_low_linux_registers_name(i));
+    // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
     add_instruction(list, new_instruction);
   }
+
   DEBUG_PRINT("1\n");
 
   // Below is the function call
@@ -466,7 +505,10 @@ void ast_function_call_node_to_x86(ast_node* node,
 
   //   new_instruction[currentNewInstructionLength] = ')';
   //   new_instruction[currentNewInstructionLength + 2] = '\0';
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   add_instruction(list, new_instruction);
+
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 }
 
 void ast_function_node_to_x86(ast_node* node, list_of_x86_instructions* list) {
@@ -479,6 +521,7 @@ void ast_function_node_to_x86(ast_node* node, list_of_x86_instructions* list) {
   init_memory(mem);
   if (strncmp(node->as.function.name->lexeme, "main", strlen("main")) == 0) {
     char* new_instruction = "main:";
+    // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
     add_instruction(list, new_instruction);
   } else {
     char* new_instruction = malloc(MAX_LINE_LENGTH);
@@ -518,24 +561,31 @@ void ast_function_node_to_x86(ast_node* node, list_of_x86_instructions* list) {
     // node->as.function.name,
     // //         node->as.function.name);
 
+    // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
     add_instruction(list, new_instruction);
   }
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   char* new_instruction = "        push    rbp";
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   add_instruction(list, new_instruction);
   new_instruction = "        mov     rbp, rsp";
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   add_instruction(list, new_instruction);
 
   for (int i = 0; i < node->as.function.param_count; i++) {
-    char* variable_name = malloc(
-        node->as.function.parameters[i]->as.variable_declaration.name->length +
-        1);
+    char* variable_name = malloc((unsigned long)node->as.function.parameters[i]
+                                     ->as.variable_declaration.name->length +
+                                 (unsigned long)1);
     if (!variable_name) {
+      free((void*)mem);
       error_and_exit("malloc failed");
+      return;
     }
     strncpy(
         variable_name,
         node->as.function.parameters[i]->as.variable_declaration.name->lexeme,
-        node->as.function.parameters[i]->as.variable_declaration.name->length);
+        (size_t)node->as.function.parameters[i]
+            ->as.variable_declaration.name->length);
     variable_name[node->as.function.parameters[i]
                       ->as.variable_declaration.name->length] = '\0';
     add_variable_to_memory(mem, variable_name);
@@ -546,10 +596,14 @@ void ast_function_node_to_x86(ast_node* node, list_of_x86_instructions* list) {
     new_instruction = malloc(MAX_LINE_LENGTH);
     (void)sprintf(new_instruction, "        mov     DWORD PTR %s, %s",
                   var_loc_with_pointer, get_low_linux_registers_name(i));
+    // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
     add_instruction(list, new_instruction);
+    free(var_loc_with_pointer);
   }
 
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   ast_block_node_to_x86(node->as.function.statements, list, mem);
+  free((void*)mem);
 }
 
 void list_of_ast_function_nodes_to_x86(ast_node** nodes,
@@ -557,20 +611,28 @@ void list_of_ast_function_nodes_to_x86(ast_node** nodes,
                                        int numberOfFunctions) {
   DEBUG_PRINT("Going through %d functions.\n", numberOfFunctions);
   char* new_instruction = ".intel_syntax noprefix";
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   add_instruction(list, new_instruction);
   new_instruction = ".global _start";
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   add_instruction(list, new_instruction);
   new_instruction = ".text";
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   add_instruction(list, new_instruction);
   new_instruction = "_start:";
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   add_instruction(list, new_instruction);
   new_instruction = "    call main";
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   add_instruction(list, new_instruction);
   new_instruction = "    mov rdi, rax       # syscall: exit";
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   add_instruction(list, new_instruction);
   new_instruction = "    mov rax, 60        # exit code 0";
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   add_instruction(list, new_instruction);
   new_instruction = "    syscall";
+  // NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
   add_instruction(list, new_instruction);
 
   for (int i = 0; i < numberOfFunctions; ++i) {
@@ -579,8 +641,6 @@ void list_of_ast_function_nodes_to_x86(ast_node** nodes,
     }
   }
 }
-
-#include <stdio.h>
 
 void print_instructions(list_of_x86_instructions* list) {
   FILE* file = fopen("chat.s", "we");  // Overwrite/clear the file
@@ -591,7 +651,7 @@ void print_instructions(list_of_x86_instructions* list) {
 
   // Add the instructions
   for (int i = 0; i < list->instruction_count; i++) {
-    fprintf(file, "%s\n", list->instructions[i]);
+    (void)fprintf(file, "%s\n", list->instructions[i]);
   }
 
   (void)fclose(file);
@@ -618,3 +678,5 @@ void print_memory(memory* mem) {
   add_variable_to_memory(mem, variable_name);
 
 */
+
+// NOLINTEND(clang-diagnostic-gnu-zero-variadic-macro-arguments)

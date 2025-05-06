@@ -161,7 +161,7 @@ Args:
 Returns:
   void
 */
-void print_ast_output(ast_node** nodes, int count, int outputToFile);
+void print_ast_output(ast_node** nodes, int count, int output_to_file);
 
 /*
 Parses a block (compound statement) of code.
@@ -309,7 +309,7 @@ Args:
 Returns:
   ast_node* representing the full declaration.
 */
-ast_node* new_declaration_node(ast_node* variableDeclaration,
+ast_node* new_declaration_node(ast_node* variable_declaration,
                                ast_node* expression);
 
 /*
