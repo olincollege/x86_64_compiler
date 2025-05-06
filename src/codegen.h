@@ -57,7 +57,7 @@ Args:
 Returns:
   void
 */
-void add_variable_to_memory(memory* mem, char* variableName);
+void add_variable_to_memory(memory* mem, char* variable_name);
 
 /*
 Finds the stack memory location of a variable.

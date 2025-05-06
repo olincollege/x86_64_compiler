@@ -7,7 +7,8 @@
 
 #include "lexer.h"
 
-// ast_node constructors with added debug prints.
+// NOLINTBEGIN(clang-diagnostic-gnu-zero-variadic-macro-arguments)
+
 // #define DEBUG
 #ifdef DEBUG
 /**
@@ -30,6 +31,7 @@ static inline void debug_print(const char* func, int line, const char* fmt,
   debug_print(__func__, __LINE__, (fmt), ##__VA_ARGS__)
 #else
 /* In release builds this becomes a no‑op with zero overhead */
+// NOLINTNEXTLINE(clang-diagnostic-unused-function)
 static inline void debug_print(const char* func, int line, const char* fmt,
                                ...) {
   (void)func;
@@ -72,6 +74,7 @@ ast_node* new_variable_node(Token* name) {
   return node;
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 ast_node* new_variable_declaration_node(Token* name, Token* type) {
   DEBUG_PRINT(
       "Debug: Creating new VariableDeclaration node. Name: %.*s, Type: %.*s\n",
@@ -133,6 +136,7 @@ ast_node* new_block_node(ast_node** statements, int count) {
   return node;
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 ast_node* new_function_node(Token* name, Token* return_type,
                             ast_node** parameters, int count,
                             ast_node* statements) {
@@ -182,6 +186,7 @@ ast_node* new_return_node(ast_node* expression) {
   return node;
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 ast_node* new_declaration_node(ast_node* variable_declaration,
                                ast_node* expression) {
   ast_node* node = malloc(sizeof(ast_node));
@@ -195,6 +200,7 @@ ast_node* new_declaration_node(ast_node* variable_declaration,
   return node;
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 ast_node* new_if_elif_else_node(ast_node_type type, ast_node* condition,
                                 ast_node* body) {
   DEBUG_PRINT("Debug: Creating new If/Elif/Else node.\n");
@@ -210,6 +216,7 @@ ast_node* new_if_elif_else_node(ast_node_type type, ast_node* condition,
   return node;
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 ast_node* new_while_node(ast_node* condition, ast_node* body) {
   DEBUG_PRINT("Debug: Creating new while node\n");
 
@@ -351,6 +358,7 @@ ast_node* parse_variable_or_literal(Token* tokens, int* token_index,
   return NULL;
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 ast_node* parse_expression(Token* tokens, int* token_index, int token_count) {
   DEBUG_PRINT("Debug: Entering parse_expression at token_index = %d\n",
               *token_index);
@@ -380,6 +388,7 @@ ast_node* parse_expression(Token* tokens, int* token_index, int token_count) {
   if (peek_token(tokens, token_index)->type == TOKEN_LPAREN) {
     // Deal with this later
   }
+
   DEBUG_PRINT("Debug: Variable or literal with second part\n");
   ast_node* leftSide = node;
   // parse_variable_or_literal(tokens, token_index, token_count);
@@ -390,9 +399,7 @@ ast_node* parse_expression(Token* tokens, int* token_index, int token_count) {
                          parse_expression(tokens, token_index, token_count));
 }
 
-// parse for
-// parse while
-
+// NOLINTNEXTLINE(misc-no-recursion)
 ast_node* parse_while_statement(Token* tokens, int* token_index,
                                 int token_count) {
   DEBUG_PRINT("Debug: Entering parse_while_statement at token_index = %d\n",
@@ -429,6 +436,7 @@ ast_node* parse_while_statement(Token* tokens, int* token_index,
   return new_while_node(condition, body);
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 ast_node* parse_if_elif_else_statement(Token* tokens, int* token_index,
                                        int token_count) {
   DEBUG_PRINT("Debug: Entering parseIfStatement at token_index = %d\n",
@@ -447,6 +455,7 @@ ast_node* parse_if_elif_else_statement(Token* tokens, int* token_index,
     if (peek_ahead_token(tokens, token_index, 1, token_count)->type ==
         TOKEN_IF) {
       node_type = AST_ELSE_IF_STATEMENT;
+
       DEBUG_PRINT("Elseif\n\n");
 
       (*token_index)++;
@@ -504,8 +513,8 @@ ast_node* parse_function_call(Token* tokens, int* token_index,
               *token_index);
   Token* name = peek_token(tokens, token_index);
   (*token_index)++;
-  ast_node** parameters =
-      (ast_node**)malloc(sizeof(ast_node*) * (MAX_PARAMETER_SIZE));
+  ast_node** parameters = (ast_node**)malloc(
+      sizeof(ast_node*) * ((long unsigned int)MAX_PARAMETER_SIZE));
   int parameter_count = 0;
   if (peek_token(tokens, token_index)->type != TOKEN_LPAREN) {
     (void)fprintf(stderr, "Error: Expected '(' at token_index = %d\n",
@@ -526,9 +535,15 @@ ast_node* parse_function_call(Token* tokens, int* token_index,
     }
   }
   (*token_index)++;  // Skip right parenthis
-  return new_function_call_node(name, parameters, parameter_count);
+  ast_node* new_node =
+      new_function_call_node(name, parameters, parameter_count);
+  if (!new_node) {
+    free((void*)parameters);
+  }
+  return new_node;
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 ast_node* parse_statement(Token* tokens, int* token_index, int token_count) {
   DEBUG_PRINT("Debug: Entering parse_statement at token_index = %d\n",
               *token_index);
@@ -559,7 +574,13 @@ ast_node* parse_statement(Token* tokens, int* token_index, int token_count) {
     }
     (*token_index)++;  // Skip semicolon
 
-    return new_declaration_node(variable_declaration_node, expression);
+    ast_node* new_node =
+        new_declaration_node(variable_declaration_node, expression);
+    if (!new_node) {
+      free((void*)expression);
+      free((void*)variable_declaration_node);
+    }
+    return new_node;
   }
 
   // Case below
@@ -576,7 +597,12 @@ ast_node* parse_statement(Token* tokens, int* token_index, int token_count) {
       }
       (*token_index)++;  // skip semicolon
 
-      return new_return_node(return_expression);
+      ast_node* new_node = new_return_node(return_expression);
+      if (!new_node) {
+        free((void*)return_expression);
+      }
+      return new_node;
+
     case TOKEN_SEMICOLON:
 
       DEBUG_PRINT("Debug: Found semicolon after statement\n");
@@ -598,7 +624,15 @@ ast_node* parse_statement(Token* tokens, int* token_index, int token_count) {
         (*token_index)++;  // consume the assign operator
         ast_node* expression_node =
             parse_expression(tokens, token_index, token_count);
-        return new_declaration_node(varaible_name, expression_node);
+
+        ast_node* temp_declaration_node =
+            new_declaration_node(varaible_name, expression_node);
+        if (!temp_declaration_node) {
+          free((void*)varaible_name);
+          free((void*)expression_node);
+        }
+        return temp_declaration_node;
+
         // new_declaration_node()
       } else if (peek_ahead_token(tokens, token_index, 1, token_count)->type ==
                  TOKEN_LPAREN) {
@@ -614,12 +648,14 @@ ast_node* parse_statement(Token* tokens, int* token_index, int token_count) {
   return NULL;
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 ast_node* parse_block(Token* tokens, int* token_index, int token_count) {
   DEBUG_PRINT("Debug: Entering parse_block at token_index = %d\n",
               *token_index);
 
-  ast_node** statements =
-      (ast_node**)malloc(MAX_NUMBER_OF_STATEMENTS * sizeof(ast_node*));
+  ast_node** statements = (ast_node**)malloc(
+      (size_t)MAX_NUMBER_OF_STATEMENTS *
+      sizeof *statements);  // NOLINT(bugprone-sizeof-expression)
   int statement_count = 0;
 
   if (peek_token(tokens, token_index)->type != TOKEN_LBRACE) {
@@ -628,7 +664,14 @@ ast_node* parse_block(Token* tokens, int* token_index, int token_count) {
     if (new_node != NULL) {
       statements[statement_count++] = new_node;
     }
-    return new_block_node(statements, statement_count);
+    new_node = new_block_node(statements, statement_count);
+    if (!new_node) {
+      free((void*)statements);
+      error_and_exit(
+          "Error parsing function body. No statements found after left brace.");
+      return NULL;
+    }
+    return new_node;
   }
 
   // There is a left brace
@@ -647,7 +690,12 @@ ast_node* parse_block(Token* tokens, int* token_index, int token_count) {
   }
 
   (*token_index)++;  // Move to the next token after '}'
-  return new_block_node(statements, statement_count);
+  ast_node* new_node = new_block_node(statements, statement_count);
+  if (!new_node) {
+    free((void*)statements);
+    error_and_exit("Failed to parse function body");
+  }
+  return new_node;
 }
 
 ast_node* parse_function(Token* tokens, int* token_index, int token_count) {
@@ -656,8 +704,8 @@ ast_node* parse_function(Token* tokens, int* token_index, int token_count) {
 
   Token* name = NULL;
   Token* return_type = NULL;
-  ast_node** parameters =
-      (ast_node**)malloc(MAX_PARAMETER_SIZE * sizeof(ast_node*));
+  ast_node** parameters = (ast_node**)malloc(
+      (long unsigned int)MAX_PARAMETER_SIZE * sizeof(ast_node*));
   ast_node* statements = NULL;
 
   int parameter_count = 0;
@@ -679,6 +727,7 @@ ast_node* parse_function(Token* tokens, int* token_index, int token_count) {
 
   // Ensure a '(' token follows.
   if (peek_token(tokens, token_index)->type != TOKEN_LPAREN) {
+    free((void*)parameters);
     error_and_exit("Error: Expected '(' after function name\n");
     return NULL;
   }
@@ -728,8 +777,14 @@ ast_node* parse_function(Token* tokens, int* token_index, int token_count) {
   DEBUG_PRINT("Debug: Finished parsing function '%.*s'\n", name->length,
               name->lexeme);
 
-  return new_function_node(name, return_type, parameters, parameter_count,
-                           statements);
+  ast_node* new_node = new_function_node(name, return_type, parameters,
+                                         parameter_count, statements);
+  if (!new_node) {
+    free((void*)statements);
+    free((void*)parameters);
+    error_and_exit("malloc failed");
+  }
+  return new_node;
 }
 
 ast_node** parse_file(Token* tokens, int token_count) {
@@ -737,7 +792,7 @@ ast_node** parse_file(Token* tokens, int token_count) {
 
   int token_index = 0;
   ast_node** ast_nodes =
-      (ast_node**)malloc(MAX_NUMBER_OF_FUNCTIONS * sizeof(ast_node*));
+      (ast_node**)malloc((size_t)MAX_NUMBER_OF_FUNCTIONS * sizeof(ast_node*));
   for (int i = 0; i < MAX_NUMBER_OF_FUNCTIONS; i++) {
     ast_nodes[i] = NULL;
   }
@@ -797,6 +852,7 @@ static void print_indent(FILE* output, int indent) {
 /*                                AST Printer                                 */
 /* -------------------------------------------------------------------------- */
 
+// NOLINTNEXTLINE(misc-no-recursion)
 void print_ast(FILE* output, ast_node* node, int indent) {
   // DEBUG_PRINT("Entering print_ast (indent=%d)", indent);
 
@@ -951,7 +1007,7 @@ void print_ast(FILE* output, ast_node* node, int indent) {
 }
 
 /* -------------------------------------------------------------------------- */
-
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 void print_ast_output(ast_node** nodes, int count, int output_to_file) {
   // DEBUG_PRINT("Entering print_ast_output (count=%d, output_to_file=%d)",
   // count,
@@ -984,3 +1040,5 @@ void print_ast_output(ast_node** nodes, int count, int output_to_file) {
 
   DEBUG_PRINT("Exiting print_ast_output");
 }
+
+// NOLINTEND(clang-diagnostic-gnu-zero-variadic-macro-arguments)
